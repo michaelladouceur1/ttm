@@ -1,0 +1,199 @@
+package db
+
+import (
+	"context"
+	"database/sql"
+	_ "embed"
+	"os"
+	"time"
+	"ttm/pkg/models"
+	"ttm/pkg/paths"
+)
+
+type DBStore struct {
+	ctx context.Context
+	db  *sql.DB
+}
+
+//go:embed schema.sql
+var ddl string
+
+func NewDBStore() *DBStore {
+	return &DBStore{}
+}
+
+func (ts *DBStore) Init() error {
+	var err error
+
+	if os.MkdirAll(paths.GetTaskStorePath(), os.ModePerm); err != nil {
+		return err
+	}
+
+	ts.ctx = context.Background()
+
+	ts.db, err = sql.Open("sqlite3", paths.GetTaskStoreDBPath())
+	if err != nil {
+		return err
+	}
+
+	if _, err := ts.db.ExecContext(ts.ctx, ddl); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ts *DBStore) InsertTask(task models.Task) error {
+	task.CreatedAt = time.Now()
+	task.UpdatedAt = time.Now()
+
+	queries := New(ts.db)
+
+	_, err := queries.CreateTask(ts.ctx, CreateTaskParams{
+		Title:       toNullString(task.Title),
+		Description: toNullString(task.Description),
+		Category:    toNullString(string(task.Category)),
+		Priority:    toNullString(string(task.Priority)),
+		Status:      toNullString(string(task.Status)),
+		StartTime:   toNullString(task.StartTime),
+		EndTime:     toNullString(task.EndTime),
+		CreatedAt:   toNullTime(task.CreatedAt),
+		UpdatedAt:   toNullTime(task.UpdatedAt),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ts *DBStore) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
+	queries := New(ts.db)
+
+	dbTasks, err := queries.ListTasks(ts.ctx, ListTasksParams{
+		Title:       toNullString(titleDescSearch),
+		Description: toNullString(titleDescSearch),
+		Category:    toNullString(string(category)),
+		Priority:    toNullString(string(priority)),
+		Status:      toNullString(string(status)),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := dbTasksToTasks(dbTasks)
+
+	return tasks, nil
+}
+
+func (ts *DBStore) UpdateTitle(taskID int, title string) error {
+	return ts.updateTaskField(UpdateTaskFieldParams{
+		ID:    int64(taskID),
+		Title: toNullString(title),
+	})
+}
+
+func (ts *DBStore) UpdateDescription(taskID int, description string) error {
+	return ts.updateTaskField(UpdateTaskFieldParams{
+		ID:          int64(taskID),
+		Description: toNullString(description),
+	})
+}
+
+func (ts *DBStore) UpdateCategory(taskID int, category models.Category) error {
+	return ts.updateTaskField(UpdateTaskFieldParams{
+		ID:       int64(taskID),
+		Category: toNullString(string(category)),
+	})
+}
+
+func (ts *DBStore) UpdatePriority(taskID int, priority models.Priority) error {
+	return ts.updateTaskField(UpdateTaskFieldParams{
+		ID:       int64(taskID),
+		Priority: toNullString(string(priority)),
+	})
+}
+
+func (ts *DBStore) UpdateStatus(taskID int, status models.Status) error {
+	return ts.updateTaskField(UpdateTaskFieldParams{
+		ID:     int64(taskID),
+		Status: toNullString(string(status)),
+	})
+}
+
+func (ts *DBStore) UpdateStartTime(taskID int, startTime string) error {
+	return ts.updateTaskField(UpdateTaskFieldParams{
+		ID:        int64(taskID),
+		StartTime: toNullString(startTime),
+	})
+}
+
+func (ts *DBStore) UpdateEndTime(taskID int, endTime string) error {
+	return ts.updateTaskField(UpdateTaskFieldParams{
+		ID:      int64(taskID),
+		EndTime: toNullString(endTime),
+	})
+}
+
+func (ts *DBStore) updateTaskField(params UpdateTaskFieldParams) error {
+	params.UpdatedAt = toNullTime(time.Now())
+
+	queries := New(ts.db)
+
+	_, err := queries.UpdateTaskField(ts.ctx, params)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ts *DBStore) AddSession(session models.Session) error {
+	queries := New(ts.db)
+
+	_, err := queries.CreateSession(ts.ctx, CreateSessionParams{
+		TaskID:    toNullInt(int(session.TaskId)),
+		StartTime: toNullTime(session.StartTime),
+		EndTime:   toNullTime(session.EndTime),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func toNullString(s string) sql.NullString {
+	return sql.NullString{String: s, Valid: s != ""}
+}
+
+func toNullTime(t time.Time) sql.NullTime {
+	return sql.NullTime{Time: t, Valid: true}
+}
+
+func toNullInt(i int) sql.NullInt64 {
+	return sql.NullInt64{Int64: int64(i), Valid: true}
+}
+
+func dbTasksToTasks(t []Task) []models.Task {
+	var tasksList []models.Task
+	for _, task := range t {
+		tasksList = append(tasksList, models.Task{
+			ID:          task.ID,
+			Title:       task.Title.String,
+			Description: task.Description.String,
+			Category:    models.Category(task.Category.String),
+			Priority:    models.Priority(task.Priority.String),
+			Status:      models.Status(task.Status.String),
+			StartTime:   task.StartTime.String,
+			EndTime:     task.EndTime.String,
+			CreatedAt:   task.CreatedAt.Time,
+			UpdatedAt:   task.UpdatedAt.Time,
+		})
+	}
+	return tasksList
+}

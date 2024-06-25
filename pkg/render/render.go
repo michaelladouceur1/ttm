@@ -1,0 +1,46 @@
+package render
+
+import (
+	"fmt"
+	"time"
+	"ttm/pkg/models"
+
+	"github.com/jedib0t/go-pretty/v6/table"
+)
+
+type Renderer interface {
+	RenderTasks(tasks []models.Task)
+	RenderAddTask(task models.Task)
+}
+
+func RenderAddTask(task models.Task) {
+	fmt.Printf("Task added!")
+}
+
+func RenderUpdateTask() {
+	fmt.Printf("Task updated!")
+}
+
+func RenderTasks(tasks []models.Task) {
+	t := table.NewWriter()
+	t.AppendHeader(table.Row{"ID", "Title", "Description", "Category", "Priority", "Status", "Start Time", "End Time", "Created At"})
+	for _, task := range tasks {
+		t.AppendRow(table.Row{task.ID, task.Title, task.Description, task.Category, task.Priority, task.Status, task.StartTime, task.EndTime, task.CreatedAt.Format("2006-01-02 15:04:05")})
+	}
+	t.SetStyle(table.StyleColoredDark)
+	fmt.Println(t.Render())
+}
+
+func RenderSessionStart(taskId string) {
+	fmt.Printf("Session started for task: %s \n", taskId)
+}
+
+func RenderSessionEnd(session models.SessionFile) {
+	RenderSessionInfo(session)
+}
+
+func RenderSessionInfo(session models.SessionFile) {
+	fmt.Printf("Current session for task: %s \n", session.ID)
+	fmt.Printf("Start time: %s \n", session.StartTime)
+	fmt.Printf("Duration: %s \n", time.Since(session.StartTime))
+}
