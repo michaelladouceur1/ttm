@@ -14,11 +14,11 @@ type Renderer interface {
 }
 
 func RenderAddTask(task models.Task) {
-	fmt.Printf("Task added!")
+	fmt.Printf("Task added\n")
 }
 
 func RenderUpdateTask() {
-	fmt.Printf("Task updated!")
+	fmt.Printf("Task updated\n")
 }
 
 func RenderTasks(tasks []models.Task) {
@@ -43,4 +43,8 @@ func RenderSessionInfo(session models.SessionFile) {
 	fmt.Printf("Current session for task: %s \n", session.ID)
 	fmt.Printf("Start time: %s \n", session.StartTime)
 	fmt.Printf("Duration: %s \n", time.Since(session.StartTime))
+}
+
+func RenderSessionCancel() {
+	fmt.Printf("Session cancelled\n")
 }

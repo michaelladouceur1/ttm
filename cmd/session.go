@@ -34,10 +34,22 @@ var endCmd = &cobra.Command{
 	Run:   endHandler,
 }
 
+var cancelCmd = &cobra.Command{
+	Use:   "cancel",
+	Short: "Cancel a session",
+	Run:   cancelHandler,
+}
+
 var infoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Get session info",
 	Run:   infoHandler,
+}
+
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all sessions",
+	Run:   listHandler,
 }
 
 func init() {
@@ -45,9 +57,12 @@ func init() {
 
 	sessionCmd.AddCommand(startCmd)
 	sessionCmd.AddCommand(endCmd)
+	sessionCmd.AddCommand(cancelCmd)
 	sessionCmd.AddCommand(infoCmd)
+	sessionCmd.AddCommand(listCmd)
 
-	// startCmd.Flags().StringP("time", "t", "", "Start time")
+	listCmd.Flags().StringP("id", "i", "", "Filter by task ID")
+	listCmd.Flags().StringP("days", "d", "", "Previous days to show")
 }
 
 func startHandler(cmd *cobra.Command, args []string) {
@@ -92,6 +107,21 @@ func endHandler(cmd *cobra.Command, args []string) {
 	})
 
 	render.RenderSessionEnd(sf)
+}
+
+func cancelHandler(cmd *cobra.Command, args []string) {
+	if !fs.SessionFileExists() {
+		fmt.Println("No session found. Please start a session first.")
+		return
+	}
+
+	_, err := fs.RemoveSessionFile()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	render.RenderSessionCancel()
 }
 
 func infoHandler(cmd *cobra.Command, args []string) {
