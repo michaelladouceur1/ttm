@@ -1,18 +1,23 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package session
 
 import (
 	"fmt"
 	"strconv"
 	"time"
+	"ttm/cmd"
 	"ttm/pkg/fs"
 	"ttm/pkg/models"
 	"ttm/pkg/render"
+	"ttm/pkg/store"
+	"ttm/pkg/store/db"
 
 	"github.com/spf13/cobra"
 )
+
+var taskStore = store.NewStore(db.NewDBStore())
 
 // sessionCmd represents the session command
 var sessionCmd = &cobra.Command{
@@ -53,7 +58,9 @@ var infoCmd = &cobra.Command{
 // }
 
 func init() {
-	rootCmd.AddCommand(sessionCmd)
+	taskStore.Init()
+
+	cmd.RootCmd.AddCommand(sessionCmd)
 
 	sessionCmd.AddCommand(startCmd)
 	sessionCmd.AddCommand(endCmd)

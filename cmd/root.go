@@ -12,14 +12,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var ttmConfig = config.NewConfig()
+var taskStore = store.NewStore(db.NewDBStore())
+
 // rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+var RootCmd = &cobra.Command{
 	Use:   "ttm",
 	Short: "Terminal Todo Manager",
 }
-
-var ttmConfig = config.NewConfig()
-var taskStore = store.NewStore(db.NewDBStore())
 
 func Execute() {
 	ttmConfig.Init()
@@ -27,7 +27,7 @@ func Execute() {
 
 	taskStore.Init()
 
-	err := rootCmd.Execute()
+	err := RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
