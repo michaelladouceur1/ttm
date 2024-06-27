@@ -2,6 +2,7 @@ package store
 
 import (
 	_ "embed"
+	"sort"
 	"time"
 	"ttm/pkg/models"
 
@@ -46,7 +47,19 @@ func (s *Store) InsertTask(task models.Task) error {
 }
 
 func (s *Store) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
-	return s.strategy.ListTasks(titleDescSearch, category, status, priority)
+	tasks, err := s.strategy.ListTasks(titleDescSearch, category, status, priority)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.getTasksDuration(&tasks)
+	if err != nil {
+		return nil, err
+	}
+
+	s.sortTasksByID(&tasks)
+
+	return tasks, nil
 }
 
 func (s *Store) UpdateTitle(taskID int, title string) error {
@@ -83,4 +96,44 @@ func (s *Store) AddSession(session models.Session) error {
 
 func (s *Store) GetSessionByTaskID(taskID int) ([]models.Session, error) {
 	return s.strategy.GetSessionByTaskID(taskID)
+}
+
+func (s *Store) getTasksDuration(tasks *[]models.Task) error {
+	taskChannel := make(chan models.Task)
+	for _, task := range *tasks {
+		go s.getTaskDuration(task, taskChannel)
+	}
+
+	var tasksWithDuration []models.Task
+	for range *tasks {
+		taskWithDuration := <-taskChannel
+		tasksWithDuration = append(tasksWithDuration, taskWithDuration)
+	}
+
+	*tasks = tasksWithDuration
+
+	return nil
+}
+
+func (s *Store) getTaskDuration(task models.Task, taskChannel chan models.Task) {
+	sessions, err := s.GetSessionByTaskID(int(task.ID))
+	if err != nil {
+		taskChannel <- task
+		return
+	}
+
+	var totalDuration time.Time
+	for _, session := range sessions {
+		sessionDuration := session.EndTime.Sub(session.StartTime)
+		totalDuration = totalDuration.Add(sessionDuration)
+	}
+
+	task.Duration = totalDuration
+	taskChannel <- task
+}
+
+func (s *Store) sortTasksByID(tasks *[]models.Task) {
+	sort.Slice(*tasks, func(i, j int) bool {
+		return (*tasks)[i].ID < (*tasks)[j].ID
+	})
 }
