@@ -10,7 +10,7 @@ WHERE
     AND (@status IS NULL OR status = @status);
 
 -- name: CreateTask :one
-INSERT INTO tasks (title, description, category, priority, status, start_time, end_time, created_at, updated_at)
+INSERT INTO tasks (title, description, category, priority, status, opened_at, closed_at, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
@@ -22,8 +22,8 @@ SET
     category = COALESCE(?, category),
     priority = COALESCE(?, priority),
     status = COALESCE(?, status),
-    start_time = COALESCE(?, start_time),
-    end_time = COALESCE(?, end_time),
+    opened_at = COALESCE(?, opened_at),
+    closed_at = COALESCE(?, closed_at),
     updated_at = ?
 WHERE id = ?
 RETURNING *;
@@ -32,3 +32,7 @@ RETURNING *;
 INSERT INTO sessions (task_id, start_time, end_time)
 VALUES (?, ?, ?)
 RETURNING *;
+
+-- name: GetSessionByTaskId :many
+SELECT * FROM sessions
+WHERE task_id = ?

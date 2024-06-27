@@ -2,6 +2,7 @@ package store
 
 import (
 	_ "embed"
+	"time"
 	"ttm/pkg/models"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -16,9 +17,10 @@ type StoreStrategy interface {
 	UpdateCategory(taskID int, category models.Category) error
 	UpdatePriority(taskID int, priority models.Priority) error
 	UpdateStatus(taskID int, status models.Status) error
-	UpdateStartTime(taskID int, startTime string) error
-	UpdateEndTime(taskID int, endTime string) error
+	UpdateOpenedAt(taskID int, openedAt time.Time) error
+	UpdateClosedAt(taskID int, closedAt time.Time) error
 	AddSession(session models.Session) error
+	GetSessionByTaskID(taskID int) ([]models.Session, error)
 }
 
 type Store struct {
@@ -67,14 +69,18 @@ func (s *Store) UpdateStatus(taskID int, status models.Status) error {
 	return s.strategy.UpdateStatus(taskID, status)
 }
 
-func (s *Store) UpdateStartTime(taskID int, startTime string) error {
-	return s.strategy.UpdateStartTime(taskID, startTime)
+func (s *Store) UpdateOpenedAt(taskID int, openedAt time.Time) error {
+	return s.strategy.UpdateOpenedAt(taskID, openedAt)
 }
 
-func (s *Store) UpdateEndTime(taskID int, endTime string) error {
-	return s.strategy.UpdateEndTime(taskID, endTime)
+func (s *Store) UpdateClosedAt(taskID int, closedAt time.Time) error {
+	return s.strategy.UpdateClosedAt(taskID, closedAt)
 }
 
 func (s *Store) AddSession(session models.Session) error {
 	return s.strategy.AddSession(session)
+}
+
+func (s *Store) GetSessionByTaskID(taskID int) ([]models.Session, error) {
+	return s.strategy.GetSessionByTaskID(taskID)
 }

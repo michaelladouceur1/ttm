@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 	"ttm/pkg/models"
 	"ttm/pkg/render"
 
@@ -27,8 +28,8 @@ func init() {
 	updateCmd.Flags().StringP("category", "c", "", "Update category")
 	updateCmd.Flags().StringP("priority", "p", "", "Update priority")
 	updateCmd.Flags().StringP("status", "s", "", "Update status")
-	updateCmd.Flags().StringP("start", "a", "", "Update start time")
-	updateCmd.Flags().StringP("end", "b", "", "Update end time")
+	updateCmd.Flags().StringP("openedAt", "a", "", "Update opened time")
+	updateCmd.Flags().StringP("closedAt", "b", "", "Update closed time")
 }
 
 func updateHandler(cmd *cobra.Command, args []string) {
@@ -38,8 +39,8 @@ func updateHandler(cmd *cobra.Command, args []string) {
 	categoryFlag, _ := cmd.Flags().GetString("category")
 	priorityFlag, _ := cmd.Flags().GetString("priority")
 	statusFlag, _ := cmd.Flags().GetString("status")
-	startTimeFlag, _ := cmd.Flags().GetString("start")
-	endTimeFlag, _ := cmd.Flags().GetString("end")
+	openedAtFlag, _ := cmd.Flags().GetString("openedAt")
+	closedAtFlag, _ := cmd.Flags().GetString("closedAt")
 
 	if idFlag == 0 {
 		fmt.Println("Please provide a task ID to update")
@@ -69,7 +70,7 @@ func updateHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if titleFlag == "" && descriptionFlag == "" && categoryFlag == "" && priorityFlag == "" && statusFlag == "" && startTimeFlag == "" && endTimeFlag == "" {
+	if titleFlag == "" && descriptionFlag == "" && categoryFlag == "" && priorityFlag == "" && statusFlag == "" && openedAtFlag == "" && closedAtFlag == "" {
 		fmt.Println("Please provide at least one field to update")
 		return
 	}
@@ -114,16 +115,26 @@ func updateHandler(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	if startTimeFlag != "" {
-		err = taskStore.UpdateStartTime(idFlag, startTimeFlag)
+	if openedAtFlag != "" {
+		openedTime, err := time.Parse(time.RFC3339, openedAtFlag)
+		if err != nil {
+			fmt.Println("Error parsing start time: ", err)
+			return
+		}
+		err = taskStore.UpdateOpenedAt(idFlag, openedTime)
 		if err != nil {
 			fmt.Println("Error updating start time: ", err)
 			return
 		}
 	}
 
-	if endTimeFlag != "" {
-		err = taskStore.UpdateEndTime(idFlag, endTimeFlag)
+	if closedAtFlag != "" {
+		closedTime, err := time.Parse(time.RFC3339, closedAtFlag)
+		if err != nil {
+			fmt.Println("Error parsing end time: ", err)
+			return
+		}
+		err = taskStore.UpdateClosedAt(idFlag, closedTime)
 		if err != nil {
 			fmt.Println("Error updating end time: ", err)
 			return

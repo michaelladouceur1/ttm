@@ -35,9 +35,9 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 }
 
 const createTask = `-- name: CreateTask :one
-INSERT INTO tasks (title, description, category, priority, status, start_time, end_time, created_at, updated_at)
+INSERT INTO tasks (title, description, category, priority, status, opened_at, closed_at, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, title, description, category, priority, status, start_time, end_time, created_at, updated_at
+RETURNING id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at
 `
 
 type CreateTaskParams struct {
@@ -46,8 +46,8 @@ type CreateTaskParams struct {
 	Category    sql.NullString
 	Priority    sql.NullString
 	Status      sql.NullString
-	StartTime   sql.NullString
-	EndTime     sql.NullString
+	OpenedAt    sql.NullTime
+	ClosedAt    sql.NullTime
 	CreatedAt   sql.NullTime
 	UpdatedAt   sql.NullTime
 }
@@ -59,8 +59,8 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		arg.Category,
 		arg.Priority,
 		arg.Status,
-		arg.StartTime,
-		arg.EndTime,
+		arg.OpenedAt,
+		arg.ClosedAt,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -72,16 +72,49 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.Category,
 		&i.Priority,
 		&i.Status,
-		&i.StartTime,
-		&i.EndTime,
+		&i.OpenedAt,
+		&i.ClosedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
+const getSessionByTaskId = `-- name: GetSessionByTaskId :many
+SELECT id, task_id, start_time, end_time FROM sessions
+WHERE task_id = ?
+`
+
+func (q *Queries) GetSessionByTaskId(ctx context.Context, taskID sql.NullInt64) ([]Session, error) {
+	rows, err := q.db.QueryContext(ctx, getSessionByTaskId, taskID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Session
+	for rows.Next() {
+		var i Session
+		if err := rows.Scan(
+			&i.ID,
+			&i.TaskID,
+			&i.StartTime,
+			&i.EndTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTasks = `-- name: ListTasks :many
-SELECT id, title, description, category, priority, status, start_time, end_time, created_at, updated_at FROM tasks
+SELECT id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
 WHERE 
     (
         (?1 IS NULL OR title LIKE '%' || ?1 || '%')
@@ -122,8 +155,8 @@ func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, e
 			&i.Category,
 			&i.Priority,
 			&i.Status,
-			&i.StartTime,
-			&i.EndTime,
+			&i.OpenedAt,
+			&i.ClosedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -148,11 +181,11 @@ SET
     category = COALESCE(?, category),
     priority = COALESCE(?, priority),
     status = COALESCE(?, status),
-    start_time = COALESCE(?, start_time),
-    end_time = COALESCE(?, end_time),
+    opened_at = COALESCE(?, opened_at),
+    closed_at = COALESCE(?, closed_at),
     updated_at = ?
 WHERE id = ?
-RETURNING id, title, description, category, priority, status, start_time, end_time, created_at, updated_at
+RETURNING id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at
 `
 
 type UpdateTaskFieldParams struct {
@@ -161,8 +194,8 @@ type UpdateTaskFieldParams struct {
 	Category    sql.NullString
 	Priority    sql.NullString
 	Status      sql.NullString
-	StartTime   sql.NullString
-	EndTime     sql.NullString
+	OpenedAt    sql.NullTime
+	ClosedAt    sql.NullTime
 	UpdatedAt   sql.NullTime
 	ID          int64
 }
@@ -174,8 +207,8 @@ func (q *Queries) UpdateTaskField(ctx context.Context, arg UpdateTaskFieldParams
 		arg.Category,
 		arg.Priority,
 		arg.Status,
-		arg.StartTime,
-		arg.EndTime,
+		arg.OpenedAt,
+		arg.ClosedAt,
 		arg.UpdatedAt,
 		arg.ID,
 	)
@@ -187,8 +220,8 @@ func (q *Queries) UpdateTaskField(ctx context.Context, arg UpdateTaskFieldParams
 		&i.Category,
 		&i.Priority,
 		&i.Status,
-		&i.StartTime,
-		&i.EndTime,
+		&i.OpenedAt,
+		&i.ClosedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

@@ -22,8 +22,8 @@ type Task struct {
 	Category    sql.NullString
 	Priority    sql.NullString
 	Status      sql.NullString
-	StartTime   sql.NullString
-	EndTime     sql.NullString
+	OpenedAt    sql.NullTime
+	ClosedAt    sql.NullTime
 	CreatedAt   sql.NullTime
 	UpdatedAt   sql.NullTime
 }

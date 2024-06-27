@@ -23,9 +23,9 @@ func RenderUpdateTask() {
 
 func RenderTasks(tasks []models.Task) {
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{"ID", "Title", "Description", "Category", "Priority", "Status", "Start Time", "End Time", "Created At"})
+	t.AppendHeader(table.Row{"ID", "Title", "Description", "Category", "Priority", "Status", "Duration", "Created At"})
 	for _, task := range tasks {
-		t.AppendRow(table.Row{task.ID, task.Title, task.Description, task.Category, task.Priority, task.Status, task.StartTime, task.EndTime, task.CreatedAt.Format("2006-01-02 15:04:05")})
+		t.AppendRow(table.Row{task.ID, task.Title, task.Description, task.Category, task.Priority, task.Status, formatTimeToDuration(task.Duration), task.CreatedAt.Format("2006-01-02 15:04:05")})
 	}
 	t.SetStyle(table.StyleColoredDark)
 	fmt.Println(t.Render())
@@ -47,4 +47,8 @@ func RenderSessionInfo(session models.SessionFile) {
 
 func RenderSessionCancel() {
 	fmt.Printf("Session cancelled\n")
+}
+
+func formatTimeToDuration(t time.Time) string {
+	return fmt.Sprintf("%02dh%02dm%02ds", int(t.Hour()), int(t.Minute()), int(t.Second()))
 }

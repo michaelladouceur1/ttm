@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 	"ttm/pkg/models"
 	"ttm/pkg/render"
 
@@ -29,8 +30,8 @@ func init() {
 	addCmd.Flags().StringVarP(addCategoryFlag, "category", "c", *addCategoryFlag, "Default category")
 	addCmd.Flags().StringVarP(addPriorityFlag, "priority", "p", *addPriorityFlag, "Default priority")
 	addCmd.Flags().StringVarP(addStatusFlag, "status", "s", *addStatusFlag, "Default status")
-	addCmd.Flags().String("st", "", "Start time")
-	addCmd.Flags().String("et", "", "End time")
+	// addCmd.Flags().String("st", "", "Start time")
+	// addCmd.Flags().String("et", "", "End time")
 }
 
 func addHandler(cmd *cobra.Command, args []string) {
@@ -46,17 +47,13 @@ func addHandler(cmd *cobra.Command, args []string) {
 		description = args[1]
 	}
 
-	startTimeFlag := cmd.Flags().Lookup("st").Value.String()
-	endTimeFlag := cmd.Flags().Lookup("et").Value.String()
-
 	task := models.Task{
 		Title:       title,
 		Description: description,
 		Category:    models.Category(*addCategoryFlag),
 		Priority:    models.Priority(*addPriorityFlag),
 		Status:      models.Status(*addStatusFlag),
-		StartTime:   startTimeFlag,
-		EndTime:     endTimeFlag,
+		OpenedAt:    time.Now(),
 	}
 
 	err := task.Validate()

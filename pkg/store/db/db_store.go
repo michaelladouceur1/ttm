@@ -55,8 +55,8 @@ func (ts *DBStore) InsertTask(task models.Task) error {
 		Category:    toNullString(string(task.Category)),
 		Priority:    toNullString(string(task.Priority)),
 		Status:      toNullString(string(task.Status)),
-		StartTime:   toNullString(task.StartTime),
-		EndTime:     toNullString(task.EndTime),
+		OpenedAt:    toNullTime(task.OpenedAt),
+		ClosedAt:    toNullTime(task.ClosedAt),
 		CreatedAt:   toNullTime(task.CreatedAt),
 		UpdatedAt:   toNullTime(task.UpdatedAt),
 	})
@@ -123,17 +123,17 @@ func (ts *DBStore) UpdateStatus(taskID int, status models.Status) error {
 	})
 }
 
-func (ts *DBStore) UpdateStartTime(taskID int, startTime string) error {
+func (ts *DBStore) UpdateOpenedAt(taskID int, openedAt time.Time) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
-		ID:        int64(taskID),
-		StartTime: toNullString(startTime),
+		ID:       int64(taskID),
+		OpenedAt: toNullTime(openedAt),
 	})
 }
 
-func (ts *DBStore) UpdateEndTime(taskID int, endTime string) error {
+func (ts *DBStore) UpdateClosedAt(taskID int, closedAt time.Time) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
-		ID:      int64(taskID),
-		EndTime: toNullString(endTime),
+		ID:       int64(taskID),
+		ClosedAt: toNullTime(closedAt),
 	})
 }
 
@@ -167,6 +167,33 @@ func (ts *DBStore) AddSession(session models.Session) error {
 	return nil
 }
 
+func (ts *DBStore) GetSessionByTaskID(taskID int) ([]models.Session, error) {
+	queries := New(ts.db)
+
+	dbSessions, err := queries.GetSessionByTaskId(ts.ctx, toNullInt(taskID))
+
+	sessions := []models.Session{}
+
+	if err != nil {
+		return sessions, err
+	}
+
+	if len(dbSessions) == 0 {
+		return sessions, nil
+	}
+
+	for _, dbSession := range dbSessions {
+		sessions = append(sessions, models.Session{
+			TaskId:    dbSession.ID,
+			StartTime: dbSession.StartTime.Time,
+			EndTime:   dbSession.EndTime.Time,
+		})
+	}
+
+	return sessions, nil
+
+}
+
 func toNullString(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: s != ""}
 }
@@ -189,8 +216,8 @@ func dbTasksToTasks(t []Task) []models.Task {
 			Category:    models.Category(task.Category.String),
 			Priority:    models.Priority(task.Priority.String),
 			Status:      models.Status(task.Status.String),
-			StartTime:   task.StartTime.String,
-			EndTime:     task.EndTime.String,
+			OpenedAt:    task.OpenedAt.Time,
+			ClosedAt:    task.ClosedAt.Time,
 			CreatedAt:   task.CreatedAt.Time,
 			UpdatedAt:   task.UpdatedAt.Time,
 		})

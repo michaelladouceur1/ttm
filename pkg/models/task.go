@@ -32,8 +32,9 @@ type Task struct {
 	Category    Category  `json:"category"`
 	Priority    Priority  `json:"priority"`
 	Status      Status    `json:"status"`
-	StartTime   string    `json:"start_time"`
-	EndTime     string    `json:"end_time"`
+	Duration    time.Time `json:"duration"`
+	OpenedAt    time.Time `json:"opened_at"`
+	ClosedAt    time.Time `json:"closed_at"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

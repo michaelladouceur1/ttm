@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     category TEXT,
     priority TEXT,
     status TEXT,
-    start_time TEXT,
-    end_time TEXT,
+    opened_at TIMESTAMP,
+    closed_at TIMESTAMP,
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );

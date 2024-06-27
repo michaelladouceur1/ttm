@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 	"ttm/pkg/models"
 	"ttm/pkg/render"
 
@@ -65,5 +66,41 @@ func listHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	tasks = getTasksDuration(tasks)
+
 	render.RenderTasks(tasks)
+}
+
+func getTasksDuration(tasks []models.Task) []models.Task {
+	taskChannel := make(chan models.Task)
+	for _, task := range tasks {
+		go getTaskDuration(task, taskChannel)
+	}
+
+	var tasksWithDuration []models.Task
+	for range tasks {
+		taskWithDuration := <-taskChannel
+		tasksWithDuration = append(tasksWithDuration, taskWithDuration)
+	}
+
+	return tasksWithDuration
+}
+
+func getTaskDuration(task models.Task, taskChannel chan models.Task) error {
+	sessions, err := taskStore.GetSessionByTaskID(int(task.ID))
+	if err != nil {
+		return err
+	}
+
+	var totalDuration time.Time
+	for _, session := range sessions {
+		sessionDuration := session.EndTime.Sub(session.StartTime)
+		totalDuration = totalDuration.Add(sessionDuration)
+	}
+
+	task.Duration = totalDuration
+
+	taskChannel <- task
+
+	return nil
 }

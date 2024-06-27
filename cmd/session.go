@@ -46,11 +46,11 @@ var infoCmd = &cobra.Command{
 	Run:   infoHandler,
 }
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all sessions",
-	Run:   listHandler,
-}
+// var listCmd = &cobra.Command{
+// 	Use:   "list",
+// 	Short: "List all sessions",
+// 	Run:   listHandler,
+// }
 
 func init() {
 	rootCmd.AddCommand(sessionCmd)
@@ -59,10 +59,10 @@ func init() {
 	sessionCmd.AddCommand(endCmd)
 	sessionCmd.AddCommand(cancelCmd)
 	sessionCmd.AddCommand(infoCmd)
-	sessionCmd.AddCommand(listCmd)
+	// sessionCmd.AddCommand(listCmd)
 
-	listCmd.Flags().StringP("id", "i", "", "Filter by task ID")
-	listCmd.Flags().StringP("days", "d", "", "Previous days to show")
+	// listCmd.Flags().StringP("id", "i", "", "Filter by task ID")
+	// listCmd.Flags().StringP("days", "d", "", "Previous days to show")
 }
 
 func startHandler(cmd *cobra.Command, args []string) {
