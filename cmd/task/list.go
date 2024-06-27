@@ -2,6 +2,7 @@ package task
 
 import (
 	"fmt"
+	"ttm/pkg/fs"
 	"ttm/pkg/models"
 	"ttm/pkg/render"
 
@@ -58,6 +59,8 @@ func listHandler(cmd *cobra.Command, args []string) {
 		fmt.Println("Error listing tasks: ", err)
 		return
 	}
+
+	fs.UpdateIDMapFile(tasks)
 
 	render.RenderTasks(tasks)
 }

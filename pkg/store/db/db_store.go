@@ -88,51 +88,51 @@ func (ts *DBStore) ListTasks(titleDescSearch string, category models.Category, s
 	return tasks, nil
 }
 
-func (ts *DBStore) UpdateTitle(taskID int, title string) error {
+func (ts *DBStore) UpdateTitle(taskID int64, title string) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
-		ID:    int64(taskID),
+		ID:    taskID,
 		Title: toNullString(title),
 	})
 }
 
-func (ts *DBStore) UpdateDescription(taskID int, description string) error {
+func (ts *DBStore) UpdateDescription(taskID int64, description string) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
-		ID:          int64(taskID),
+		ID:          taskID,
 		Description: toNullString(description),
 	})
 }
 
-func (ts *DBStore) UpdateCategory(taskID int, category models.Category) error {
+func (ts *DBStore) UpdateCategory(taskID int64, category models.Category) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
-		ID:       int64(taskID),
+		ID:       taskID,
 		Category: toNullString(string(category)),
 	})
 }
 
-func (ts *DBStore) UpdatePriority(taskID int, priority models.Priority) error {
+func (ts *DBStore) UpdatePriority(taskID int64, priority models.Priority) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
-		ID:       int64(taskID),
+		ID:       taskID,
 		Priority: toNullString(string(priority)),
 	})
 }
 
-func (ts *DBStore) UpdateStatus(taskID int, status models.Status) error {
+func (ts *DBStore) UpdateStatus(taskID int64, status models.Status) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
-		ID:     int64(taskID),
+		ID:     taskID,
 		Status: toNullString(string(status)),
 	})
 }
 
-func (ts *DBStore) UpdateOpenedAt(taskID int, openedAt time.Time) error {
+func (ts *DBStore) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
-		ID:       int64(taskID),
+		ID:       taskID,
 		OpenedAt: toNullTime(openedAt),
 	})
 }
 
-func (ts *DBStore) UpdateClosedAt(taskID int, closedAt time.Time) error {
+func (ts *DBStore) UpdateClosedAt(taskID int64, closedAt time.Time) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
-		ID:       int64(taskID),
+		ID:       taskID,
 		ClosedAt: toNullTime(closedAt),
 	})
 }

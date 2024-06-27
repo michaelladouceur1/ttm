@@ -13,13 +13,13 @@ type StoreStrategy interface {
 	Init() error
 	InsertTask(task models.Task) error
 	ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error)
-	UpdateTitle(taskID int, title string) error
-	UpdateDescription(taskID int, description string) error
-	UpdateCategory(taskID int, category models.Category) error
-	UpdatePriority(taskID int, priority models.Priority) error
-	UpdateStatus(taskID int, status models.Status) error
-	UpdateOpenedAt(taskID int, openedAt time.Time) error
-	UpdateClosedAt(taskID int, closedAt time.Time) error
+	UpdateTitle(taskID int64, title string) error
+	UpdateDescription(taskID int64, description string) error
+	UpdateCategory(taskID int64, category models.Category) error
+	UpdatePriority(taskID int64, priority models.Priority) error
+	UpdateStatus(taskID int64, status models.Status) error
+	UpdateOpenedAt(taskID int64, openedAt time.Time) error
+	UpdateClosedAt(taskID int64, closedAt time.Time) error
 	AddSession(session models.Session) error
 	GetSessionByTaskID(taskID int) ([]models.Session, error)
 }
@@ -58,35 +58,36 @@ func (s *Store) ListTasks(titleDescSearch string, category models.Category, stat
 	}
 
 	s.sortTasksByID(&tasks)
+	s.populateListIDs(&tasks)
 
 	return tasks, nil
 }
 
-func (s *Store) UpdateTitle(taskID int, title string) error {
+func (s *Store) UpdateTitle(taskID int64, title string) error {
 	return s.strategy.UpdateTitle(taskID, title)
 }
 
-func (s *Store) UpdateDescription(taskID int, description string) error {
+func (s *Store) UpdateDescription(taskID int64, description string) error {
 	return s.strategy.UpdateDescription(taskID, description)
 }
 
-func (s *Store) UpdateCategory(taskID int, category models.Category) error {
+func (s *Store) UpdateCategory(taskID int64, category models.Category) error {
 	return s.strategy.UpdateCategory(taskID, category)
 }
 
-func (s *Store) UpdatePriority(taskID int, priority models.Priority) error {
+func (s *Store) UpdatePriority(taskID int64, priority models.Priority) error {
 	return s.strategy.UpdatePriority(taskID, priority)
 }
 
-func (s *Store) UpdateStatus(taskID int, status models.Status) error {
+func (s *Store) UpdateStatus(taskID int64, status models.Status) error {
 	return s.strategy.UpdateStatus(taskID, status)
 }
 
-func (s *Store) UpdateOpenedAt(taskID int, openedAt time.Time) error {
+func (s *Store) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
 	return s.strategy.UpdateOpenedAt(taskID, openedAt)
 }
 
-func (s *Store) UpdateClosedAt(taskID int, closedAt time.Time) error {
+func (s *Store) UpdateClosedAt(taskID int64, closedAt time.Time) error {
 	return s.strategy.UpdateClosedAt(taskID, closedAt)
 }
 
@@ -137,4 +138,10 @@ func (s *Store) sortTasksByID(tasks *[]models.Task) {
 	sort.Slice(*tasks, func(i, j int) bool {
 		return (*tasks)[i].ID < (*tasks)[j].ID
 	})
+}
+
+func (s *Store) populateListIDs(tasks *[]models.Task) {
+	for i := range *tasks {
+		(*tasks)[i].ListID = int64(i + 1)
+	}
 }

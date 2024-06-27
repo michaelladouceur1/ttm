@@ -28,10 +28,6 @@ func init() {
 }
 
 func addHandler(cmd *cobra.Command, args []string) {
-	if len(args) < 1 {
-		fmt.Println("Please provide a title for the task")
-		return
-	}
 
 	var title, description string
 	title = args[0]

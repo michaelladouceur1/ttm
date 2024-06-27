@@ -27,6 +27,7 @@ const (
 
 type Task struct {
 	ID          int64     `json:"id"`
+	ListID      int64     `json:"list_id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Category    Category  `json:"category"`
@@ -78,13 +79,6 @@ func (s Status) Validate() error {
 	}
 	return nil
 }
-
-// func ParseTime(timeStr string) (time.Time, error) {
-// 	if timeStr == "" {
-// 		return time.Time{}, nil
-// 	}
-// 	return time.Parse(time.RFC3339, timeStr)
-// }
 
 type InvalidCategoryError struct{}
 

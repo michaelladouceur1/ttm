@@ -2,7 +2,9 @@ package task
 
 import (
 	"fmt"
+	"strconv"
 	"time"
+	"ttm/pkg/fs"
 	"ttm/pkg/models"
 	"ttm/pkg/render"
 
@@ -12,6 +14,7 @@ import (
 var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update a task",
+	Args:  cobra.MinimumNArgs(1),
 	Run:   updateHandler,
 }
 
@@ -27,7 +30,12 @@ func init() {
 }
 
 func updateHandler(cmd *cobra.Command, args []string) {
-	idFlag, _ := cmd.Flags().GetInt("id")
+	idArg, err := strconv.Atoi(args[0])
+	if err != nil {
+		fmt.Println("Error parsing task ID: ", err)
+		return
+	}
+
 	titleFlag, _ := cmd.Flags().GetString("title")
 	descriptionFlag, _ := cmd.Flags().GetString("description")
 	categoryFlag, _ := cmd.Flags().GetString("category")
@@ -36,8 +44,9 @@ func updateHandler(cmd *cobra.Command, args []string) {
 	openedAtFlag, _ := cmd.Flags().GetString("openedAt")
 	closedAtFlag, _ := cmd.Flags().GetString("closedAt")
 
-	if idFlag == 0 {
-		fmt.Println("Please provide a task ID to update")
+	id, err := fs.GetTaskIDFromListID(int64(idArg))
+	if err != nil {
+		fmt.Println("Error getting task ID: ", err)
 		return
 	}
 
@@ -45,7 +54,6 @@ func updateHandler(cmd *cobra.Command, args []string) {
 	priority := models.Priority(priorityFlag)
 	status := models.Status(statusFlag)
 
-	var err error
 	err = category.Validate()
 	if err != nil {
 		fmt.Println(err)
@@ -70,7 +78,7 @@ func updateHandler(cmd *cobra.Command, args []string) {
 	}
 
 	if titleFlag != "" {
-		err = taskStore.UpdateTitle(idFlag, titleFlag)
+		err = taskStore.UpdateTitle(id, titleFlag)
 		if err != nil {
 			fmt.Println("Error updating title: ", err)
 			return
@@ -78,7 +86,7 @@ func updateHandler(cmd *cobra.Command, args []string) {
 	}
 
 	if descriptionFlag != "" {
-		err = taskStore.UpdateDescription(idFlag, descriptionFlag)
+		err = taskStore.UpdateDescription(id, descriptionFlag)
 		if err != nil {
 			fmt.Println("Error updating description: ", err)
 			return
@@ -86,7 +94,7 @@ func updateHandler(cmd *cobra.Command, args []string) {
 	}
 
 	if categoryFlag != "" {
-		err = taskStore.UpdateCategory(idFlag, category)
+		err = taskStore.UpdateCategory(id, category)
 		if err != nil {
 			fmt.Println("Error updating category: ", err)
 			return
@@ -94,7 +102,7 @@ func updateHandler(cmd *cobra.Command, args []string) {
 	}
 
 	if priorityFlag != "" {
-		err = taskStore.UpdatePriority(idFlag, priority)
+		err = taskStore.UpdatePriority(id, priority)
 		if err != nil {
 			fmt.Println("Error updating priority: ", err)
 			return
@@ -102,7 +110,7 @@ func updateHandler(cmd *cobra.Command, args []string) {
 	}
 
 	if statusFlag != "" {
-		err = taskStore.UpdateStatus(idFlag, status)
+		err = taskStore.UpdateStatus(id, status)
 		if err != nil {
 			fmt.Println("Error updating status: ", err)
 			return
@@ -115,7 +123,7 @@ func updateHandler(cmd *cobra.Command, args []string) {
 			fmt.Println("Error parsing start time: ", err)
 			return
 		}
-		err = taskStore.UpdateOpenedAt(idFlag, openedTime)
+		err = taskStore.UpdateOpenedAt(id, openedTime)
 		if err != nil {
 			fmt.Println("Error updating start time: ", err)
 			return
@@ -128,7 +136,7 @@ func updateHandler(cmd *cobra.Command, args []string) {
 			fmt.Println("Error parsing end time: ", err)
 			return
 		}
-		err = taskStore.UpdateClosedAt(idFlag, closedTime)
+		err = taskStore.UpdateClosedAt(id, closedTime)
 		if err != nil {
 			fmt.Println("Error updating end time: ", err)
 			return

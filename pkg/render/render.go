@@ -23,9 +23,9 @@ func RenderUpdateTask() {
 
 func RenderTasks(tasks []models.Task) {
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{"ID", "Title", "Description", "Category", "Priority", "Status", "Duration", "Created At"})
+	t.AppendHeader(table.Row{"Temp ID", "Title", "Description", "Category", "Priority", "Status", "Duration", "Created At"})
 	for _, task := range tasks {
-		t.AppendRow(table.Row{task.ID, task.Title, task.Description, task.Category, task.Priority, task.Status, formatTimeToDuration(task.Duration), task.CreatedAt.Format("2006-01-02 15:04:05")})
+		t.AppendRow(table.Row{task.ListID, task.Title, task.Description, task.Category, task.Priority, task.Status, formatTimeToDuration(task.Duration), task.CreatedAt.Format("2006-01-02 15:04:05")})
 	}
 	t.SetStyle(table.StyleColoredDark)
 	fmt.Println(t.Render())
