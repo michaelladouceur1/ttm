@@ -98,6 +98,7 @@ func (s *Store) GetSessionByTaskID(taskID int) ([]models.Session, error) {
 	return s.strategy.GetSessionByTaskID(taskID)
 }
 
+// TODO: add result type to handle errors
 func (s *Store) getTasksDuration(tasks *[]models.Task) error {
 	taskChannel := make(chan models.Task)
 	for _, task := range *tasks {
