@@ -182,10 +182,10 @@ func (ts *DBStore) AddSession(session models.Session) error {
 	return nil
 }
 
-func (ts *DBStore) GetSessionByTaskID(taskID int) ([]models.Session, error) {
+func (ts *DBStore) GetSessionsByTaskID(taskID int) ([]models.Session, error) {
 	queries := New(ts.db)
 
-	dbSessions, err := queries.GetSessionByTaskId(ts.ctx, toNullInt(taskID))
+	dbSessions, err := queries.GetSessionsByTaskID(ts.ctx, toNullInt(taskID))
 
 	sessions := []models.Session{}
 

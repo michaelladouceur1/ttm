@@ -37,7 +37,7 @@ INSERT INTO sessions (task_id, start_time, end_time)
 VALUES (?, ?, ?)
 RETURNING *;
 
--- name: GetSessionByTaskId :many
+-- name: GetSessionsByTaskID :many
 SELECT * FROM sessions
 WHERE task_id = ?;
 

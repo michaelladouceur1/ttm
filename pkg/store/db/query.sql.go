@@ -80,13 +80,13 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	return i, err
 }
 
-const getSessionByTaskId = `-- name: GetSessionByTaskId :many
+const getSessionsByTaskID = `-- name: GetSessionsByTaskID :many
 SELECT id, task_id, start_time, end_time FROM sessions
 WHERE task_id = ?
 `
 
-func (q *Queries) GetSessionByTaskId(ctx context.Context, taskID sql.NullInt64) ([]Session, error) {
-	rows, err := q.db.QueryContext(ctx, getSessionByTaskId, taskID)
+func (q *Queries) GetSessionsByTaskID(ctx context.Context, taskID sql.NullInt64) ([]Session, error) {
+	rows, err := q.db.QueryContext(ctx, getSessionsByTaskID, taskID)
 	if err != nil {
 		return nil, err
 	}

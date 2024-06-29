@@ -1,6 +1,7 @@
 package models
 
 import (
+	"sort"
 	"time"
 )
 
@@ -38,6 +39,16 @@ type Task struct {
 	ClosedAt    time.Time `json:"closed_at"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+	Sessions    []Session `json:"sessions"`
+}
+
+func (s *Task) CalculateDuration() {
+	var totalDuration time.Time
+	for _, session := range s.Sessions {
+		sessionDuration := session.EndTime.Sub(session.StartTime)
+		totalDuration = totalDuration.Add(sessionDuration)
+	}
+	s.Duration = totalDuration
 }
 
 func (t *Task) Validate() error {
@@ -78,6 +89,18 @@ func (s Status) Validate() error {
 		return &InvalidStatusError{}
 	}
 	return nil
+}
+
+func SortTasksById(tasks *[]Task) {
+	sort.Slice(*tasks, func(i, j int) bool {
+		return (*tasks)[i].ID < (*tasks)[j].ID
+	})
+}
+
+func PopulateListIDs(tasks *[]Task) {
+	for i := range *tasks {
+		(*tasks)[i].ListID = int64(i + 1)
+	}
 }
 
 type InvalidCategoryError struct{}
