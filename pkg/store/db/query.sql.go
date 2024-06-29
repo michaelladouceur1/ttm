@@ -113,6 +113,67 @@ func (q *Queries) GetSessionByTaskId(ctx context.Context, taskID sql.NullInt64) 
 	return items, nil
 }
 
+const getSessionsByTimeRange = `-- name: GetSessionsByTimeRange :many
+SELECT id, task_id, start_time, end_time FROM sessions
+WHERE start_time >= ? AND end_time <= ?
+`
+
+type GetSessionsByTimeRangeParams struct {
+	StartTime sql.NullTime
+	EndTime   sql.NullTime
+}
+
+func (q *Queries) GetSessionsByTimeRange(ctx context.Context, arg GetSessionsByTimeRangeParams) ([]Session, error) {
+	rows, err := q.db.QueryContext(ctx, getSessionsByTimeRange, arg.StartTime, arg.EndTime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Session
+	for rows.Next() {
+		var i Session
+		if err := rows.Scan(
+			&i.ID,
+			&i.TaskID,
+			&i.StartTime,
+			&i.EndTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTaskById = `-- name: GetTaskById :one
+SELECT id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
+WHERE id = ?
+`
+
+func (q *Queries) GetTaskById(ctx context.Context, id int64) (Task, error) {
+	row := q.db.QueryRowContext(ctx, getTaskById, id)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.Category,
+		&i.Priority,
+		&i.Status,
+		&i.OpenedAt,
+		&i.ClosedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listTasks = `-- name: ListTasks :many
 SELECT id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
 WHERE 

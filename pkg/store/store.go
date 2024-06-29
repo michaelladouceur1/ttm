@@ -12,6 +12,7 @@ import (
 type StoreStrategy interface {
 	Init() error
 	InsertTask(task models.Task) error
+	GetTaskByID(taskID int64) (models.Task, error)
 	ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error)
 	UpdateTitle(taskID int64, title string) error
 	UpdateDescription(taskID int64, description string) error
@@ -22,6 +23,7 @@ type StoreStrategy interface {
 	UpdateClosedAt(taskID int64, closedAt time.Time) error
 	AddSession(session models.Session) error
 	GetSessionByTaskID(taskID int) ([]models.Session, error)
+	GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error)
 }
 
 type Store struct {
@@ -44,6 +46,10 @@ func (s *Store) Init() error {
 
 func (s *Store) InsertTask(task models.Task) error {
 	return s.strategy.InsertTask(task)
+}
+
+func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
+	return s.strategy.GetTaskByID(taskID)
 }
 
 func (s *Store) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
@@ -97,6 +103,10 @@ func (s *Store) AddSession(session models.Session) error {
 
 func (s *Store) GetSessionByTaskID(taskID int) ([]models.Session, error) {
 	return s.strategy.GetSessionByTaskID(taskID)
+}
+
+func (s *Store) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error) {
+	return s.strategy.GetSessionsByTimeRange(startTime, endTime)
 }
 
 // TODO: add result type to handle errors

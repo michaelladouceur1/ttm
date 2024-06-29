@@ -68,6 +68,21 @@ func (ts *DBStore) InsertTask(task models.Task) error {
 	return nil
 }
 
+func (ts *DBStore) GetTaskByID(taskID int64) (models.Task, error) {
+	queries := New(ts.db)
+
+	dbTask, err := queries.GetTaskById(ts.ctx, taskID)
+
+	if err != nil {
+		return models.Task{}, err
+	}
+
+	task := dbTasksToTasks([]Task{dbTask})
+
+	return task[0], nil
+
+}
+
 func (ts *DBStore) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
 	queries := New(ts.db)
 
@@ -184,7 +199,39 @@ func (ts *DBStore) GetSessionByTaskID(taskID int) ([]models.Session, error) {
 
 	for _, dbSession := range dbSessions {
 		sessions = append(sessions, models.Session{
-			TaskId:    dbSession.ID,
+			ID:        dbSession.ID,
+			TaskId:    dbSession.TaskID.Int64,
+			StartTime: dbSession.StartTime.Time,
+			EndTime:   dbSession.EndTime.Time,
+		})
+	}
+
+	return sessions, nil
+
+}
+
+func (ts *DBStore) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error) {
+	queries := New(ts.db)
+
+	dbSessions, err := queries.GetSessionsByTimeRange(ts.ctx, GetSessionsByTimeRangeParams{
+		StartTime: toNullTime(startTime),
+		EndTime:   toNullTime(endTime),
+	})
+
+	sessions := []models.Session{}
+
+	if err != nil {
+		return sessions, err
+	}
+
+	if len(dbSessions) == 0 {
+		return sessions, nil
+	}
+
+	for _, dbSession := range dbSessions {
+		sessions = append(sessions, models.Session{
+			ID:        dbSession.ID,
+			TaskId:    dbSession.TaskID.Int64,
 			StartTime: dbSession.StartTime.Time,
 			EndTime:   dbSession.EndTime.Time,
 		})

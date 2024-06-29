@@ -1,3 +1,7 @@
+-- name: GetTaskById :one
+SELECT * FROM tasks
+WHERE id = ?;
+
 -- name: ListTasks :many
 SELECT * FROM tasks
 WHERE 
@@ -35,4 +39,8 @@ RETURNING *;
 
 -- name: GetSessionByTaskId :many
 SELECT * FROM sessions
-WHERE task_id = ?
+WHERE task_id = ?;
+
+-- name: GetSessionsByTimeRange :many
+SELECT * FROM sessions
+WHERE start_time >= ? AND end_time <= ?;
