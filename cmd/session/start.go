@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 	"ttm/pkg/fs"
 	"ttm/pkg/render"
@@ -24,9 +25,20 @@ func startHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	taskId := args[0]
+	taskListIdString := args[0]
+	taskListId, err := strconv.Atoi(taskListIdString)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	_, err := fs.CreateSessionFile(taskId, time.Now())
+	taskId, err := fs.GetTaskIDFromListID(int64(taskListId))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	_, err = fs.CreateSessionFile(taskId, time.Now())
 	if err != nil {
 		fmt.Println(err)
 		return

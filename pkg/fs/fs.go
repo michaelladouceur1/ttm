@@ -9,7 +9,7 @@ import (
 	"ttm/pkg/paths"
 )
 
-func CreateSessionFile(taskId string, startTime time.Time) (*os.File, error) {
+func CreateSessionFile(taskId int64, startTime time.Time) (*os.File, error) {
 	var err error
 
 	sfJson, err := json.Marshal(models.SessionFile{ID: taskId, StartTime: startTime})
