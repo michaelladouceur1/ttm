@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 	"ttm/pkg/models"
 
@@ -23,16 +24,31 @@ func RenderUpdateTask() {
 
 func RenderTasks(tasks []models.Task) {
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{"Temp ID", "Title", "Description", "Category", "Priority", "Status", "Duration", "Created At"})
+	t.AppendHeader(table.Row{"Temp ID", "ID", "Title", "Description", "Category", "Priority", "Status", "Duration", "Created At"})
 	for _, task := range tasks {
-		t.AppendRow(table.Row{task.ListID, task.Title, task.Description, task.Category, task.Priority, task.Status, formatTimeToDuration(task.Duration), task.CreatedAt.Format("2006-01-02 15:04:05")})
+		t.AppendRow(table.Row{task.ListID, task.ID, task.Title, task.Description, task.Category, task.Priority, task.Status, formatTimeToDuration(task.Duration), task.CreatedAt.Format("2006-01-02 15:04:05")})
 	}
 	t.SetStyle(table.StyleColoredDark)
 	fmt.Println(t.Render())
 }
 
-func RenderSessionStart(taskId string) {
-	fmt.Printf("Session started for task: %s \n", taskId)
+func RenderTaskSummary(taskSummary models.TaskSummary) {
+	for _, day := range taskSummary.Days {
+		if len(day.Tasks) == 0 {
+			continue
+		}
+		fmt.Printf("%s: %s\n", day.Day.Weekday().String(), day.Day.Format("2006-01-02"))
+		for _, task := range day.Tasks {
+			task.CalculateDuration()
+			fmt.Printf("   • %s: %s\n", task.Title, task.Description)
+		}
+		fmt.Println()
+	}
+}
+
+func RenderSessionStart(taskId int64) {
+	taskIdString := strconv.Itoa(int(taskId))
+	fmt.Printf("Session started for task: %s \n", taskIdString)
 }
 
 func RenderSessionEnd(session models.SessionFile) {
@@ -40,7 +56,8 @@ func RenderSessionEnd(session models.SessionFile) {
 }
 
 func RenderSessionInfo(session models.SessionFile) {
-	fmt.Printf("Current session for task: %s \n", session.ID)
+	taskIdString := strconv.Itoa(int(session.ID))
+	fmt.Printf("Current session for task: %s \n", taskIdString)
 	fmt.Printf("Start time: %s \n", session.StartTime)
 	fmt.Printf("Duration: %s \n", time.Since(session.StartTime))
 }

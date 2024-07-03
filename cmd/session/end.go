@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 	"ttm/pkg/fs"
 	"ttm/pkg/models"
@@ -31,14 +30,8 @@ func endHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	taskId, err := strconv.Atoi(sf.ID)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
 	taskStore.AddSession(models.Session{
-		TaskId:    int64(taskId),
+		TaskId:    int64(sf.ID),
 		StartTime: sf.StartTime,
 		EndTime:   time.Now(),
 	})

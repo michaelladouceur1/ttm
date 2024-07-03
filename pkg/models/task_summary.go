@@ -3,10 +3,14 @@ package models
 import "time"
 
 type TaskSummary struct {
-	TasksByDay []TasksByDay
+	Days []TaskSummaryDay
 }
 
-type TasksByDay struct {
+type TaskSummaryDay struct {
 	Day   time.Time
 	Tasks []Task
+}
+
+func (ts *TaskSummary) AddDay(day TaskSummaryDay) {
+	ts.Days = append(ts.Days, day)
 }

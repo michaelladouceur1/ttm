@@ -6,6 +6,8 @@ package task
 import (
 	"fmt"
 	"time"
+	"ttm/pkg/models"
+	"ttm/pkg/render"
 
 	"github.com/spf13/cobra"
 )
@@ -19,39 +21,50 @@ var summaryCmd = &cobra.Command{
 
 func init() {
 	taskCmd.AddCommand(summaryCmd)
+
+	summaryCmd.Flags().IntP("days", "d", 7, "Number of days to summarize")
 }
 
 func summaryHandler(cmd *cobra.Command, args []string) {
-	endTime := time.Now()
-	startTime := endTime.AddDate(0, 0, -7)
+	days, _ := cmd.Flags().GetInt("days")
 
-	sessions, err := taskStore.GetSessionsByTimeRange(startTime, endTime)
-	if err != nil {
-		fmt.Println("Error getting sessions by time range: ", err)
-		return
-	}
+	taskSummary := models.TaskSummary{}
+	for day := days - 1; day >= 0; day-- {
+		currentDay := time.Now().AddDate(0, 0, -day)
+		beginningOfDay := time.Date(currentDay.Year(), currentDay.Month(), currentDay.Day(), 0, 0, 0, 0, currentDay.Location())
+		endOfDay := time.Date(currentDay.Year(), currentDay.Month(), currentDay.Day(), 23, 59, 59, 0, currentDay.Location())
 
-	var dayTaskIds []int64
-	for _, session := range sessions {
-		fmt.Println("Session: ", session.ID, session.TaskId)
-		if contains[int64](dayTaskIds, session.TaskId) {
-			continue
-		}
-		dayTaskIds = append(dayTaskIds, session.TaskId)
-
-		task, err := taskStore.GetTaskByID(session.TaskId)
+		sessions, err := taskStore.GetSessionsByTimeRange(beginningOfDay, endOfDay)
 		if err != nil {
-			fmt.Println("Error getting task by ID: ", err)
+			fmt.Println(err)
 			return
 		}
 
-		fmt.Println("Task: ", task.ID, task.Title)
+		var tasks []models.Task
+		for _, session := range sessions {
+			task, err := taskStore.GetTaskByID(session.TaskId)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if taskExistsInList(task, tasks) {
+				continue
+			}
+			tasks = append(tasks, task)
+		}
+
+		taskSummary.AddDay(models.TaskSummaryDay{
+			Day:   beginningOfDay,
+			Tasks: tasks,
+		})
 	}
+
+	render.RenderTaskSummary(taskSummary)
 }
 
-func contains[T comparable](slice []T, element T) bool {
-	for _, item := range slice {
-		if item == element {
+func taskExistsInList(task models.Task, tasks []models.Task) bool {
+	for _, t := range tasks {
+		if t.ID == task.ID {
 			return true
 		}
 	}
