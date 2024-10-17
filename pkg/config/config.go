@@ -34,7 +34,7 @@ func NewConfig() *Config {
 func (c *Config) Init() error {
 	var err error
 
-	if os.MkdirAll(paths.GetTaskStorePath(), os.ModePerm); err != nil {
+	if os.MkdirAll(paths.GetTTMDirectory(), os.ModePerm); err != nil {
 		return err
 	}
 

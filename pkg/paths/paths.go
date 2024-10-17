@@ -6,22 +6,22 @@ import (
 )
 
 func GetTaskStoreDBPath() string {
-	return filepath.Join(GetTaskStorePath(), "ttm.db")
+	return filepath.Join(GetTTMDirectory(), "ttm.db")
 }
 
 func GetConfigPath() string {
-	return filepath.Join(GetTaskStorePath(), "config.json")
+	return filepath.Join(GetTTMDirectory(), "config.json")
 }
 
 func GetSessionPath() string {
-	return filepath.Join(GetTaskStorePath(), "session.json")
+	return filepath.Join(GetTTMDirectory(), "session.json")
 }
 
 func GetIDMapPath() string {
-	return filepath.Join(GetTaskStorePath(), "id_map.json")
+	return filepath.Join(GetTTMDirectory(), "id_map.json")
 }
 
 func GetTaskStoreCSVPath() string {
 	dateTime := time.Now().Format("2006-01-02_15-04-05")
-	return filepath.Join(GetTaskStorePath(), "tasks_"+dateTime+".csv")
+	return filepath.Join(GetTTMDirectory(), "tasks_"+dateTime+".csv")
 }

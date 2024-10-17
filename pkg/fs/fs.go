@@ -121,7 +121,7 @@ func GetTaskIDFromListID(listID int64) (int64, error) {
 func UpdateIDMapFile(tasks []models.Task) error {
 	var err error
 
-	if os.MkdirAll(paths.GetTaskStorePath(), os.ModePerm); err != nil {
+	if os.MkdirAll(paths.GetTTMDirectory(), os.ModePerm); err != nil {
 		return err
 	}
 
@@ -152,7 +152,7 @@ func UpdateIDMapFile(tasks []models.Task) error {
 func TasksToCSV(tasks []models.Task) error {
 	var err error
 
-	if os.MkdirAll(paths.GetTaskStorePath(), os.ModePerm); err != nil {
+	if os.MkdirAll(paths.GetTTMDirectory(), os.ModePerm); err != nil {
 		return err
 	}
 

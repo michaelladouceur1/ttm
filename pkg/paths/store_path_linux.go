@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 )
 
-func GetTaskStorePath() string {
-	appData := os.Getenv("HOME")
-	return filepath.Join(appData, ".ttm")
+func GetTTMDirectory() string {
+	return filepath.Join(os.Getenv("HOME"), ".ttm")
 }
