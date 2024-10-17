@@ -21,6 +21,10 @@ var RootCmd = &cobra.Command{
 	Short: "Terminal Todo Manager",
 }
 
+func init() {
+	RootCmd.AddCommand(closeCmd)
+}
+
 func Execute() {
 	ttmConfig.Init()
 	ttmConfig.Load()
@@ -31,8 +35,4 @@ func Execute() {
 	if err != nil {
 		os.Exit(1)
 	}
-}
-
-func init() {
-
 }
