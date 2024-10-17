@@ -6,6 +6,10 @@
 
 `ttm task [subcommands]`
 
+#### Main
+
+- `ttm view`: Serve webpage displaying tasks and sessions in user-friendly UI
+
 #### Subcommands
 
 - `add` : Add a task
@@ -35,3 +39,13 @@
   - `ttm session info`
 - `summary` : Summarize sessions for given time period
   - `ttm session summary`
+
+#### Shorthand
+
+- `ttm add`: Add a task
+- `ttm list`: List tasks
+- `ttm close`: Close task
+- `ttm start`: Start session
+- `ttm pause`: Pause session
+- `ttm end`: End session
+- `ttm cancel`: Cancel session
