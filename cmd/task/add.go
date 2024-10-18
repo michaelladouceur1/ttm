@@ -2,9 +2,9 @@ package task
 
 import (
 	"fmt"
-	"time"
-	"ttm/pkg/models"
-	"ttm/pkg/render"
+	"os"
+	"ttm/cmd/handlers"
+	c "ttm/pkg/config"
 
 	"github.com/spf13/cobra"
 )
@@ -13,49 +13,21 @@ var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add a new task",
 	Args:  cobra.MinimumNArgs(1),
-	Run:   addHandler,
+	Run:   handlers.AddHandler,
 }
 
-var addCategoryFlag = &ttmConfig.AddFlags.Category
-var addPriorityFlag = &ttmConfig.AddFlags.Priority
-var addStatusFlag = &ttmConfig.AddFlags.Status
-
 func init() {
+	config, err := c.Load()
+	if err != nil {
+		fmt.Println("Error loading config: ", err)
+		os.Exit(1)
+	}
+
+	addCategoryFlag := &config.AddFlags.Category
+	addPriorityFlag := &config.AddFlags.Priority
+	addStatusFlag := &config.AddFlags.Status
 
 	addCmd.Flags().StringVarP(addCategoryFlag, "category", "c", *addCategoryFlag, "Default category")
 	addCmd.Flags().StringVarP(addPriorityFlag, "priority", "p", *addPriorityFlag, "Default priority")
 	addCmd.Flags().StringVarP(addStatusFlag, "status", "s", *addStatusFlag, "Default status")
-}
-
-func addHandler(cmd *cobra.Command, args []string) {
-
-	var title, description string
-	title = args[0]
-
-	if len(args) > 1 {
-		description = args[1]
-	}
-
-	task := models.Task{
-		Title:       title,
-		Description: description,
-		Category:    models.Category(*addCategoryFlag),
-		Priority:    models.Priority(*addPriorityFlag),
-		Status:      models.Status(*addStatusFlag),
-		OpenedAt:    time.Now(),
-	}
-
-	err := task.Validate()
-	if err != nil {
-		fmt.Println("Error adding task: ", err)
-		return
-	}
-
-	err = taskStore.InsertTask(task)
-	if err != nil {
-		fmt.Println("Error adding task: ", err)
-		return
-	}
-
-	render.RenderAddTask(task)
 }
