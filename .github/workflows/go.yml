@@ -29,3 +29,26 @@ jobs:
       with:
         name: ttm
         path: ttm.exe
+
+  upload-release-asset:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: ttm
+
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./ttm.exe
+        asset_name: ttm.exe
+        asset_content_type: application/octet-stream
