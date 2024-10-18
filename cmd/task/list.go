@@ -2,9 +2,9 @@ package task
 
 import (
 	"fmt"
-	"ttm/pkg/fs"
-	"ttm/pkg/models"
-	"ttm/pkg/render"
+	"os"
+	"ttm/cmd/handlers"
+	c "ttm/pkg/config"
 
 	"github.com/spf13/cobra"
 )
@@ -12,55 +12,21 @@ import (
 var listTaskCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all tasks",
-	Run:   listHandler,
+	Run:   handlers.ListHandler,
 }
 
-var listCategoryFlag = &ttmConfig.ListFlags.Category
-var listPriorityFlag = &ttmConfig.ListFlags.Priority
-var listStatusFlag = &ttmConfig.ListFlags.Status
-
 func init() {
+	config, err := c.Load()
+	if err != nil {
+		fmt.Println("Error loading config: ", err)
+		os.Exit(1)
+	}
+
+	listCategoryFlag := &config.ListFlags.Category
+	listPriorityFlag := &config.ListFlags.Priority
+	listStatusFlag := &config.ListFlags.Status
+
 	listTaskCmd.Flags().StringVarP(listCategoryFlag, "category", "c", *listCategoryFlag, "Filter tasks by category")
 	listTaskCmd.Flags().StringVarP(listPriorityFlag, "priority", "p", *listPriorityFlag, "Filter tasks by priority")
 	listTaskCmd.Flags().StringVarP(listStatusFlag, "status", "s", *listStatusFlag, "Filter tasks by status")
-}
-
-func listHandler(cmd *cobra.Command, args []string) {
-	var titleDescSearch string
-	if len(args) > 0 {
-		titleDescSearch = args[0]
-	}
-
-	category := models.Category(*listCategoryFlag)
-	status := models.Status(*listStatusFlag)
-	priority := models.Priority(*listPriorityFlag)
-
-	var err error
-	err = category.Validate()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	err = status.Validate()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	err = priority.Validate()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	tasks, err := taskStore.ListTasks(titleDescSearch, category, status, priority)
-	if err != nil {
-		fmt.Println("Error listing tasks: ", err)
-		return
-	}
-
-	fs.UpdateIDMapFile(tasks)
-
-	render.RenderTasks(tasks)
 }

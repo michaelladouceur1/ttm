@@ -35,6 +35,11 @@ func NewStore(strategy StoreStrategy) *Store {
 	}
 }
 
+func Init(strategy StoreStrategy) error {
+	store := NewStore(strategy)
+	return store.Init()
+}
+
 func (s *Store) UpdateStoreStrategy(strategy StoreStrategy) {
 	s.strategy = strategy
 }

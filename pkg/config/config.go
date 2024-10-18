@@ -31,7 +31,7 @@ func NewConfig() *Config {
 	return &Config{}
 }
 
-func (c *Config) Init() error {
+func Init() error {
 	var err error
 
 	if os.MkdirAll(paths.GetTTMDirectory(), os.ModePerm); err != nil {
@@ -46,6 +46,31 @@ func (c *Config) Init() error {
 
 	return nil
 }
+
+func Load() (*Config, error) {
+	config := NewConfig()
+	if err := config.Load(); err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+// func (c *Config) Init() error {
+// 	var err error
+
+// 	if os.MkdirAll(paths.GetTTMDirectory(), os.ModePerm); err != nil {
+// 		return err
+// 	}
+
+// 	if _, err = os.Stat(paths.GetConfigPath()); err != nil {
+// 		if err := os.WriteFile(paths.GetConfigPath(), []byte(defaultConfig), 0644); err != nil {
+// 			return err
+// 		}
+// 	}
+
+// 	return nil
+// }
 
 func (c *Config) Load() error {
 	file, err := os.Open(paths.GetConfigPath())

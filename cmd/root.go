@@ -26,12 +26,17 @@ func init() {
 }
 
 func Execute() {
-	ttmConfig.Init()
-	ttmConfig.Load()
+	err := config.Init()
+	if err != nil {
+		os.Exit(1)
+	}
+
+	// ttmConfig.Init()
+	// ttmConfig.Load()
 
 	taskStore.Init()
 
-	err := RootCmd.Execute()
+	err = RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
