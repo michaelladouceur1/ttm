@@ -1,9 +1,7 @@
 package session
 
 import (
-	"fmt"
-	"ttm/pkg/fs"
-	"ttm/pkg/render"
+	"ttm/cmd/handlers"
 
 	"github.com/spf13/cobra"
 )
@@ -11,22 +9,7 @@ import (
 var cancelCmd = &cobra.Command{
 	Use:   "cancel",
 	Short: "Cancel a session",
-	Run:   cancelHandler,
+	Run:   handlers.CancelHandler,
 }
 
 func init() {}
-
-func cancelHandler(cmd *cobra.Command, args []string) {
-	if !fs.SessionFileExists() {
-		fmt.Println("No session found. Please start a session first.")
-		return
-	}
-
-	_, err := fs.RemoveSessionFile()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	render.RenderSessionCancel()
-}

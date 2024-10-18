@@ -1,9 +1,7 @@
 package session
 
 import (
-	"fmt"
-	"ttm/pkg/fs"
-	"ttm/pkg/render"
+	"ttm/cmd/handlers"
 
 	"github.com/spf13/cobra"
 )
@@ -11,22 +9,7 @@ import (
 var infoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Get session info",
-	Run:   infoHandler,
+	Run:   handlers.InfoHandler,
 }
 
 func init() {}
-
-func infoHandler(cmd *cobra.Command, args []string) {
-	if !fs.SessionFileExists() {
-		fmt.Println("No session found. Please start a session first.")
-		return
-	}
-
-	sf, err := fs.ReadSessionFile()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	render.RenderSessionInfo(sf)
-}

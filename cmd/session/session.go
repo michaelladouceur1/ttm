@@ -20,12 +20,6 @@ var sessionCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 }
 
-// var listCmd = &cobra.Command{
-// 	Use:   "list",
-// 	Short: "List all sessions",
-// 	Run:   listHandler,
-// }
-
 func init() {
 	taskStore.Init()
 
@@ -35,8 +29,4 @@ func init() {
 	sessionCmd.AddCommand(endCmd)
 	sessionCmd.AddCommand(cancelCmd)
 	sessionCmd.AddCommand(infoCmd)
-	// sessionCmd.AddCommand(listCmd)
-
-	// listCmd.Flags().StringP("id", "i", "", "Filter by task ID")
-	// listCmd.Flags().StringP("days", "d", "", "Previous days to show")
 }
