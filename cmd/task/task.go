@@ -32,5 +32,6 @@ func init() {
 	taskCmd.AddCommand(listTaskCmd)
 	taskCmd.AddCommand(updateCmd)
 	taskCmd.AddCommand(csvCmd)
+	taskCmd.AddCommand(summaryCmd)
 
 }
