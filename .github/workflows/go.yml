@@ -10,8 +10,8 @@ on:
 
 jobs:
 
-  build:
-    runs-on: ubuntu-latest
+  build-windows:
+    runs-on: windows-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -22,4 +22,10 @@ jobs:
         go-version: '1.21'
 
     - name: Build
-      run: go build -v ./...
+      run: go build -v -o ttm.exe ./...
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ttm
+        path: ttm.exe
