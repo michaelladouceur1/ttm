@@ -2,7 +2,8 @@ name: Build TTM App
 
 on:
   release:
-    types: [published]
+    types: 
+      - published
 
 jobs:
   build-windows:
@@ -32,3 +33,16 @@ jobs:
 
       - name: Build the app
         run: go build -o ttm ./...
+
+  # build-iss:
+  #   runs-on: windows-latest
+
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v2
+
+  #   - name: Set up Inno Setup
+  #     uses: dschulten/setup-inno-setup@v1
+
+  #   - name: Build installer
+  #     run: iscc build\installer.iss
