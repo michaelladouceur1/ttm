@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var ttmConfig = config.NewConfig()
 var taskStore = store.NewStore(db.NewDBStore())
 
 // rootCmd represents the base command when called without any subcommands
@@ -30,9 +29,6 @@ func Execute() {
 	if err != nil {
 		os.Exit(1)
 	}
-
-	// ttmConfig.Init()
-	// ttmConfig.Load()
 
 	taskStore.Init()
 
