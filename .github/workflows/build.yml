@@ -1,48 +1,48 @@
-name: Build TTM App
+# name: Build TTM App
 
-on:
-  release:
-    types: 
-      - published
+# on:
+#   release:
+#     types: 
+#       - published
 
-jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+# jobs:
+#   build-windows:
+#     runs-on: windows-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v2
 
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.21
+#       - name: Set up Go
+#         uses: actions/setup-go@v2
+#         with:
+#           go-version: 1.21
 
-      - name: Build the app
-        run: go build -o ttm.exe ./...
+#       - name: Build the app
+#         run: go build -o ttm.exe ./...
 
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+#   build-linux:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v2
 
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.21
+#       - name: Set up Go
+#         uses: actions/setup-go@v2
+#         with:
+#           go-version: 1.21
 
-      - name: Build the app
-        run: go build -o ttm ./...
+#       - name: Build the app
+#         run: go build -o ttm ./...
 
-  # build-iss:
-  #   runs-on: windows-latest
+#   build-iss:
+#     runs-on: windows-latest
 
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v2
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v2
 
-  #   - name: Set up Inno Setup
-  #     uses: dschulten/setup-inno-setup@v1
+#     - name: Set up Inno Setup
+#       uses: dschulten/setup-inno-setup@v1
 
-  #   - name: Build installer
-  #     run: iscc build\installer.iss
+#     - name: Build installer
+#       run: iscc build\installer.iss
