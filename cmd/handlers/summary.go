@@ -3,8 +3,8 @@ package handlers
 import (
 	"fmt"
 	"time"
+	"ttm/pkg/logger"
 	"ttm/pkg/models"
-	"ttm/pkg/render"
 
 	"github.com/spf13/cobra"
 )
@@ -43,7 +43,7 @@ func SummaryHandler(cmd *cobra.Command, args []string) {
 		})
 	}
 
-	render.RenderTaskSummary(taskSummary)
+	logger.LogTaskSummary(taskSummary)
 }
 
 func taskExistsInList(task models.Task, tasks []models.Task) bool {

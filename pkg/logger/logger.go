@@ -1,4 +1,4 @@
-package render
+package logger
 
 import (
 	"fmt"
@@ -10,19 +10,19 @@ import (
 )
 
 type Renderer interface {
-	RenderTasks(tasks []models.Task)
-	RenderAddTask(task models.Task)
+	LogTasks(tasks []models.Task)
+	LogAddTask(task models.Task)
 }
 
-func RenderAddTask(task models.Task) {
+func LogAddTask(task models.Task) {
 	fmt.Printf("Task added\n")
 }
 
-func RenderUpdateTask() {
+func LogUpdateTask() {
 	fmt.Printf("Task updated\n")
 }
 
-func RenderTasks(tasks []models.Task) {
+func LogTasks(tasks []models.Task) {
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{"Temp ID", "ID", "Title", "Description", "Category", "Priority", "Status", "Duration", "Created At"})
 	for _, task := range tasks {
@@ -32,7 +32,7 @@ func RenderTasks(tasks []models.Task) {
 	fmt.Println(t.Render())
 }
 
-func RenderTaskSummary(taskSummary models.TaskSummary) {
+func LogTaskSummary(taskSummary models.TaskSummary) {
 	for _, day := range taskSummary.Days {
 		if len(day.Tasks) == 0 {
 			continue
@@ -46,23 +46,23 @@ func RenderTaskSummary(taskSummary models.TaskSummary) {
 	}
 }
 
-func RenderSessionStart(taskId int64) {
+func LogSessionStart(taskId int64) {
 	taskIdString := strconv.Itoa(int(taskId))
 	fmt.Printf("Session started for task: %s \n", taskIdString)
 }
 
-func RenderSessionEnd(session models.SessionFile) {
-	RenderSessionInfo(session)
+func LogSessionEnd(session models.SessionFile) {
+	LogSessionInfo(session)
 }
 
-func RenderSessionInfo(session models.SessionFile) {
+func LogSessionInfo(session models.SessionFile) {
 	taskIdString := strconv.Itoa(int(session.ID))
 	fmt.Printf("Current session for task: %s \n", taskIdString)
 	fmt.Printf("Start time: %s \n", session.StartTime)
 	fmt.Printf("Duration: %s \n", time.Since(session.StartTime))
 }
 
-func RenderSessionCancel() {
+func LogSessionCancel() {
 	fmt.Printf("Session cancelled\n")
 }
 

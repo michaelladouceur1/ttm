@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 	"ttm/pkg/fs"
+	"ttm/pkg/logger"
 	"ttm/pkg/models"
-	"ttm/pkg/render"
 
 	"github.com/spf13/cobra"
 )
@@ -125,5 +125,5 @@ func UpdateHandler(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	render.RenderUpdateTask()
+	logger.LogUpdateTask()
 }

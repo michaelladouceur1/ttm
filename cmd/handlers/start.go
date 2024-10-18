@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 	"ttm/pkg/fs"
-	"ttm/pkg/render"
+	"ttm/pkg/logger"
 
 	"github.com/spf13/cobra"
 )
@@ -35,5 +35,5 @@ func StartHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	render.RenderSessionStart(taskId)
+	logger.LogSessionStart(taskId)
 }

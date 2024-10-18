@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"ttm/pkg/fs"
-	"ttm/pkg/render"
+	"ttm/pkg/logger"
 
 	"github.com/spf13/cobra"
 )
@@ -20,5 +20,5 @@ func InfoHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	render.RenderSessionInfo(sf)
+	logger.LogSessionInfo(sf)
 }

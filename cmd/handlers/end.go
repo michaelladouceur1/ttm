@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 	"ttm/pkg/fs"
+	"ttm/pkg/logger"
 	"ttm/pkg/models"
-	"ttm/pkg/render"
 
 	"github.com/spf13/cobra"
 )
@@ -28,5 +28,5 @@ func EndHandler(cmd *cobra.Command, args []string) {
 		EndTime:   time.Now(),
 	})
 
-	render.RenderSessionEnd(sf)
+	logger.LogSessionEnd(sf)
 }

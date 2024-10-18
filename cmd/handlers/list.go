@@ -3,8 +3,8 @@ package handlers
 import (
 	"fmt"
 	"ttm/pkg/fs"
+	"ttm/pkg/logger"
 	"ttm/pkg/models"
-	"ttm/pkg/render"
 
 	"github.com/spf13/cobra"
 )
@@ -48,7 +48,11 @@ func ListHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	fs.UpdateIDMapFile(tasks)
+	err = fs.UpdateIDMapFile(tasks)
+	if err != nil {
+		fmt.Println("Error updating ID map file: ", err)
+		return
+	}
 
-	render.RenderTasks(tasks)
+	logger.LogTasks(tasks)
 }
