@@ -19,9 +19,6 @@ var taskCmd = &cobra.Command{
 func init() {
 	cmd.RootCmd.AddCommand(taskCmd)
 
-	taskCmd.AddCommand(addCmd)
-	taskCmd.AddCommand(listTaskCmd)
-	taskCmd.AddCommand(updateCmd)
 	taskCmd.AddCommand(csvCmd)
 	taskCmd.AddCommand(summaryCmd)
 
