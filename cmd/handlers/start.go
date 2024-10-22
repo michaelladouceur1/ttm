@@ -35,5 +35,11 @@ func StartHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	logger.LogSessionStart(taskId)
+	task, err := store.GetTaskByID(taskId)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	logger.LogSessionStart(task)
 }

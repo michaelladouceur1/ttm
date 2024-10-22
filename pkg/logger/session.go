@@ -2,14 +2,12 @@ package logger
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 	"ttm/pkg/models"
 )
 
-func LogSessionStart(taskId int64) {
-	taskIdString := strconv.Itoa(int(taskId))
-	fmt.Printf("Session started for task: %s \n", taskIdString)
+func LogSessionStart(task models.Task) {
+	fmt.Printf("Session started for task: %s \n", task.Title)
 }
 
 func LogSessionEnd(session models.SessionFile, task models.Task) {
