@@ -10,9 +10,9 @@ import (
 )
 
 func AddHandler(cmd *cobra.Command, args []string) {
-	addCategoryFlag := &config.AddFlags.Category
-	addPriorityFlag := &config.AddFlags.Priority
-	addStatusFlag := &config.AddFlags.Status
+	addCategoryFlag := cmd.Flags().Lookup("category").Value.String()
+	addPriorityFlag := cmd.Flags().Lookup("priority").Value.String()
+	addStatusFlag := cmd.Flags().Lookup("status").Value.String()
 
 	var title, description string
 	title = args[0]
@@ -24,9 +24,9 @@ func AddHandler(cmd *cobra.Command, args []string) {
 	task := models.Task{
 		Title:       title,
 		Description: description,
-		Category:    models.Category(*addCategoryFlag),
-		Priority:    models.Priority(*addPriorityFlag),
-		Status:      models.Status(*addStatusFlag),
+		Category:    models.Category(addCategoryFlag),
+		Priority:    models.Priority(addPriorityFlag),
+		Status:      models.Status(addStatusFlag),
 		OpenedAt:    time.Now(),
 	}
 
