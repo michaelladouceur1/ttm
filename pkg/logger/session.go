@@ -12,15 +12,23 @@ func LogSessionStart(taskId int64) {
 	fmt.Printf("Session started for task: %s \n", taskIdString)
 }
 
-func LogSessionEnd(session models.SessionFile) {
-	LogSessionInfo(session)
+func LogSessionEnd(session models.SessionFile, task models.Task) {
+	LogSessionInfo(session, task)
 }
 
-func LogSessionInfo(session models.SessionFile) {
-	taskIdString := strconv.Itoa(int(session.ID))
-	fmt.Printf("Current session for task: %s \n", taskIdString)
-	fmt.Printf("Start time: %s \n", session.StartTime)
-	fmt.Printf("Duration: %s \n", time.Since(session.StartTime))
+func LogSessionInfo(session models.SessionFile, task models.Task) {
+	timeSince := time.Since(session.StartTime).Round(time.Second)
+
+	var startTime string
+	if timeSince.Hours() > 12 {
+		startTime = session.StartTime.Round(time.Second).Format("2006-01-02 15:04:05")
+	} else {
+		startTime = session.StartTime.Round(time.Second).Format("15:04:05")
+	}
+
+	fmt.Printf("Current session for task: %s \n", task.Title)
+	fmt.Printf("Start time: %s \n", startTime)
+	fmt.Printf("Duration: %s \n", timeSince)
 }
 
 func LogSessionCancel() {

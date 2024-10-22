@@ -20,5 +20,11 @@ func InfoHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	logger.LogSessionInfo(sf)
+	task, err := store.GetTaskByID(sf.ID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	logger.LogSessionInfo(sf, task)
 }

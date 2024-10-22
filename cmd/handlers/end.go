@@ -28,5 +28,11 @@ func EndHandler(cmd *cobra.Command, args []string) {
 		EndTime:   time.Now(),
 	})
 
-	logger.LogSessionEnd(sf)
+	task, err := store.GetTaskByID(sf.ID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	logger.LogSessionEnd(sf, task)
 }
