@@ -7,11 +7,12 @@ import (
 	"ttm/pkg/fs"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
+	"ttm/pkg/store"
 
 	"github.com/spf13/cobra"
 )
 
-func UpdateHandler(cmd *cobra.Command, args []string) {
+func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	idArg, err := strconv.Atoi(args[0])
 	if err != nil {
 		fmt.Println("Error parsing task ID: ", err)

@@ -2,16 +2,17 @@ package cmd
 
 import (
 	"ttm/pkg/handlers"
+	"ttm/pkg/store"
 
 	"github.com/spf13/cobra"
 )
 
-func NewUpdateCmd() *cobra.Command {
+func NewUpdateCmd(store *store.Store) *cobra.Command {
 	updateCmd := &cobra.Command{
 		Use:   "update",
 		Short: "Update a task",
 		Args:  cobra.MinimumNArgs(1),
-		Run:   handlers.UpdateHandler,
+		Run:   func(cmd *cobra.Command, args []string) { handlers.UpdateHandler(cmd, args, store) },
 	}
 
 	updateCmd.Flags().IntP("id", "i", 0, "Task ID")

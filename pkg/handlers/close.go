@@ -5,11 +5,12 @@ import (
 	"strconv"
 	"ttm/pkg/fs"
 	"ttm/pkg/models"
+	"ttm/pkg/store"
 
 	"github.com/spf13/cobra"
 )
 
-func CloseHandler(cmd *cobra.Command, args []string) {
+func CloseHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	var ids []int64
 	for _, arg := range args {
 		tmpID, err := strconv.Atoi(arg)

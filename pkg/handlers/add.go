@@ -5,11 +5,12 @@ import (
 	"time"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
+	"ttm/pkg/store"
 
 	"github.com/spf13/cobra"
 )
 
-func AddHandler(cmd *cobra.Command, args []string) {
+func AddHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	addCategoryFlag := cmd.Flags().Lookup("category").Value.String()
 	addPriorityFlag := cmd.Flags().Lookup("priority").Value.String()
 	addStatusFlag := cmd.Flags().Lookup("status").Value.String()

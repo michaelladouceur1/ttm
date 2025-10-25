@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"ttm/pkg/fs"
 	"ttm/pkg/models"
+	"ttm/pkg/store"
 
 	"github.com/spf13/cobra"
 )
 
-func CSVHandler(cmd *cobra.Command, args []string) {
+func CSVHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	var titleDescSearch string
 	if len(args) > 0 {
 		titleDescSearch = args[0]

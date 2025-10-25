@@ -5,11 +5,12 @@ import (
 	"time"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
+	"ttm/pkg/store"
 
 	"github.com/spf13/cobra"
 )
 
-func SummaryHandler(cmd *cobra.Command, args []string) {
+func SummaryHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	days, _ := cmd.Flags().GetInt("days")
 
 	taskSummary := models.TaskSummary{}

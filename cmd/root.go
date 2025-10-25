@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var taskStore = store.NewStore(db.NewDBStore())
+// var taskStore = store.NewStore(db.NewDBStore())
 
 // rootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -28,19 +28,20 @@ func init() {
 		os.Exit(1)
 	}
 
-	RootCmd.AddCommand(NewAddCmd(cfg.Config))
+	store := store.NewStore(db.NewDBStore())
+	store.Init()
+
+	RootCmd.AddCommand(NewAddCmd(cfg.Config, store))
 	RootCmd.AddCommand(NewCancelCmd())
-	RootCmd.AddCommand(NewCloseCmd())
-	RootCmd.AddCommand(NewEndCmd())
-	RootCmd.AddCommand(NewInfoCmd())
-	RootCmd.AddCommand(NewListCmd(cfg.Config))
-	RootCmd.AddCommand(NewStartCmd())
-	RootCmd.AddCommand(NewUpdateCmd())
+	RootCmd.AddCommand(NewCloseCmd(store))
+	RootCmd.AddCommand(NewEndCmd(store))
+	RootCmd.AddCommand(NewInfoCmd(store))
+	RootCmd.AddCommand(NewListCmd(cfg.Config, store))
+	RootCmd.AddCommand(NewStartCmd(store))
+	RootCmd.AddCommand(NewUpdateCmd(store))
 }
 
 func Execute() {
-	taskStore.Init()
-
 	err := RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)

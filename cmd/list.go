@@ -3,15 +3,16 @@ package cmd
 import (
 	"ttm/pkg/config"
 	"ttm/pkg/handlers"
+	"ttm/pkg/store"
 
 	"github.com/spf13/cobra"
 )
 
-func NewListCmd(cfg *config.Config) *cobra.Command {
+func NewListCmd(cfg *config.Config, store *store.Store) *cobra.Command {
 	listCmd := &cobra.Command{
 		Use:   "list",
 		Short: "List all tasks",
-		Run:   func(cmd *cobra.Command, args []string) { handlers.ListHandler(cmd, args, cfg) },
+		Run:   func(cmd *cobra.Command, args []string) { handlers.ListHandler(cmd, args, cfg, store) },
 	}
 
 	listCategoryFlag := &cfg.ListFlags.Category

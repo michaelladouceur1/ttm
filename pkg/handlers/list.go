@@ -6,11 +6,12 @@ import (
 	"ttm/pkg/fs"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
+	"ttm/pkg/store"
 
 	"github.com/spf13/cobra"
 )
 
-func ListHandler(cmd *cobra.Command, args []string, cfg *config.Config) {
+func ListHandler(cmd *cobra.Command, args []string, cfg *config.Config, store *store.Store) {
 	listCategoryFlag := &cfg.ListFlags.Category
 	listPriorityFlag := &cfg.ListFlags.Priority
 	listStatusFlag := &cfg.ListFlags.Status
