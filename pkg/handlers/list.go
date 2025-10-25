@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"ttm/pkg/config"
 	"ttm/pkg/fs"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
@@ -9,11 +10,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func ListHandler(cmd *cobra.Command, args []string) {
-	listCategoryFlag := &config.ListFlags.Category
-	listPriorityFlag := &config.ListFlags.Priority
-	listStatusFlag := &config.ListFlags.Status
-
+func ListHandler(cmd *cobra.Command, args []string, cfg *config.Config) {
+	listCategoryFlag := &cfg.ListFlags.Category
+	listPriorityFlag := &cfg.ListFlags.Priority
+	listStatusFlag := &cfg.ListFlags.Status
 	var titleDescSearch string
 	if len(args) > 0 {
 		titleDescSearch = args[0]

@@ -1,7 +1,7 @@
 package task
 
 import (
-	"ttm/cmd/handlers"
+	"ttm/pkg/handlers"
 
 	"github.com/spf13/cobra"
 )

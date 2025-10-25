@@ -1,9 +1,14 @@
 package paths
 
 import (
+	"os"
 	"path/filepath"
 	"time"
 )
+
+func GetTTMDirectory() string {
+	return filepath.Join(os.Getenv("HOME"), ".ttm")
+}
 
 func GetTaskStoreDBPath() string {
 	return filepath.Join(GetTTMDirectory(), "ttm.db")

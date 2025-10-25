@@ -4,6 +4,7 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"ttm/pkg/config"
 	"ttm/pkg/store"
@@ -21,25 +22,26 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(addCmd)
-	RootCmd.AddCommand(cancelCmd)
-	RootCmd.AddCommand(closeCmd)
-	RootCmd.AddCommand(endCmd)
-	RootCmd.AddCommand(infoCmd)
-	RootCmd.AddCommand(listTaskCmd)
-	RootCmd.AddCommand(startCmd)
-	RootCmd.AddCommand(updateCmd)
-}
-
-func Execute() {
-	err := config.Init()
+	cfg, err := config.NewConfig()
 	if err != nil {
+		fmt.Println("Error initializing config: ", err)
 		os.Exit(1)
 	}
 
+	RootCmd.AddCommand(NewAddCmd(cfg.Config))
+	RootCmd.AddCommand(NewCancelCmd())
+	RootCmd.AddCommand(NewCloseCmd())
+	RootCmd.AddCommand(NewEndCmd())
+	RootCmd.AddCommand(NewInfoCmd())
+	RootCmd.AddCommand(NewListCmd(cfg.Config))
+	RootCmd.AddCommand(NewStartCmd())
+	RootCmd.AddCommand(NewUpdateCmd())
+}
+
+func Execute() {
 	taskStore.Init()
 
-	err = RootCmd.Execute()
+	err := RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}

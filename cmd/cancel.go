@@ -1,15 +1,15 @@
 package cmd
 
 import (
-	"ttm/cmd/handlers"
+	"ttm/pkg/handlers"
 
 	"github.com/spf13/cobra"
 )
 
-var cancelCmd = &cobra.Command{
-	Use:   "cancel",
-	Short: "Cancel a session",
-	Run:   handlers.CancelHandler,
+func NewCancelCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "cancel",
+		Short: "Cancel a session",
+		Run:   handlers.CancelHandler,
+	}
 }
-
-func init() {}

@@ -2,130 +2,53 @@ package config
 
 import (
 	_ "embed"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"os"
 	"ttm/pkg/models"
 	"ttm/pkg/paths"
+
+	"github.com/michaelladouceur1/gonfig"
 )
 
-//go:embed default/config.json
-var defaultConfig string
-
 type Config struct {
-	AddFlags          ConfigDefaultFlags `json:"addFlags"`
-	ListFlags         ConfigDefaultFlags `json:"listFlags"`
-	OutPath           string             `json:"outPath"`
-	DaysToDisplay     int                `json:"daysToDisplay"`
-	MaxTasksToDisplay int                `json:"maxTasksToDisplay"`
+	DaysToDisplay     int                `yaml:"daysToDisplay"`
+	MaxTasksToDisplay int                `yaml:"maxTasksToDisplay"`
+	AddFlags          ConfigDefaultFlags `yaml:"addFlags"`
+	ListFlags         ConfigDefaultFlags `yaml:"listFlags"`
 }
 
 type ConfigDefaultFlags struct {
-	Category string `json:"category"`
-	Priority string `json:"priority"`
-	Status   string `json:"status"`
+	Category string `yaml:"category"`
+	Priority string `yaml:"priority"`
+	Status   string `yaml:"status"`
 }
 
-func NewConfig() *Config {
-	return &Config{}
-}
-
-func Init() error {
-	var err error
-
-	if os.MkdirAll(paths.GetTTMDirectory(), os.ModePerm); err != nil {
-		return err
+func NewConfig() (*gonfig.Gonfig[Config], error) {
+	cfg := &Config{
+		DaysToDisplay:     7,
+		MaxTasksToDisplay: 25,
+		AddFlags: ConfigDefaultFlags{
+			Category: string(models.CategoryTask),
+			Priority: string(models.PriorityHigh),
+			Status:   string(models.StatusOpen),
+		},
+		ListFlags: ConfigDefaultFlags{
+			Category: "",
+			Priority: "",
+			Status:   string(models.StatusOpen),
+		},
 	}
 
-	if _, err = os.Stat(paths.GetConfigPath()); err != nil {
-		if err := os.WriteFile(paths.GetConfigPath(), []byte(defaultConfig), 0644); err != nil {
-			return err
-		}
+	opts := gonfig.GonfigFileOptions{
+		Type:           gonfig.YAML,
+		RootDir:        paths.GetTTMDirectory(),
+		Name:           "config",
+		Watch:          true,
+		ValidationMode: gonfig.VMRevert,
 	}
 
-	return nil
-}
-
-func Load() (*Config, error) {
-	config := NewConfig()
-	if err := config.Load(); err != nil {
+	config, err := gonfig.NewGonfig(cfg, opts)
+	if err != nil {
 		return nil, err
 	}
 
 	return config, nil
-}
-
-// func (c *Config) Init() error {
-// 	var err error
-
-// 	if os.MkdirAll(paths.GetTTMDirectory(), os.ModePerm); err != nil {
-// 		return err
-// 	}
-
-// 	if _, err = os.Stat(paths.GetConfigPath()); err != nil {
-// 		if err := os.WriteFile(paths.GetConfigPath(), []byte(defaultConfig), 0644); err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	return nil
-// }
-
-func (c *Config) Load() error {
-	file, err := os.Open(paths.GetConfigPath())
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	if err := json.NewDecoder(file).Decode(c); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Config) Update() error {
-	configJson, err := json.Marshal(c)
-	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(paths.GetConfigPath(), []byte(configJson), 0644); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Config) UpdateAddFlags(flag interface{}, val string) error {
-	var err error
-	switch flag {
-	default:
-		return errors.New("invalid flag")
-	case "category":
-		err = models.Category(val).Validate()
-		if err != nil {
-			fmt.Println("Error updating config: ", err)
-			return err
-		}
-		c.AddFlags.Category = val
-	case "priority":
-		err = models.Priority(val).Validate()
-		if err != nil {
-			fmt.Println("Error updating config: ", err)
-			return err
-		}
-		c.AddFlags.Priority = val
-	case "status":
-		err = models.Status(val).Validate()
-		if err != nil {
-			fmt.Println("Error updating config: ", err)
-			return err
-		}
-		c.AddFlags.Status = val
-	}
-
-	return nil
 }
