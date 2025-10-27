@@ -8,21 +8,23 @@ import (
 	"time"
 	"ttm/pkg/models"
 	"ttm/pkg/paths"
+
+	_ "github.com/lib/pq"
 )
 
-type DBStore struct {
+type DBLocal struct {
 	ctx context.Context
 	db  *sql.DB
 }
 
-//go:embed schema.sql
+//go:embed schema.sqlite.sql
 var ddl string
 
-func NewDBStore() *DBStore {
-	return &DBStore{}
+func NewDBStore() *DBLocal {
+	return &DBLocal{}
 }
 
-func (ts *DBStore) Init() error {
+func (ts *DBLocal) Init() error {
 	var err error
 
 	if os.MkdirAll(paths.GetTTMDirectory(), os.ModePerm); err != nil {
@@ -30,6 +32,11 @@ func (ts *DBStore) Init() error {
 	}
 
 	ts.ctx = context.Background()
+
+	// ts.db, err = sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/ttmdb")
+	// if err != nil {
+	// 	return err
+	// }
 
 	ts.db, err = sql.Open("sqlite3", paths.GetTaskStoreDBPath())
 	if err != nil {
@@ -43,7 +50,7 @@ func (ts *DBStore) Init() error {
 	return nil
 }
 
-func (ts *DBStore) InsertTask(task models.Task) error {
+func (ts *DBLocal) InsertTask(task models.Task) error {
 	task.CreatedAt = time.Now()
 	task.UpdatedAt = time.Now()
 
@@ -68,7 +75,7 @@ func (ts *DBStore) InsertTask(task models.Task) error {
 	return nil
 }
 
-func (ts *DBStore) GetTaskByID(taskID int64) (models.Task, error) {
+func (ts *DBLocal) GetTaskByID(taskID int64) (models.Task, error) {
 	queries := New(ts.db)
 
 	dbTask, err := queries.GetTaskById(ts.ctx, taskID)
@@ -83,7 +90,7 @@ func (ts *DBStore) GetTaskByID(taskID int64) (models.Task, error) {
 
 }
 
-func (ts *DBStore) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
+func (ts *DBLocal) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
 	queries := New(ts.db)
 
 	dbTasks, err := queries.ListTasks(ts.ctx, ListTasksParams{
@@ -103,56 +110,56 @@ func (ts *DBStore) ListTasks(titleDescSearch string, category models.Category, s
 	return tasks, nil
 }
 
-func (ts *DBStore) UpdateTitle(taskID int64, title string) error {
+func (ts *DBLocal) UpdateTitle(taskID int64, title string) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
 		ID:    taskID,
 		Title: toNullString(title),
 	})
 }
 
-func (ts *DBStore) UpdateDescription(taskID int64, description string) error {
+func (ts *DBLocal) UpdateDescription(taskID int64, description string) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
 		ID:          taskID,
 		Description: toNullString(description),
 	})
 }
 
-func (ts *DBStore) UpdateCategory(taskID int64, category models.Category) error {
+func (ts *DBLocal) UpdateCategory(taskID int64, category models.Category) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
 		ID:       taskID,
 		Category: toNullString(string(category)),
 	})
 }
 
-func (ts *DBStore) UpdatePriority(taskID int64, priority models.Priority) error {
+func (ts *DBLocal) UpdatePriority(taskID int64, priority models.Priority) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
 		ID:       taskID,
 		Priority: toNullString(string(priority)),
 	})
 }
 
-func (ts *DBStore) UpdateStatus(taskID int64, status models.Status) error {
+func (ts *DBLocal) UpdateStatus(taskID int64, status models.Status) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
 		ID:     taskID,
 		Status: toNullString(string(status)),
 	})
 }
 
-func (ts *DBStore) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
+func (ts *DBLocal) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
 		ID:       taskID,
 		OpenedAt: toNullTime(openedAt),
 	})
 }
 
-func (ts *DBStore) UpdateClosedAt(taskID int64, closedAt time.Time) error {
+func (ts *DBLocal) UpdateClosedAt(taskID int64, closedAt time.Time) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
 		ID:       taskID,
 		ClosedAt: toNullTime(closedAt),
 	})
 }
 
-func (ts *DBStore) updateTaskField(params UpdateTaskFieldParams) error {
+func (ts *DBLocal) updateTaskField(params UpdateTaskFieldParams) error {
 	params.UpdatedAt = toNullTime(time.Now())
 
 	queries := New(ts.db)
@@ -166,7 +173,7 @@ func (ts *DBStore) updateTaskField(params UpdateTaskFieldParams) error {
 	return nil
 }
 
-func (ts *DBStore) AddSession(session models.Session) error {
+func (ts *DBLocal) AddSession(session models.Session) error {
 	queries := New(ts.db)
 
 	_, err := queries.CreateSession(ts.ctx, CreateSessionParams{
@@ -182,7 +189,7 @@ func (ts *DBStore) AddSession(session models.Session) error {
 	return nil
 }
 
-func (ts *DBStore) GetSessionsByTaskID(taskID int) ([]models.Session, error) {
+func (ts *DBLocal) GetSessionsByTaskID(taskID int) ([]models.Session, error) {
 	queries := New(ts.db)
 
 	dbSessions, err := queries.GetSessionsByTaskID(ts.ctx, toNullInt(taskID))
@@ -210,7 +217,7 @@ func (ts *DBStore) GetSessionsByTaskID(taskID int) ([]models.Session, error) {
 
 }
 
-func (ts *DBStore) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error) {
+func (ts *DBLocal) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error) {
 	queries := New(ts.db)
 
 	dbSessions, err := queries.GetSessionsByTimeRange(ts.ctx, GetSessionsByTimeRangeParams{
