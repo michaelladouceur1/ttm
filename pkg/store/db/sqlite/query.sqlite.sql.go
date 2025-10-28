@@ -177,13 +177,12 @@ func (q *Queries) GetTaskById(ctx context.Context, id int64) (Task, error) {
 const listTasks = `-- name: ListTasks :many
 SELECT id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
 WHERE 
-    (
-        (?1 IS NULL OR title LIKE '%' || ?1 || '%')
-        OR (?2 IS NULL OR description LIKE '%' || ?2 || '%')
-    )
-    AND (?3 IS NULL OR category = ?3)
-    AND (?4 IS NULL OR priority = ?4)
-    AND (?5 IS NULL OR status = ?5)
+    
+    (?1 IS NULL OR ?1 = '' OR title LIKE '%' || ?1 || '%')
+    AND (?2 IS NULL OR ?2 = '' OR description LIKE '%' || ?2 || '%')
+    AND (?3 IS NULL OR ?3 = '' OR category = ?3)
+    AND (?4 IS NULL OR ?4 = '' OR priority = ?4)
+    AND (?5 IS NULL OR ?5 = '' OR status = ?5)
 `
 
 type ListTasksParams struct {

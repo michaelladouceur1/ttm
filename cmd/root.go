@@ -28,7 +28,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	store := store.NewStore(db.NewDBStore())
+	store := store.NewStore(db.NewDBStore("sqlite"))
 	store.Init()
 
 	RootCmd.AddCommand(NewAddCmd(cfg.Config, store))

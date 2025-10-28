@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS tasks (
-    id INTEGER PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     title TEXT,
     description TEXT,
     category TEXT,
@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
-    id INTEGER PRIMARY KEY,
-    task_id INTEGER,
+    id BIGSERIAL PRIMARY KEY,
+    task_id BIGINT REFERENCES tasks(id),
     start_time TIMESTAMP,
     end_time TIMESTAMP
 );

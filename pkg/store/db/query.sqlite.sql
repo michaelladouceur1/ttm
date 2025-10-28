@@ -5,13 +5,11 @@ WHERE id = ?;
 -- name: ListTasks :many
 SELECT * FROM tasks
 WHERE 
-    (
-        (@title IS NULL OR title LIKE '%' || @title || '%')
-        OR (@description IS NULL OR description LIKE '%' || @description || '%')
-    )
-    AND (@category IS NULL OR category = @category)
-    AND (@priority IS NULL OR priority = @priority)
-    AND (@status IS NULL OR status = @status);
+    (@title IS NULL OR @title = '' OR title LIKE '%' || @title || '%')
+    AND (@description IS NULL OR @description = '' OR description LIKE '%' || @description || '%')
+    AND (@category IS NULL OR @category = '' OR category = @category)
+    AND (@priority IS NULL OR @priority = '' OR priority = @priority)
+    AND (@status IS NULL OR @status = '' OR status = @status);
 
 -- name: CreateTask :one
 INSERT INTO tasks (title, description, category, priority, status, opened_at, closed_at, created_at, updated_at)

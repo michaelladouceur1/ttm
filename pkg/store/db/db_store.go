@@ -12,16 +12,34 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type DBType string
+
+const (
+	Postgres DBType = "postgres"
+	Sqlite   DBType = "sqlite"
+)
+
 type DBLocal struct {
-	ctx context.Context
-	db  *sql.DB
+	ctx    context.Context
+	db     *sql.DB
+	dbType DBType
+}
+
+type DBQueries interface {
+	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
+	GetTaskById(ctx context.Context, id int64) (Task, error)
+	ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, error)
+	UpdateTaskField(ctx context.Context, arg UpdateTaskFieldParams) (Task, error)
+	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
+	GetSessionsByTaskID(ctx context.Context, taskID sql.NullInt64) ([]Session, error)
+	GetSessionsByTimeRange(ctx context.Context, arg GetSessionsByTimeRangeParams) ([]Session, error)
 }
 
 //go:embed schema.sqlite.sql
 var ddl string
 
-func NewDBStore() *DBLocal {
-	return &DBLocal{}
+func NewDBStore(dbType DBType) *DBLocal {
+	return &DBLocal{dbType: dbType}
 }
 
 func (ts *DBLocal) Init() error {
@@ -33,12 +51,13 @@ func (ts *DBLocal) Init() error {
 
 	ts.ctx = context.Background()
 
-	// ts.db, err = sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/ttmdb")
-	// if err != nil {
-	// 	return err
-	// }
-
-	ts.db, err = sql.Open("sqlite3", paths.GetTaskStoreDBPath())
+	if ts.dbType == "sqlite" {
+		ts.db, err = sql.Open("sqlite3", paths.GetTaskStoreDBPath())
+	} else if ts.dbType == "postgres" {
+		ts.db, err = sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/ttmdb")
+	} else {
+		ts.db, err = sql.Open("sqlite3", paths.GetTaskStoreDBPath())
+	}
 	if err != nil {
 		return err
 	}
@@ -50,11 +69,20 @@ func (ts *DBLocal) Init() error {
 	return nil
 }
 
+func (ts *DBLocal) getQueries() DBQueries {
+	if ts.dbType == "postgres" {
+		return NewPostgresQueriesAdapter(ts.db)
+	} else if ts.dbType == "sqlite" {
+		return NewSqliteQueriesAdapter(ts.db)
+	}
+	return NewSqliteQueriesAdapter(ts.db)
+}
+
 func (ts *DBLocal) InsertTask(task models.Task) error {
 	task.CreatedAt = time.Now()
 	task.UpdatedAt = time.Now()
 
-	queries := New(ts.db)
+	queries := ts.getQueries()
 
 	_, err := queries.CreateTask(ts.ctx, CreateTaskParams{
 		Title:       toNullString(task.Title),
@@ -76,7 +104,7 @@ func (ts *DBLocal) InsertTask(task models.Task) error {
 }
 
 func (ts *DBLocal) GetTaskByID(taskID int64) (models.Task, error) {
-	queries := New(ts.db)
+	queries := ts.getQueries()
 
 	dbTask, err := queries.GetTaskById(ts.ctx, taskID)
 
@@ -91,7 +119,7 @@ func (ts *DBLocal) GetTaskByID(taskID int64) (models.Task, error) {
 }
 
 func (ts *DBLocal) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
-	queries := New(ts.db)
+	queries := ts.getQueries()
 
 	dbTasks, err := queries.ListTasks(ts.ctx, ListTasksParams{
 		Title:       toNullString(titleDescSearch),
@@ -162,7 +190,7 @@ func (ts *DBLocal) UpdateClosedAt(taskID int64, closedAt time.Time) error {
 func (ts *DBLocal) updateTaskField(params UpdateTaskFieldParams) error {
 	params.UpdatedAt = toNullTime(time.Now())
 
-	queries := New(ts.db)
+	queries := ts.getQueries()
 
 	_, err := queries.UpdateTaskField(ts.ctx, params)
 
@@ -174,7 +202,7 @@ func (ts *DBLocal) updateTaskField(params UpdateTaskFieldParams) error {
 }
 
 func (ts *DBLocal) AddSession(session models.Session) error {
-	queries := New(ts.db)
+	queries := ts.getQueries()
 
 	_, err := queries.CreateSession(ts.ctx, CreateSessionParams{
 		TaskID:    toNullInt(int(session.TaskId)),
@@ -190,7 +218,7 @@ func (ts *DBLocal) AddSession(session models.Session) error {
 }
 
 func (ts *DBLocal) GetSessionsByTaskID(taskID int) ([]models.Session, error) {
-	queries := New(ts.db)
+	queries := ts.getQueries()
 
 	dbSessions, err := queries.GetSessionsByTaskID(ts.ctx, toNullInt(taskID))
 
@@ -218,7 +246,7 @@ func (ts *DBLocal) GetSessionsByTaskID(taskID int) ([]models.Session, error) {
 }
 
 func (ts *DBLocal) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error) {
-	queries := New(ts.db)
+	queries := ts.getQueries()
 
 	dbSessions, err := queries.GetSessionsByTimeRange(ts.ctx, GetSessionsByTimeRangeParams{
 		StartTime: toNullTime(startTime),
@@ -248,8 +276,15 @@ func (ts *DBLocal) GetSessionsByTimeRange(startTime time.Time, endTime time.Time
 
 }
 
-func toNullString(s string) sql.NullString {
-	return sql.NullString{String: s, Valid: s != ""}
+func toNullString(v interface{}) sql.NullString {
+	switch val := v.(type) {
+	case string:
+		return sql.NullString{String: val, Valid: val != ""}
+	case sql.NullString:
+		return val
+	default:
+		return sql.NullString{String: "", Valid: false}
+	}
 }
 
 func toNullTime(t time.Time) sql.NullTime {

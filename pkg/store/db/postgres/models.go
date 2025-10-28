@@ -9,14 +9,14 @@ import (
 )
 
 type Session struct {
-	ID        int32
-	TaskID    sql.NullInt32
+	ID        int64
+	TaskID    sql.NullInt64
 	StartTime sql.NullTime
 	EndTime   sql.NullTime
 }
 
 type Task struct {
-	ID          int32
+	ID          int64
 	Title       sql.NullString
 	Description sql.NullString
 	Category    sql.NullString

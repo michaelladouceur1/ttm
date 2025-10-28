@@ -17,7 +17,7 @@ RETURNING id, task_id, start_time, end_time
 `
 
 type CreateSessionParams struct {
-	TaskID    sql.NullInt32
+	TaskID    sql.NullInt64
 	StartTime sql.NullTime
 	EndTime   sql.NullTime
 }
@@ -85,7 +85,7 @@ SELECT id, task_id, start_time, end_time FROM sessions
 WHERE task_id = $1
 `
 
-func (q *Queries) GetSessionsByTaskID(ctx context.Context, taskID sql.NullInt32) ([]Session, error) {
+func (q *Queries) GetSessionsByTaskID(ctx context.Context, taskID sql.NullInt64) ([]Session, error) {
 	rows, err := q.db.QueryContext(ctx, getSessionsByTaskID, taskID)
 	if err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ SELECT id, title, description, category, priority, status, opened_at, closed_at,
 WHERE id = $1
 `
 
-func (q *Queries) GetTaskById(ctx context.Context, id int32) (Task, error) {
+func (q *Queries) GetTaskById(ctx context.Context, id int64) (Task, error) {
 	row := q.db.QueryRowContext(ctx, getTaskById, id)
 	var i Task
 	err := row.Scan(
@@ -177,21 +177,20 @@ func (q *Queries) GetTaskById(ctx context.Context, id int32) (Task, error) {
 const listTasks = `-- name: ListTasks :many
 SELECT id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
 WHERE 
-    (
-        ($1 IS NULL OR title LIKE '%' || $1 || '%')
-        OR ($2 IS NULL OR description LIKE '%' || $2 || '%')
-    )
-    AND ($3 IS NULL OR category = $3)
-    AND ($4 IS NULL OR priority = $4)
-    AND ($5 IS NULL OR status = $5)
+    
+    ($1::text IS NULL OR $1::text = '' OR title ILIKE '%' || $1::text || '%')
+    AND ($2::text IS NULL OR $2::text = '' OR description ILIKE '%' || $2::text || '%')
+    AND ($3::text IS NULL OR $3::text = '' OR category = $3::text)
+    AND ($4::text IS NULL OR $4::text = '' OR priority = $4::text)
+    AND ($5::text IS NULL OR $5::text = '' OR status = $5::text)
 `
 
 type ListTasksParams struct {
-	Column1 interface{}
-	Column2 interface{}
-	Column3 interface{}
-	Column4 interface{}
-	Column5 interface{}
+	Column1 string
+	Column2 string
+	Column3 string
+	Column4 string
+	Column5 string
 }
 
 func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, error) {
@@ -258,7 +257,7 @@ type UpdateTaskFieldParams struct {
 	OpenedAt    sql.NullTime
 	ClosedAt    sql.NullTime
 	UpdatedAt   sql.NullTime
-	ID          int32
+	ID          int64
 }
 
 func (q *Queries) UpdateTaskField(ctx context.Context, arg UpdateTaskFieldParams) (Task, error) {
