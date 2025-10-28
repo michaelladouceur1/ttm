@@ -1,0 +1,9 @@
+Package: TTM
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: amd64
+Depends: systemd
+Maintainer: Your Name <your.email@example.com>
+Description: TTM (Terminal Todo Manager) CLI tool for managing tasks from the terminal.
+  Support for session-based time tracking and task management.
