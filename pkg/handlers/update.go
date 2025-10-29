@@ -126,5 +126,11 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		}
 	}
 
-	logger.LogUpdateTask()
+	updatedTask, err := store.GetTaskByID(id)
+	if err != nil {
+		fmt.Println("Error retrieving updated task: ", err)
+		return
+	}
+
+	logger.LogUpdateTask(updatedTask)
 }
