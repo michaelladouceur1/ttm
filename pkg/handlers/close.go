@@ -35,4 +35,16 @@ func CloseHandler(cmd *cobra.Command, args []string, store *store.Store) {
 			return
 		}
 	}
+
+	tasks := []models.Task{}
+	for _, id := range ids {
+		task, err := store.GetTaskByID(id)
+		if err != nil {
+			logger.LogError("Error retrieving closed task: ", err)
+			return
+		}
+		tasks = append(tasks, task)
+	}
+
+	logger.LogCloseTasks(tasks)
 }

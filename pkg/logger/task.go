@@ -40,6 +40,17 @@ func LogTasks(tasks []models.Task) {
 	fmt.Println(t)
 }
 
+func LogCloseTasks(tasks []models.Task) {
+	data := []SummaryTreeItem{}
+	for i, task := range tasks {
+		data = append(data, SummaryTreeItem{
+			Key:   fmt.Sprintf("Task %d", i+1),
+			Value: task.Title,
+		})
+	}
+	fmt.Println(createSummaryTree(data, "Tasks Closed"))
+}
+
 func LogTaskSummary(taskSummary models.TaskSummary) {
 	for _, day := range taskSummary.Days {
 		if len(day.Tasks) == 0 {
