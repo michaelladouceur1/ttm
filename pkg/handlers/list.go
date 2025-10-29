@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"ttm/pkg/config"
 	"ttm/pkg/fs"
 	"ttm/pkg/logger"
@@ -27,31 +26,31 @@ func ListHandler(cmd *cobra.Command, args []string, cfg *config.Config, store *s
 	var err error
 	err = category.Validate()
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error listing tasks: ", err)
 		return
 	}
 
 	err = status.Validate()
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error listing tasks: ", err)
 		return
 	}
 
 	err = priority.Validate()
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error listing tasks: ", err)
 		return
 	}
 
 	tasks, err := store.ListTasks(titleDescSearch, category, status, priority)
 	if err != nil {
-		fmt.Println("Error listing tasks: ", err)
+		logger.LogError("Error listing tasks: ", err)
 		return
 	}
 
 	err = fs.UpdateIDMapFile(tasks)
 	if err != nil {
-		fmt.Println("Error updating ID map file: ", err)
+		logger.LogError("Error listing tasks: ", err)
 		return
 	}
 

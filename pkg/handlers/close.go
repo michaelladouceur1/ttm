@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"fmt"
 	"strconv"
 	"ttm/pkg/fs"
+	"ttm/pkg/logger"
 	"ttm/pkg/models"
 	"ttm/pkg/store"
 
@@ -15,13 +15,13 @@ func CloseHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	for _, arg := range args {
 		tmpID, err := strconv.Atoi(arg)
 		if err != nil {
-			fmt.Println("Error parsing task ID: ", err)
+			logger.LogError("Error parsing task ID: ", err)
 			return
 		}
 
 		id, err := fs.GetTaskIDFromListID(int64(tmpID))
 		if err != nil {
-			fmt.Println("Error getting task ID: ", err)
+			logger.LogError("Error getting task ID: ", err)
 			return
 		}
 
@@ -31,7 +31,7 @@ func CloseHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	for _, id := range ids {
 		err := store.UpdateStatus(id, models.StatusClosed)
 		if err != nil {
-			fmt.Println("Error closing task: ", err)
+			logger.LogError("Error closing task: ", err)
 			return
 		}
 	}

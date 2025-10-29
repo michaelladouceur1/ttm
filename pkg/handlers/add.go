@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"time"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
@@ -33,13 +32,13 @@ func AddHandler(cmd *cobra.Command, args []string, store *store.Store) {
 
 	err := task.Validate()
 	if err != nil {
-		fmt.Println("Error adding task: ", err)
+		logger.LogError("Error adding task: ", err)
 		return
 	}
 
 	err = store.InsertTask(task)
 	if err != nil {
-		fmt.Println("Error adding task: ", err)
+		logger.LogError("Error adding task: ", err)
 		return
 	}
 

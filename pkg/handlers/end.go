@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"time"
 	"ttm/pkg/fs"
 	"ttm/pkg/logger"
@@ -13,13 +12,13 @@ import (
 
 func EndHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	if !fs.SessionFileExists() {
-		fmt.Println("No session found. Please start a session first.")
+		logger.LogError("No session found. Please start a session first.")
 		return
 	}
 
 	sf, err := fs.RemoveSessionFile()
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error ending session: ", err)
 		return
 	}
 
@@ -31,7 +30,7 @@ func EndHandler(cmd *cobra.Command, args []string, store *store.Store) {
 
 	task, err := store.GetTaskByID(sf.ID)
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error ending session: ", err)
 		return
 	}
 

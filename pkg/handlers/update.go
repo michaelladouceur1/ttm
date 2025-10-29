@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 	"ttm/pkg/fs"
@@ -15,7 +14,7 @@ import (
 func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	idArg, err := strconv.Atoi(args[0])
 	if err != nil {
-		fmt.Println("Error parsing task ID: ", err)
+		logger.LogError("Error parsing task ID: ", err)
 		return
 	}
 
@@ -29,7 +28,7 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 
 	id, err := fs.GetTaskIDFromListID(int64(idArg))
 	if err != nil {
-		fmt.Println("Error getting task ID: ", err)
+		logger.LogError("Error getting task ID: ", err)
 		return
 	}
 
@@ -39,31 +38,31 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 
 	err = category.Validate()
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError(err)
 		return
 	}
 
 	err = priority.Validate()
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError(err)
 		return
 	}
 
 	err = status.Validate()
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError(err)
 		return
 	}
 
 	if titleFlag == "" && descriptionFlag == "" && categoryFlag == "" && priorityFlag == "" && statusFlag == "" && openedAtFlag == "" && closedAtFlag == "" {
-		fmt.Println("Please provide at least one field to update")
+		logger.LogError("Please provide at least one field to update")
 		return
 	}
 
 	if titleFlag != "" {
 		err = store.UpdateTitle(id, titleFlag)
 		if err != nil {
-			fmt.Println("Error updating title: ", err)
+			logger.LogError("Error updating title: ", err)
 			return
 		}
 	}
@@ -71,7 +70,7 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	if descriptionFlag != "" {
 		err = store.UpdateDescription(id, descriptionFlag)
 		if err != nil {
-			fmt.Println("Error updating description: ", err)
+			logger.LogError("Error updating description: ", err)
 			return
 		}
 	}
@@ -79,7 +78,7 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	if categoryFlag != "" {
 		err = store.UpdateCategory(id, category)
 		if err != nil {
-			fmt.Println("Error updating category: ", err)
+			logger.LogError("Error updating category: ", err)
 			return
 		}
 	}
@@ -87,7 +86,7 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	if priorityFlag != "" {
 		err = store.UpdatePriority(id, priority)
 		if err != nil {
-			fmt.Println("Error updating priority: ", err)
+			logger.LogError("Error updating priority: ", err)
 			return
 		}
 	}
@@ -95,7 +94,7 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	if statusFlag != "" {
 		err = store.UpdateStatus(id, status)
 		if err != nil {
-			fmt.Println("Error updating status: ", err)
+			logger.LogError("Error updating status: ", err)
 			return
 		}
 	}
@@ -103,12 +102,12 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	if openedAtFlag != "" {
 		openedTime, err := time.Parse(time.RFC3339, openedAtFlag)
 		if err != nil {
-			fmt.Println("Error parsing start time: ", err)
+			logger.LogError("Error parsing start time: ", err)
 			return
 		}
 		err = store.UpdateOpenedAt(id, openedTime)
 		if err != nil {
-			fmt.Println("Error updating start time: ", err)
+			logger.LogError("Error updating start time: ", err)
 			return
 		}
 	}
@@ -116,19 +115,19 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	if closedAtFlag != "" {
 		closedTime, err := time.Parse(time.RFC3339, closedAtFlag)
 		if err != nil {
-			fmt.Println("Error parsing end time: ", err)
+			logger.LogError("Error parsing end time: ", err)
 			return
 		}
 		err = store.UpdateClosedAt(id, closedTime)
 		if err != nil {
-			fmt.Println("Error updating end time: ", err)
+			logger.LogError("Error updating end time: ", err)
 			return
 		}
 	}
 
 	updatedTask, err := store.GetTaskByID(id)
 	if err != nil {
-		fmt.Println("Error retrieving updated task: ", err)
+		logger.LogError("Error retrieving updated task: ", err)
 		return
 	}
 

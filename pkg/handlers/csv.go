@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"fmt"
 	"ttm/pkg/fs"
+	"ttm/pkg/logger"
 	"ttm/pkg/models"
 	"ttm/pkg/store"
 
@@ -26,31 +26,31 @@ func CSVHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	var err error
 	err = category.Validate()
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error exporting to CSV: ", err)
 		return
 	}
 
 	err = status.Validate()
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error exporting to CSV: ", err)
 		return
 	}
 
 	err = priority.Validate()
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error exporting to CSV: ", err)
 		return
 	}
 
 	tasks, err := store.ListTasks(titleDescSearch, category, status, priority)
 	if err != nil {
-		fmt.Println("Error listing tasks: ", err)
+		logger.LogError("Error exporting to CSV: ", err)
 		return
 	}
 
 	err = fs.TasksToCSV(tasks)
 	if err != nil {
-		fmt.Println("Error exporting tasks to CSV: ", err)
+		logger.LogError("Error exporting to CSV: ", err)
 		return
 	}
 }

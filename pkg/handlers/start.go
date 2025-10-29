@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 	"ttm/pkg/fs"
@@ -13,34 +12,35 @@ import (
 
 func StartHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	if fs.SessionFileExists() {
-		fmt.Println("Session already started. Please end the current session first.")
+		logger.LogError("Session already started. Please end the current session first.")
 		return
 	}
 
 	taskListIdString := args[0]
 	taskListId, err := strconv.Atoi(taskListIdString)
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error starting session: ", err)
 		return
 	}
 
 	taskId, err := fs.GetTaskIDFromListID(int64(taskListId))
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error starting session: ", err)
 		return
 	}
 
-	_, err = fs.CreateSessionFile(taskId, time.Now())
+	start := time.Now()
+	_, err = fs.CreateSessionFile(taskId, start)
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error starting session: ", err)
 		return
 	}
 
 	task, err := store.GetTaskByID(taskId)
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("Error starting session: ", err)
 		return
 	}
 
-	logger.LogSessionStart(task)
+	logger.LogSessionStart(task, start)
 }

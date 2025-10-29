@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"time"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
@@ -21,7 +20,7 @@ func SummaryHandler(cmd *cobra.Command, args []string, store *store.Store) {
 
 		sessions, err := store.GetSessionsByTimeRange(beginningOfDay, endOfDay)
 		if err != nil {
-			fmt.Println(err)
+			logger.LogError("Error getting task summary: ", err)
 			return
 		}
 
@@ -29,7 +28,7 @@ func SummaryHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		for _, session := range sessions {
 			task, err := store.GetTaskByID(session.TaskId)
 			if err != nil {
-				fmt.Println(err)
+				logger.LogError("Error getting task summary: ", err)
 				return
 			}
 			if taskExistsInList(task, tasks) {
