@@ -6,7 +6,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.5.9
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.22
-	github.com/michaelladouceur1/gonfig v0.0.0-20251025033713-3deae523de69
+	github.com/michaelladouceur1/gonfig v0.0.0-20251029184636-5238d2387ce2
 	github.com/spf13/cobra v1.8.0
 )
 
