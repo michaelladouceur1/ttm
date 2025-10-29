@@ -19,7 +19,7 @@ func CloseHandler(cmd *cobra.Command, args []string, store *store.Store) {
 			return
 		}
 
-		id, err := fs.GetTaskIDFromListID(int64(tmpID))
+		id, err := fs.GetTaskIDFromTempID(int64(tmpID))
 		if err != nil {
 			logger.LogError("Error getting task ID: ", err)
 			return

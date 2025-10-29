@@ -26,7 +26,7 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	openedAtFlag, _ := cmd.Flags().GetString("openedAt")
 	closedAtFlag, _ := cmd.Flags().GetString("closedAt")
 
-	id, err := fs.GetTaskIDFromListID(int64(idArg))
+	id, err := fs.GetTaskIDFromTempID(int64(idArg))
 	if err != nil {
 		logger.LogError("Error getting task ID: ", err)
 		return
