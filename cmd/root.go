@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"ttm/pkg/config"
+	"ttm/pkg/handlers"
 	"ttm/pkg/store"
 	"ttm/pkg/store/db"
 
@@ -19,6 +20,7 @@ import (
 var RootCmd = &cobra.Command{
 	Use:   "ttm",
 	Short: "Terminal Todo Manager",
+	Run:   func(cmd *cobra.Command, args []string) { handlers.RootHandler(cmd, args) },
 }
 
 func init() {
