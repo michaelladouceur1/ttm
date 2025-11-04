@@ -1,12 +1,23 @@
 package tui
 
 import (
+	"ttm/pkg/styles"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 var docStyle = lipgloss.NewStyle().Margin(0)
+
+var (
+	listTitleStyle     = lipgloss.NewStyle().Bold(true).Foreground(styles.Blue)
+	selectedTitleStyle = lipgloss.NewStyle().
+				Border(lipgloss.NormalBorder(), false, false, false, true).
+				BorderForeground(styles.Blue).
+				Foreground(styles.DarkBlue).
+				Padding(0, 0, 0, 1)
+)
 
 type RootModel struct {
 	list list.Model
@@ -18,9 +29,15 @@ func NewRootModel() RootModel {
 		NavItem{title: "Start Session", page: string(StartPage)},
 	}
 
-	m := RootModel{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
+	delegate := list.NewDefaultDelegate()
+	delegate.ShowDescription = false
+	delegate.Styles.SelectedTitle = selectedTitleStyle
+
+	m := RootModel{list: list.New(items, delegate, 0, 0)}
+
 	m.list.Title = "Terminal Todo Manager"
 	m.list.SetShowStatusBar(false)
+	m.list.Styles.Title = listTitleStyle
 
 	return m
 }
