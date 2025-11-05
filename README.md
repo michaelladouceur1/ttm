@@ -49,3 +49,11 @@
 - `ttm pause`: Pause session
 - `ttm end`: End session
 - `ttm cancel`: Cancel session
+
+#### TODO
+
+- [ ] TUI mode
+- [ ] Notes support per task/session
+- [ ] User support for multi-user environments
+- [ ] Time-based reports viewing tasks and sessions
+- [ ] Integration with project management tools (e.g., Jira, Trello)
