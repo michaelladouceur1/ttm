@@ -17,11 +17,7 @@ import (
 // var taskStore = store.NewStore(db.NewDBStore())
 
 // rootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
-	Use:   "ttm",
-	Short: "Terminal Todo Manager",
-	Run:   func(cmd *cobra.Command, args []string) { handlers.RootHandler(cmd, args) },
-}
+var RootCmd *cobra.Command
 
 func init() {
 	cfg, err := config.NewConfig()
@@ -32,6 +28,12 @@ func init() {
 
 	store := store.NewStore(db.NewDBStore("sqlite"))
 	store.Init()
+
+	RootCmd = &cobra.Command{
+		Use:   "ttm",
+		Short: "Terminal Todo Manager",
+		Run:   func(cmd *cobra.Command, args []string) { handlers.RootHandler(cmd, args, cfg) },
+	}
 
 	RootCmd.AddCommand(NewAddCmd(cfg.Config, store))
 	RootCmd.AddCommand(NewCancelCmd())

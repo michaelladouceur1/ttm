@@ -1,14 +1,17 @@
 package tui
 
 import (
+	"strings"
 	"ttm/pkg/styles"
+	"ttm/pkg/tui/context"
+	"ttm/pkg/tui/sections/footer"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-var docStyle = lipgloss.NewStyle().Margin(0)
+var docStyle = lipgloss.NewStyle().Margin(0).Border(lipgloss.NormalBorder(), true, true, true, true).Padding(1, 2)
 
 var (
 	listTitleStyle     = lipgloss.NewStyle().Bold(true).Foreground(styles.Blue)
@@ -20,10 +23,12 @@ var (
 )
 
 type RootModel struct {
-	list list.Model
+	list   list.Model
+	ctx    *context.TUIContext
+	footer footer.Model
 }
 
-func NewRootModel() RootModel {
+func NewRootModel(ctx *context.TUIContext) RootModel {
 	items := []list.Item{
 		NavItem{title: "Add Task", page: string(AddPage)},
 		NavItem{title: "Start Session", page: string(StartPage)},
@@ -33,7 +38,7 @@ func NewRootModel() RootModel {
 	delegate.ShowDescription = false
 	delegate.Styles.SelectedTitle = selectedTitleStyle
 
-	m := RootModel{list: list.New(items, delegate, 0, 0)}
+	m := RootModel{list: list.New(items, delegate, 0, 0), ctx: ctx, footer: footer.NewModel(ctx)}
 
 	m.list.Title = "Terminal Todo Manager"
 	m.list.SetShowStatusBar(false)
@@ -68,7 +73,14 @@ func (m RootModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m RootModel) View() string {
-	return docStyle.Render(m.list.View())
+	s := strings.Builder{}
+	// listView := docStyle.Render(m.list.View())
+	// textView := lipgloss.NewStyle().Render("Welcome to Terminal Todo Manager!\n\nUse the arrow keys to navigate and press Enter to select an option.")
+
+	// s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, listView, textView))
+	// s.WriteString("\n")
+	s.WriteString(m.footer.View())
+	return s.String()
 }
 
 func (m RootModel) getSelectedPage() TuiPages {

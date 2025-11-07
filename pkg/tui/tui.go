@@ -1,7 +1,13 @@
 package tui
 
 import (
+	"os"
+	"ttm/pkg/config"
+	"ttm/pkg/tui/context"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/michaelladouceur1/gonfig"
+	"golang.org/x/term"
 )
 
 type TuiPages string
@@ -15,7 +21,7 @@ const (
 type Pages map[TuiPages]tea.Model
 
 var pages = Pages{
-	RootPage:  NewRootModel(),
+	// RootPage:  NewRootModel(),
 	AddPage:   NewAddModel(),
 	StartPage: NewStartModel(),
 }
@@ -30,16 +36,36 @@ func (i NavItem) FilterValue() string { return i.title }
 
 type TUI struct {
 	program *tea.Program
+	ctx     *context.TUIContext
+	root    RootModel
 	pages   Pages
 }
 
 var tui *TUI
 
-func NewTUI() *TUI {
+func NewTUI(config *gonfig.Gonfig[config.Config]) *TUI {
+
 	tui = &TUI{
-		program: tea.NewProgram(pages[RootPage], tea.WithAltScreen()),
-		pages:   pages,
+		pages: pages,
 	}
+
+	width, height, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		width = 100
+		height = 30
+	}
+
+	ctx := &context.TUIContext{
+		Config: config,
+		Width:  width,
+		Height: height,
+	}
+
+	tui.ctx = ctx
+	tui.root = NewRootModel(ctx)
+
+	tui.program = tea.NewProgram(tui.root, tea.WithAltScreen())
+
 	return tui
 }
 
