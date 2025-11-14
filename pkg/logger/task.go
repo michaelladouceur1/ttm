@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 	"ttm/pkg/models"
+	"ttm/pkg/styles"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
@@ -79,7 +80,7 @@ func createTaskSummaryTree(task models.Task, title string) *tree.Tree {
 func createTable() *table.Table {
 	return table.New().
 		Border(lipgloss.RoundedBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(blue)).
+		BorderStyle(lipgloss.NewStyle().Foreground(styles.Blue)).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			if row == table.HeaderRow {
 				return tableHeaderStyle
@@ -111,9 +112,9 @@ func createTable() *table.Table {
 
 			switch row % 2 {
 			case 0: // even
-				style = style.Foreground(lightGray)
+				style = style.Foreground(styles.LightGray)
 			default: // odd
-				style = style.Foreground(gray)
+				style = style.Foreground(styles.Gray)
 			}
 
 			return style

@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"ttm/pkg/styles"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -12,22 +13,16 @@ const (
 )
 
 var (
-	// Colors
-	blue      = lipgloss.Color("#2cd5fb")
-	darkBlue  = lipgloss.Color("#219cb8ff")
-	gray      = lipgloss.Color("#6b6b6bff")
-	lightGray = lipgloss.Color("#e4e4e4ff")
-
 	// General styles
-	headerStyle = lipgloss.NewStyle().Bold(true).Foreground(blue)
-	textStyle   = lipgloss.NewStyle().Foreground(darkBlue)
+	headerStyle = lipgloss.NewStyle().Bold(true).Foreground(styles.Blue)
+	textStyle   = lipgloss.NewStyle().Foreground(styles.DarkBlue)
 	errorStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#d34545ff"))
 
-	treeConnStyle = lipgloss.NewStyle().Foreground(gray)
+	treeConnStyle = lipgloss.NewStyle().Foreground(styles.Gray)
 
 	// Table styles
 	// Header style
-	tableHeaderStyle = lipgloss.NewStyle().Foreground(blue).Bold(true).Align(lipgloss.Center)
+	tableHeaderStyle = lipgloss.NewStyle().Foreground(styles.Blue).Bold(true).Align(lipgloss.Center)
 
 	// Cell styles
 	cellStyle        = lipgloss.NewStyle().Padding(0, 1).Width(14)
@@ -41,8 +36,8 @@ var (
 	createdAtStyle   = cellStyle.Width(21)
 
 	// Row styles
-	oddRowStyle  = cellStyle.Foreground(gray)
-	evenRowStyle = cellStyle.Foreground(lightGray)
+	oddRowStyle  = cellStyle.Foreground(styles.Gray)
+	evenRowStyle = cellStyle.Foreground(styles.LightGray)
 )
 
 func LogMessage(strs ...string) {

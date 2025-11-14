@@ -40,7 +40,15 @@
 - `summary` : Summarize sessions for given time period
   - `ttm session summary`
 
-#### Shorthand
+### TUI Mode
+
+#### Command List
+
+- Add task
+- Start session
+- List tasks
+
+### Shorthand
 
 - `ttm add`: Add a task
 - `ttm list`: List tasks
