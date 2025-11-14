@@ -14,9 +14,9 @@ type Model struct {
 
 var (
 	style = lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder(), true, false, false, false).
+		// Border(lipgloss.NormalBorder(), true).
 		Foreground(styles.Blue).
-		Width(100) // set width to match main view
+		Padding(0, 1)
 )
 
 func NewModel(ctx *context.TUIContext) Model {
@@ -29,5 +29,5 @@ func NewModel(ctx *context.TUIContext) Model {
 }
 
 func (m Model) View() string {
-	return style.Width(m.ctx.Width).Render(m.footerText)
+	return style.Width(m.ctx.FooterDims.Width).Height(m.ctx.FooterDims.Height).Render(m.footerText)
 }

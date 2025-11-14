@@ -5,13 +5,16 @@ import (
 	"ttm/pkg/styles"
 	"ttm/pkg/tui/context"
 	"ttm/pkg/tui/sections/footer"
+	"ttm/pkg/tui/sections/left"
+	"ttm/pkg/tui/sections/middle"
+	"ttm/pkg/tui/sections/right"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-var docStyle = lipgloss.NewStyle().Margin(0).Border(lipgloss.NormalBorder(), true, true, true, true).Padding(1, 2)
+var docStyle = lipgloss.NewStyle().Margin(0).Border(lipgloss.NormalBorder(), true, true, true, true).Padding(0)
 
 var (
 	listTitleStyle     = lipgloss.NewStyle().Bold(true).Foreground(styles.Blue)
@@ -23,9 +26,12 @@ var (
 )
 
 type RootModel struct {
-	list   list.Model
-	ctx    *context.TUIContext
-	footer footer.Model
+	list          list.Model
+	ctx           *context.TUIContext
+	leftSection   left.Model
+	middleSection middle.Model
+	rightSection  right.Model
+	footer        footer.Model
 }
 
 func NewRootModel(ctx *context.TUIContext) RootModel {
@@ -38,7 +44,14 @@ func NewRootModel(ctx *context.TUIContext) RootModel {
 	delegate.ShowDescription = false
 	delegate.Styles.SelectedTitle = selectedTitleStyle
 
-	m := RootModel{list: list.New(items, delegate, 0, 0), ctx: ctx, footer: footer.NewModel(ctx)}
+	m := RootModel{
+		list:          list.New(items, delegate, 0, 0),
+		ctx:           ctx,
+		footer:        footer.NewModel(ctx),
+		leftSection:   left.NewModel(ctx),
+		middleSection: middle.NewModel(ctx),
+		rightSection:  right.NewModel(ctx),
+	}
 
 	m.list.Title = "Terminal Todo Manager"
 	m.list.SetShowStatusBar(false)
@@ -63,8 +76,14 @@ func (m RootModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			return tui.switchPage(m.getSelectedPage())
 		}
 	case tea.WindowSizeMsg:
-		h, v := docStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v)
+		leftDims, middleDims, rightDims, footerDims := calculateSectionDims(msg.Width, msg.Height)
+		m.ctx.TermWidth = msg.Width
+		m.ctx.TermHeight = msg.Height
+		m.ctx.LeftDims = leftDims
+		m.ctx.MiddleDims = middleDims
+		m.ctx.RightDims = rightDims
+		m.ctx.FooterDims = footerDims
+		return m, nil
 	}
 
 	var cmd tea.Cmd
@@ -79,6 +98,8 @@ func (m RootModel) View() string {
 
 	// s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, listView, textView))
 	// s.WriteString("\n")
+	s.WriteString(lipgloss.JoinHorizontal(lipgloss.Bottom, m.leftSection.View(), m.middleSection.View(), m.rightSection.View()))
+	s.WriteString("\n")
 	s.WriteString(m.footer.View())
 	return s.String()
 }
