@@ -6,17 +6,22 @@ import (
 	"github.com/michaelladouceur1/gonfig"
 )
 
-type SectionDims struct {
+type SectionDim struct {
 	Width  int
 	Height int
+}
+
+type SectionDims struct {
+	Header SectionDim
+	Left   SectionDim
+	Middle SectionDim
+	Right  SectionDim
+	Footer SectionDim
 }
 
 type TUIContext struct {
 	Config     *gonfig.Gonfig[config.Config]
 	TermWidth  int
 	TermHeight int
-	LeftDims   SectionDims
-	MiddleDims SectionDims
-	RightDims  SectionDims
-	FooterDims SectionDims
+	Dims       SectionDims
 }

@@ -15,9 +15,7 @@ type Model struct {
 
 var (
 	style = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder(), true).
-		Foreground(styles.Blue).
-		Padding(0).Margin(0)
+		Foreground(styles.Blue)
 )
 
 func NewModel(ctx *context.TUIContext) Model {
@@ -30,5 +28,5 @@ func NewModel(ctx *context.TUIContext) Model {
 }
 
 func (m Model) View() string {
-	return style.Width(m.ctx.LeftDims.Width).Height(m.ctx.LeftDims.Height).Render(m.sectionText)
+	return style.Width(m.ctx.Dims.Left.Width).Height(m.ctx.Dims.Left.Height).Render(m.sectionText)
 }

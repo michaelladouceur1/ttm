@@ -3,27 +3,34 @@ package tui
 import "ttm/pkg/tui/context"
 
 const (
-	footerHeight        = 2
-	sectionHeightOffset = 4
+	headerHeight        = 1
+	footerHeight        = 1
+	sectionHeightOffset = 0
 	sectionWidthOffset  = 6
 )
 
-func calculateSectionDims(width, height int) (leftDims, middleDims, rightDims, footerDims context.SectionDims) {
-	leftDims = context.SectionDims{
-		Width:  width / 4,
-		Height: height - sectionHeightOffset,
+func calculateSectionDims(width, height int) context.SectionDims {
+
+	return context.SectionDims{
+		Header: context.SectionDim{
+			Width:  width,
+			Height: headerHeight,
+		},
+		Left: context.SectionDim{
+			Width:  width / 4,
+			Height: height - headerHeight - footerHeight - sectionHeightOffset,
+		},
+		Middle: context.SectionDim{
+			Width:  width/2 - sectionWidthOffset,
+			Height: height - headerHeight - footerHeight - sectionHeightOffset,
+		},
+		Right: context.SectionDim{
+			Width:  width / 4,
+			Height: height - headerHeight - footerHeight - sectionHeightOffset,
+		},
+		Footer: context.SectionDim{
+			Width:  width,
+			Height: footerHeight,
+		},
 	}
-	middleDims = context.SectionDims{
-		Width:  width/2 - sectionWidthOffset,
-		Height: height - sectionHeightOffset,
-	}
-	rightDims = context.SectionDims{
-		Width:  width / 4,
-		Height: height - sectionHeightOffset,
-	}
-	footerDims = context.SectionDims{
-		Width:  width,
-		Height: footerHeight,
-	}
-	return
 }

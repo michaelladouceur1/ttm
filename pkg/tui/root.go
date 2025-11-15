@@ -5,6 +5,7 @@ import (
 	"ttm/pkg/styles"
 	"ttm/pkg/tui/context"
 	"ttm/pkg/tui/sections/footer"
+	"ttm/pkg/tui/sections/header"
 	"ttm/pkg/tui/sections/left"
 	"ttm/pkg/tui/sections/middle"
 	"ttm/pkg/tui/sections/right"
@@ -28,6 +29,7 @@ var (
 type RootModel struct {
 	list          list.Model
 	ctx           *context.TUIContext
+	header        header.Model
 	leftSection   left.Model
 	middleSection middle.Model
 	rightSection  right.Model
@@ -47,6 +49,7 @@ func NewRootModel(ctx *context.TUIContext) RootModel {
 	m := RootModel{
 		list:          list.New(items, delegate, 0, 0),
 		ctx:           ctx,
+		header:        header.NewModel(ctx),
 		footer:        footer.NewModel(ctx),
 		leftSection:   left.NewModel(ctx),
 		middleSection: middle.NewModel(ctx),
@@ -76,13 +79,9 @@ func (m RootModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			return tui.switchPage(m.getSelectedPage())
 		}
 	case tea.WindowSizeMsg:
-		leftDims, middleDims, rightDims, footerDims := calculateSectionDims(msg.Width, msg.Height)
 		m.ctx.TermWidth = msg.Width
 		m.ctx.TermHeight = msg.Height
-		m.ctx.LeftDims = leftDims
-		m.ctx.MiddleDims = middleDims
-		m.ctx.RightDims = rightDims
-		m.ctx.FooterDims = footerDims
+		m.ctx.Dims = calculateSectionDims(msg.Width, msg.Height)
 		return m, nil
 	}
 
@@ -98,6 +97,8 @@ func (m RootModel) View() string {
 
 	// s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, listView, textView))
 	// s.WriteString("\n")
+	s.WriteString(m.header.View())
+	s.WriteString("\n")
 	s.WriteString(lipgloss.JoinHorizontal(lipgloss.Bottom, m.leftSection.View(), m.middleSection.View(), m.rightSection.View()))
 	s.WriteString("\n")
 	s.WriteString(m.footer.View())

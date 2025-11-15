@@ -55,16 +55,11 @@ func NewTUI(config *gonfig.Gonfig[config.Config]) *TUI {
 		height = 30
 	}
 
-	leftDims, middleDims, rightDims, footerDims := calculateSectionDims(width, height)
-
 	ctx := &context.TUIContext{
 		Config:     config,
 		TermWidth:  width,
 		TermHeight: height,
-		LeftDims:   leftDims,
-		MiddleDims: middleDims,
-		RightDims:  rightDims,
-		FooterDims: footerDims,
+		Dims:       calculateSectionDims(width, height),
 	}
 
 	tui.ctx = ctx
