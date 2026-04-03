@@ -10,6 +10,7 @@ import (
 )
 
 func SummaryHandler(cmd *cobra.Command, args []string, store *store.Store) {
+
 	days, _ := cmd.Flags().GetInt("days")
 
 	taskSummary := models.TaskSummary{}

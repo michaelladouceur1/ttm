@@ -19,14 +19,14 @@ import (
 var RootCmd *cobra.Command
 
 func init() {
+	store := store.NewStore(db.NewDBStore("sqlite"))
+	store.Init()
+
 	cfg, err := config.NewConfig()
 	if err != nil {
 		fmt.Println("Error initializing config: ", err)
 		os.Exit(1)
 	}
-
-	store := store.NewStore(db.NewDBStore("sqlite"))
-	store.Init()
 
 	RootCmd = &cobra.Command{
 		Use:   "ttm",
@@ -42,7 +42,7 @@ func init() {
 	RootCmd.AddCommand(NewListCmd(cfg.Config, store))
 	RootCmd.AddCommand(NewStartCmd(store))
 	RootCmd.AddCommand(NewUpdateCmd(store))
-	RootCmd.AddCommand(NewSummaryCmd(store))
+	RootCmd.AddCommand(NewSummaryCmd(cfg.Config, store))
 }
 
 func Execute() {
