@@ -32,7 +32,7 @@ func init() {
 	RootCmd = &cobra.Command{
 		Use:   "ttm",
 		Short: "Terminal Todo Manager",
-		Run:   func(cmd *cobra.Command, args []string) { handlers.RootHandler(cmd, args, cfg) },
+		Run:   func(cmd *cobra.Command, args []string) { handlers.RootHandler(cmd, args, cfg, store) },
 	}
 
 	RootCmd.AddCommand(NewAddCmd(cfg.Config, store))

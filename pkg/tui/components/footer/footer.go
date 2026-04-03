@@ -1,7 +1,6 @@
-package header
+package footer
 
 import (
-	"ttm/pkg/styles"
 	"ttm/pkg/tui/context"
 
 	"github.com/charmbracelet/lipgloss"
@@ -9,24 +8,25 @@ import (
 
 type Model struct {
 	ctx        *context.TUIContext
-	headerText string
+	footerText string
 }
 
 var (
 	style = lipgloss.NewStyle().
-		Background(styles.DarkBlue).
+		Border(lipgloss.RoundedBorder(), true).
+		AlignVertical(lipgloss.Center).
 		Padding(0, 1)
 )
 
 func NewModel(ctx *context.TUIContext) Model {
 	m := Model{
 		ctx:        ctx,
-		headerText: "Welcome to Terminal Todo Manager",
+		footerText: "Press q to quit | Press h for help",
 	}
 
 	return m
 }
 
 func (m Model) View() string {
-	return style.Width(m.ctx.Dims.Header.Width).Height(m.ctx.Dims.Header.Height).Render(m.headerText)
+	return style.Width(m.ctx.Dims.Footer.Width).Height(m.ctx.Dims.Footer.Height).Render(m.footerText)
 }

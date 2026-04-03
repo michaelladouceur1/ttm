@@ -3,12 +3,13 @@ package tui
 import (
 	"strings"
 	"ttm/pkg/styles"
+	"ttm/pkg/tui/components/footer"
+	"ttm/pkg/tui/components/header"
+	"ttm/pkg/tui/components/left"
+	"ttm/pkg/tui/components/middle"
+	"ttm/pkg/tui/components/right"
+	"ttm/pkg/tui/components/sessions"
 	"ttm/pkg/tui/context"
-	"ttm/pkg/tui/sections/footer"
-	"ttm/pkg/tui/sections/header"
-	"ttm/pkg/tui/sections/left"
-	"ttm/pkg/tui/sections/middle"
-	"ttm/pkg/tui/sections/right"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -30,6 +31,7 @@ type RootModel struct {
 	list          list.Model
 	ctx           *context.TUIContext
 	header        header.Model
+	sessions      sessions.Model
 	leftSection   left.Model
 	middleSection middle.Model
 	rightSection  right.Model
@@ -50,6 +52,7 @@ func NewRootModel(ctx *context.TUIContext) RootModel {
 		list:          list.New(items, delegate, 0, 0),
 		ctx:           ctx,
 		header:        header.NewModel(ctx),
+		sessions:      sessions.NewModel(ctx),
 		footer:        footer.NewModel(ctx),
 		leftSection:   left.NewModel(ctx),
 		middleSection: middle.NewModel(ctx),
@@ -64,6 +67,8 @@ func NewRootModel(ctx *context.TUIContext) RootModel {
 }
 
 func (m RootModel) Init() tea.Cmd {
+	m.sessions.HeaderText = "Loading sessions..."
+	m.sessions.Init()
 	return nil
 }
 
@@ -98,6 +103,8 @@ func (m RootModel) View() string {
 	// s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, listView, textView))
 	// s.WriteString("\n")
 	s.WriteString(m.header.View())
+	s.WriteString("\n")
+	s.WriteString(m.sessions.View())
 	s.WriteString("\n")
 	s.WriteString(lipgloss.JoinHorizontal(lipgloss.Bottom, m.leftSection.View(), m.middleSection.View(), m.rightSection.View()))
 	s.WriteString("\n")

@@ -3,6 +3,7 @@ package tui
 import (
 	"os"
 	"ttm/pkg/config"
+	"ttm/pkg/store"
 	"ttm/pkg/tui/context"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -37,13 +38,13 @@ func (i NavItem) FilterValue() string { return i.title }
 type TUI struct {
 	program *tea.Program
 	ctx     *context.TUIContext
-	root    RootModel
-	pages   Pages
+	// root    RootModel
+	pages Pages
 }
 
 var tui *TUI
 
-func NewTUI(config *gonfig.Gonfig[config.Config]) *TUI {
+func NewTUI(config *gonfig.Gonfig[config.Config], store *store.Store) *TUI {
 
 	tui = &TUI{
 		pages: pages,
@@ -57,15 +58,16 @@ func NewTUI(config *gonfig.Gonfig[config.Config]) *TUI {
 
 	ctx := &context.TUIContext{
 		Config:     config,
+		Store:      store,
 		TermWidth:  width,
 		TermHeight: height,
 		Dims:       calculateSectionDims(width, height),
 	}
 
 	tui.ctx = ctx
-	tui.root = NewRootModel(ctx)
+	// tui.root = NewRootModel(ctx)
 
-	tui.program = tea.NewProgram(tui.root, tea.WithAltScreen())
+	tui.program = tea.NewProgram(NewRootModel(ctx), tea.WithAltScreen())
 
 	return tui
 }
