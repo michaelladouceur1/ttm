@@ -52,18 +52,24 @@ func LogCloseTasks(tasks []models.Task) {
 	fmt.Println(createSummaryTree(data, "Tasks Closed"))
 }
 
-func LogTaskSummary(taskSummary models.TaskSummary) {
+func LogSessionSummary(taskSummary models.TaskSummary) {
 	for _, day := range taskSummary.Days {
 		if len(day.Tasks) == 0 {
 			continue
 		}
-		fmt.Printf("%s: %s\n", day.Day.Weekday().String(), day.Day.Format("2006-01-02"))
-		for _, task := range day.Tasks {
-			task.CalculateDuration()
-			fmt.Printf("   • %s: %s\n", task.Title, task.Description)
-		}
-		fmt.Println()
+		fmt.Println(createSessionDaySummaryTree(day))
 	}
+}
+
+func createSessionDaySummaryTree(day models.TaskSummaryDay) *tree.Tree {
+	data := []SummaryTreeItem{}
+	for _, task := range day.Tasks {
+		data = append(data, SummaryTreeItem{
+			Key:   task.Title,
+			Value: task.Description,
+		})
+	}
+	return createSummaryTree(data, day.Day.Format("2006-01-02"))
 }
 
 func createTaskSummaryTree(task models.Task, title string) *tree.Tree {

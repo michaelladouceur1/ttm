@@ -44,7 +44,7 @@ func SummaryHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		})
 	}
 
-	logger.LogTaskSummary(taskSummary)
+	logger.LogSessionSummary(taskSummary)
 }
 
 func taskExistsInList(task models.Task, tasks []models.Task) bool {
