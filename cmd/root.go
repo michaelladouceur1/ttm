@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"ttm/pkg/config"
-	"ttm/pkg/handlers"
 	"ttm/pkg/store"
 	"ttm/pkg/store/db"
 
@@ -32,7 +31,7 @@ func init() {
 	RootCmd = &cobra.Command{
 		Use:   "ttm",
 		Short: "Terminal Todo Manager",
-		Run:   func(cmd *cobra.Command, args []string) { handlers.RootHandler(cmd, args, cfg) },
+		// Run:   func(cmd *cobra.Command, args []string) { handlers.RootHandler(cmd, args, cfg) },
 	}
 
 	RootCmd.AddCommand(NewAddCmd(cfg.Config, store))
@@ -43,6 +42,7 @@ func init() {
 	RootCmd.AddCommand(NewListCmd(cfg.Config, store))
 	RootCmd.AddCommand(NewStartCmd(store))
 	RootCmd.AddCommand(NewUpdateCmd(store))
+	RootCmd.AddCommand(NewSummaryCmd(store))
 }
 
 func Execute() {
