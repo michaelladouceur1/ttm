@@ -14,15 +14,15 @@ const (
 
 var (
 	// General styles
-	headerStyle = lipgloss.NewStyle().Bold(true).Foreground(styles.Blue)
-	textStyle   = lipgloss.NewStyle().Foreground(styles.DarkBlue)
+	headerStyle = lipgloss.NewStyle().Bold(true).Foreground(styles.Main)
+	textStyle   = lipgloss.NewStyle().Foreground(styles.Highlight1)
 	errorStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#d34545ff"))
 
-	treeConnStyle = lipgloss.NewStyle().Foreground(styles.Gray)
+	treeConnStyle = lipgloss.NewStyle().Foreground(styles.Highlight2)
 
 	// Table styles
 	// Header style
-	tableHeaderStyle = lipgloss.NewStyle().Foreground(styles.Blue).Bold(true).Align(lipgloss.Center)
+	tableHeaderStyle = lipgloss.NewStyle().Foreground(styles.Main).Bold(true).Align(lipgloss.Center)
 
 	// Cell styles
 	cellStyle        = lipgloss.NewStyle().Padding(0, 1).Width(14)
@@ -36,8 +36,8 @@ var (
 	createdAtStyle   = cellStyle.Width(21)
 
 	// Row styles
-	oddRowStyle  = cellStyle.Foreground(styles.Gray)
-	evenRowStyle = cellStyle.Foreground(styles.LightGray)
+	oddRowStyle  = cellStyle.Foreground(styles.Highlight2)
+	evenRowStyle = cellStyle.Foreground(styles.Highlight3)
 )
 
 func LogMessage(strs ...string) {

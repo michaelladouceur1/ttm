@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(styles.Blue).Padding(0, 0, 0, 2)
-	focusedStyle = lipgloss.NewStyle().Foreground(styles.Blue).Padding(0, 0, 0, 1)
+	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(styles.Main).Padding(0, 0, 0, 2)
+	focusedStyle = lipgloss.NewStyle().Foreground(styles.Main).Padding(0, 0, 0, 1)
 	noStyle      = lipgloss.NewStyle().Padding(0, 0, 0, 1)
 	cursorStyle  = focusedStyle
 )

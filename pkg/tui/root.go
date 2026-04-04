@@ -18,11 +18,11 @@ import (
 var docStyle = lipgloss.NewStyle().Margin(0).Border(lipgloss.NormalBorder(), true, true, true, true).Padding(0)
 
 var (
-	listTitleStyle     = lipgloss.NewStyle().Bold(true).Foreground(styles.Blue)
+	listTitleStyle     = lipgloss.NewStyle().Bold(true).Foreground(styles.Main)
 	selectedTitleStyle = lipgloss.NewStyle().
 				Border(lipgloss.NormalBorder(), false, false, false, true).
-				BorderForeground(styles.Blue).
-				Foreground(styles.DarkBlue).
+				BorderForeground(styles.Main).
+				Foreground(styles.Highlight1).
 				Padding(0, 0, 0, 1)
 )
 

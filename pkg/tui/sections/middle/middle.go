@@ -15,7 +15,7 @@ type Model struct {
 var (
 	style = lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder(), false, true).
-		Foreground(styles.Blue)
+		Foreground(styles.Main)
 )
 
 func NewModel(ctx *context.TUIContext) Model {

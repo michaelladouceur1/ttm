@@ -86,7 +86,7 @@ func createTaskSummaryTree(task models.Task, title string) *tree.Tree {
 func createTable() *table.Table {
 	return table.New().
 		Border(lipgloss.RoundedBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(styles.Blue)).
+		BorderStyle(lipgloss.NewStyle().Foreground(styles.Main)).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			if row == table.HeaderRow {
 				return tableHeaderStyle
@@ -118,9 +118,9 @@ func createTable() *table.Table {
 
 			switch row % 2 {
 			case 0: // even
-				style = style.Foreground(styles.LightGray)
+				style = style.Foreground(styles.Highlight3)
 			default: // odd
-				style = style.Foreground(styles.Gray)
+				style = style.Foreground(styles.Highlight2)
 			}
 
 			return style

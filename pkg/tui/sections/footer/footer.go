@@ -14,7 +14,7 @@ type Model struct {
 
 var (
 	style = lipgloss.NewStyle().
-		Background(styles.DarkBlue).
+		Background(styles.Highlight1).
 		AlignVertical(lipgloss.Center).
 		Padding(0, 1)
 )
