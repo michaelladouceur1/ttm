@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss/tree"
@@ -24,10 +23,10 @@ func createSummaryTree(data []SummaryTreeItem, title string) *tree.Tree {
 }
 
 func getTreeChildStrings(data []SummaryTreeItem, longestKey int) []any {
-	children := []any{}
+	children := make([]any, 0, len(data))
 	for _, kv := range data {
 		paddingLength := longestKey - len(kv.Key) + SeparatorMargin
-		childString := fmt.Sprintf(kv.Key) + fmt.Sprintf(treeConnStyle.Render(" "+strings.Repeat(Separator, paddingLength))+" ") + fmt.Sprintf(textStyle.Render(kv.Value))
+		childString := kv.Key + treeConnStyle.Render(" "+strings.Repeat(Separator, paddingLength)) + " " + textStyle.Render(kv.Value)
 		children = append(children, childString)
 	}
 	return children

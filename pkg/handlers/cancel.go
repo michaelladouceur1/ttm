@@ -13,8 +13,7 @@ func CancelHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	_, err := fs.RemoveSessionFile()
-	if err != nil {
+	if err := fs.RemoveSessionFile(); err != nil {
 		logger.LogError("Error cancelling session: ", err)
 		return
 	}

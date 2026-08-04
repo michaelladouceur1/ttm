@@ -52,19 +52,13 @@ func (s *Task) CalculateDuration() {
 }
 
 func (t *Task) Validate() error {
-	var err error
-
-	err = t.Priority.Validate()
-	if err != nil {
+	if err := t.Category.Validate(); err != nil {
 		return err
 	}
-
-	err = t.Status.Validate()
-	if err != nil {
+	if err := t.Priority.Validate(); err != nil {
 		return err
 	}
-
-	return nil
+	return t.Status.Validate()
 }
 
 func (c Category) Validate() error {
@@ -91,15 +85,15 @@ func (s Status) Validate() error {
 	return nil
 }
 
-func SortTasksById(tasks *[]Task) {
-	sort.Slice(*tasks, func(i, j int) bool {
-		return (*tasks)[i].ID < (*tasks)[j].ID
+func SortTasksByID(tasks []Task) {
+	sort.Slice(tasks, func(i, j int) bool {
+		return tasks[i].ID < tasks[j].ID
 	})
 }
 
-func PopulateListIDs(tasks *[]Task) {
-	for i := range *tasks {
-		(*tasks)[i].ListID = int64(i + 1)
+func PopulateListIDs(tasks []Task) {
+	for i := range tasks {
+		tasks[i].ListID = int64(i + 1)
 	}
 }
 

@@ -16,19 +16,27 @@ func EndHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		return
 	}
 
-	sf, err := fs.RemoveSessionFile()
+	sf, err := fs.ReadSessionFile()
 	if err != nil {
 		logger.LogError("Error ending session: ", err)
 		return
 	}
 
-	store.AddSession(models.Session{
-		TaskId:    int64(sf.ID),
+	if err := store.AddSession(models.Session{
+		TaskId:    sf.TaskID,
 		StartTime: sf.StartTime,
 		EndTime:   time.Now(),
-	})
+	}); err != nil {
+		logger.LogError("Error ending session: ", err)
+		return
+	}
 
-	task, err := store.GetTaskByID(sf.ID)
+	if err := fs.RemoveSessionFile(); err != nil {
+		logger.LogError("Error ending session: ", err)
+		return
+	}
+
+	task, err := store.GetTaskByID(sf.TaskID)
 	if err != nil {
 		logger.LogError("Error ending session: ", err)
 		return
