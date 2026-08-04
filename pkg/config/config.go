@@ -13,6 +13,7 @@ type Config struct {
 	MaxTasksToDisplay int                `yaml:"maxTasksToDisplay"`
 	AddFlags          ConfigDefaultFlags `yaml:"addFlags"`
 	ListFlags         ConfigDefaultFlags `yaml:"listFlags"`
+	Storage           StorageConfig      `yaml:"storage"`
 }
 
 type ConfigDefaultFlags struct {
@@ -21,10 +22,23 @@ type ConfigDefaultFlags struct {
 	Status   string `yaml:"status"`
 }
 
+type StorageConfig struct {
+	Type       string           `yaml:"type"`
+	GoogleDocs GoogleDocsConfig `yaml:"googleDocs"`
+}
+
+type GoogleDocsConfig struct {
+	DocumentID      string `yaml:"documentId"`
+	CredentialsFile string `yaml:"credentialsFile"`
+}
+
 func NewConfig() (*gonfig.Gonfig[Config], error) {
 	cfg := &Config{
 		DaysToDisplay:     7,
 		MaxTasksToDisplay: 25,
+		Storage: StorageConfig{
+			Type: "sqlite",
+		},
 		AddFlags: ConfigDefaultFlags{
 			Category: string(models.CategoryTask),
 			Priority: string(models.PriorityHigh),

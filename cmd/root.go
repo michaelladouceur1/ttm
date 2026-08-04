@@ -9,6 +9,7 @@ import (
 	"ttm/pkg/config"
 	"ttm/pkg/store"
 	"ttm/pkg/store/db"
+	"ttm/pkg/store/googledocs"
 
 	"github.com/spf13/cobra"
 )
@@ -19,12 +20,28 @@ import (
 var RootCmd *cobra.Command
 
 func init() {
-	store := store.NewStore(db.NewDBStore("sqlite"))
-	store.Init()
-
 	cfg, err := config.NewConfig()
 	if err != nil {
 		fmt.Println("Error initializing config: ", err)
+		os.Exit(1)
+	}
+
+	var strategy store.StoreStrategy
+	switch cfg.Config.Storage.Type {
+	case "", "sqlite":
+		strategy = db.NewDBStore(db.Sqlite)
+	case "postgres":
+		strategy = db.NewDBStore(db.Postgres)
+	case "google-docs":
+		strategy = googledocs.NewStore(cfg.Config.Storage.GoogleDocs)
+	default:
+		fmt.Printf("Error initializing storage: unsupported storage type %q\n", cfg.Config.Storage.Type)
+		os.Exit(1)
+	}
+
+	st := store.NewStore(strategy)
+	if err := st.Init(); err != nil {
+		fmt.Println("Error initializing storage: ", err)
 		os.Exit(1)
 	}
 
@@ -34,15 +51,15 @@ func init() {
 		// Run:   func(cmd *cobra.Command, args []string) { handlers.RootHandler(cmd, args, cfg) },
 	}
 
-	RootCmd.AddCommand(NewAddCmd(cfg.Config, store))
+	RootCmd.AddCommand(NewAddCmd(cfg.Config, st))
 	RootCmd.AddCommand(NewCancelCmd())
-	RootCmd.AddCommand(NewCloseCmd(store))
-	RootCmd.AddCommand(NewEndCmd(store))
-	RootCmd.AddCommand(NewInfoCmd(store))
-	RootCmd.AddCommand(NewListCmd(cfg.Config, store))
-	RootCmd.AddCommand(NewStartCmd(store))
-	RootCmd.AddCommand(NewUpdateCmd(store))
-	RootCmd.AddCommand(NewSummaryCmd(cfg.Config, store))
+	RootCmd.AddCommand(NewCloseCmd(st))
+	RootCmd.AddCommand(NewEndCmd(st))
+	RootCmd.AddCommand(NewInfoCmd(st))
+	RootCmd.AddCommand(NewListCmd(cfg.Config, st))
+	RootCmd.AddCommand(NewStartCmd(st))
+	RootCmd.AddCommand(NewUpdateCmd(st))
+	RootCmd.AddCommand(NewSummaryCmd(cfg.Config, st))
 }
 
 func Execute() {
