@@ -58,6 +58,25 @@
 - `ttm end`: End session
 - `ttm cancel`: Cancel session
 
+### Storage configuration
+
+TTM uses SQLite by default. To store task and session data in a Google Doc instead,
+set the following values in `~/.ttm/config.yaml`:
+
+```yaml
+storage:
+  type: google-docs
+  googleDocs:
+    documentId: "your-google-document-id"
+    credentialsFile: "/absolute/path/to/service-account.json"
+```
+
+Create a Google Cloud service account, enable the Google Docs API, download its
+JSON credential file, and share the target Google Doc with the service account's
+email address as an editor. The document content is managed as JSON by TTM; do not
+edit that JSON manually. Credentials remain in the credential file rather than
+being stored in the document or committed to source control.
+
 #### TODO
 
 - [ ] TUI mode
