@@ -23,21 +23,20 @@ func StartHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		return
 	}
 
-	taskId, err := fs.GetTaskIDFromTempID(int64(taskListId))
+	taskID, err := fs.GetTaskIDFromTempID(int64(taskListId))
+	if err != nil {
+		logger.LogError("Error starting session: ", err)
+		return
+	}
+
+	task, err := store.GetTaskByID(taskID)
 	if err != nil {
 		logger.LogError("Error starting session: ", err)
 		return
 	}
 
 	start := time.Now()
-	_, err = fs.CreateSessionFile(taskId, start)
-	if err != nil {
-		logger.LogError("Error starting session: ", err)
-		return
-	}
-
-	task, err := store.GetTaskByID(taskId)
-	if err != nil {
+	if err := fs.CreateSessionFile(taskID, start); err != nil {
 		logger.LogError("Error starting session: ", err)
 		return
 	}

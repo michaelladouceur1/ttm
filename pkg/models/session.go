@@ -10,6 +10,6 @@ type Session struct {
 }
 
 type SessionFile struct {
-	ID        int64     `json:"id"`
+	TaskID    int64     `json:"id"`
 	StartTime time.Time `json:"start_time"`
 }

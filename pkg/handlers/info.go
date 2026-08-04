@@ -20,7 +20,7 @@ func InfoHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		return
 	}
 
-	task, err := store.GetTaskByID(sf.ID)
+	task, err := store.GetTaskByID(sf.TaskID)
 	if err != nil {
 		logger.LogError("Error getting session info: ", err)
 		return

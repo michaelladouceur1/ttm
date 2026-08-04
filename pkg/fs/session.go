@@ -2,80 +2,56 @@ package fs
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
+
 	"ttm/pkg/models"
 	"ttm/pkg/paths"
 )
 
-func CreateSessionFile(taskId int64, startTime time.Time) (*os.File, error) {
+func CreateSessionFile(taskID int64, startTime time.Time) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	var err error
-
-	sfJson, err := json.Marshal(models.SessionFile{ID: taskId, StartTime: startTime})
+	data, err := json.Marshal(models.SessionFile{TaskID: taskID, StartTime: startTime})
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("encode session file: %w", err)
 	}
 
-	file, err := os.Create(paths.GetSessionPath())
-	if err != nil {
-		return nil, err
+	if err := os.MkdirAll(paths.GetTTMDirectory(), 0o755); err != nil {
+		return fmt.Errorf("create TTM directory: %w", err)
 	}
-
-	_, err = file.Write(sfJson)
-	if err != nil {
-		return nil, err
+	if err := os.WriteFile(paths.GetSessionPath(), data, 0o600); err != nil {
+		return fmt.Errorf("write session file: %w", err)
 	}
-
-	return file, nil
+	return nil
 }
 
-func RemoveSessionFile() (models.SessionFile, error) {
+func RemoveSessionFile() error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	var sf models.SessionFile
-
-	file, err := os.Open(paths.GetSessionPath())
-	if err != nil {
-		return sf, err
+	if err := os.Remove(paths.GetSessionPath()); err != nil {
+		return fmt.Errorf("remove session file: %w", err)
 	}
-
-	err = json.NewDecoder(file).Decode(&sf)
-	if err != nil {
-		return sf, err
-	}
-
-	file.Close()
-
-	err = os.Remove(paths.GetSessionPath())
-	if err != nil {
-		return sf, err
-	}
-
-	return sf, nil
+	return nil
 }
 
 func ReadSessionFile() (models.SessionFile, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	var sf models.SessionFile
-
-	file, err := os.Open(paths.GetSessionPath())
+	data, err := os.ReadFile(paths.GetSessionPath())
 	if err != nil {
-		return sf, err
-	}
-	defer file.Close()
-
-	err = json.NewDecoder(file).Decode(&sf)
-	if err != nil {
-		return sf, err
+		return models.SessionFile{}, fmt.Errorf("read session file: %w", err)
 	}
 
-	return sf, nil
+	var session models.SessionFile
+	if err := json.Unmarshal(data, &session); err != nil {
+		return models.SessionFile{}, fmt.Errorf("decode session file: %w", err)
+	}
+	return session, nil
 }
 
 func SessionFileExists() bool {

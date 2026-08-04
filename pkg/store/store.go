@@ -73,8 +73,8 @@ func (s *Store) ListTasks(titleDescSearch string, category models.Category, stat
 		tasks[i].CalculateDuration()
 	}
 
-	models.SortTasksById(&tasks)
-	models.PopulateListIDs(&tasks)
+	models.SortTasksByID(tasks)
+	models.PopulateListIDs(tasks)
 
 	return tasks, nil
 }

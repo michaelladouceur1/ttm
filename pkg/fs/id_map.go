@@ -2,7 +2,10 @@ package fs
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
+
 	"ttm/pkg/models"
 	"ttm/pkg/paths"
 )
@@ -16,73 +19,55 @@ func ReadIDMapFile() ([]IDMap, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	var idMap []IDMap
-
-	file, err := os.Open(paths.GetIDMapPath())
+	data, err := os.ReadFile(paths.GetIDMapPath())
 	if err != nil {
-		return idMap, err
+		return nil, fmt.Errorf("read task ID map: %w", err)
 	}
-	defer file.Close()
 
-	err = json.NewDecoder(file).Decode(&idMap)
-	if err != nil {
-		return idMap, err
+	var idMap []IDMap
+	if err := json.Unmarshal(data, &idMap); err != nil {
+		return nil, fmt.Errorf("decode task ID map: %w", err)
 	}
 
 	return idMap, nil
 }
 
-type TaskNotFoundError struct{}
+var ErrTaskNotFound = errors.New("task not found")
 
-func (e TaskNotFoundError) Error() string {
-	return "task not found"
-}
-
-func GetTaskIDFromTempID(tempID int64) (int64, error) {
+func GetTaskIDFromTempID(listID int64) (int64, error) {
 	idMap, err := ReadIDMapFile()
 	if err != nil {
 		return 0, err
 	}
 
 	for _, idMapItem := range idMap {
-		if idMapItem.ListID == tempID {
+		if idMapItem.ListID == listID {
 			return idMapItem.ID, nil
 		}
 	}
 
-	return 0, TaskNotFoundError{}
+	return 0, ErrTaskNotFound
 }
 
 func UpdateIDMapFile(tasks []models.Task) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	var err error
-
-	if os.MkdirAll(paths.GetTTMDirectory(), os.ModePerm); err != nil {
-		return err
-	}
-
-	file, err := os.Create(paths.GetIDMapPath())
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
 	var idMap []IDMap
 	for _, task := range tasks {
 		idMap = append(idMap, IDMap{ID: task.ID, ListID: task.ListID})
 	}
 
-	idMapJson, err := json.Marshal(idMap)
+	idMapJSON, err := json.Marshal(idMap)
 	if err != nil {
-		return err
+		return fmt.Errorf("encode task ID map: %w", err)
 	}
 
-	_, err = file.Write(idMapJson)
-	if err != nil {
-		return err
+	if err := os.MkdirAll(paths.GetTTMDirectory(), 0o755); err != nil {
+		return fmt.Errorf("create TTM directory: %w", err)
 	}
-
+	if err := os.WriteFile(paths.GetIDMapPath(), idMapJSON, 0o600); err != nil {
+		return fmt.Errorf("write task ID map: %w", err)
+	}
 	return nil
 }
