@@ -17,3 +17,9 @@ CREATE TABLE IF NOT EXISTS sessions (
     start_time TIMESTAMP,
     end_time TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER,
+    tag TEXT
+);

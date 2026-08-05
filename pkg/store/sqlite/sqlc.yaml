@@ -1,8 +1,8 @@
 version: "2"
 sql:
   - engine: "sqlite"
-    queries: "../query.sqlite.sql"
-    schema: "../schema.sqlite.sql"
+    queries: "query.sqlite.sql"
+    schema: "schema.sqlite.sql"
     gen:
       go:
         package: "ttmsqlite"

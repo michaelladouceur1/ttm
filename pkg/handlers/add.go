@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"strings"
 	"time"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
@@ -13,6 +14,7 @@ func AddHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	addCategoryFlag := cmd.Flags().Lookup("category").Value.String()
 	addPriorityFlag := cmd.Flags().Lookup("priority").Value.String()
 	addStatusFlag := cmd.Flags().Lookup("status").Value.String()
+	addTagsFlag := cmd.Flags().Lookup("tags").Value.String()
 
 	var title, description string
 	title = args[0]
@@ -21,12 +23,17 @@ func AddHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		description = args[1]
 	}
 
+	tags := strings.Split(addTagsFlag, ",")
+
+	println("tags: ", tags)
+
 	task := models.Task{
 		Title:       title,
 		Description: description,
 		Category:    models.Category(addCategoryFlag),
 		Priority:    models.Priority(addPriorityFlag),
 		Status:      models.Status(addStatusFlag),
+		Tags:        tags,
 		OpenedAt:    time.Now(),
 	}
 

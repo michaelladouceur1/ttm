@@ -42,3 +42,17 @@ WHERE task_id = $1;
 -- name: GetSessionsByTimeRange :many
 SELECT * FROM sessions
 WHERE start_time >= $1 AND end_time <= $2;
+
+-- name: GetTagsByTaskID :many
+SELECT * FROM tags
+WHERE task_id = $1;
+
+-- name: CreateTag :one
+INSERT INTO tags (task_id, tag)
+VALUES ($1, $2)
+RETURNING *;
+
+-- name: CreateTags :many
+INSERT INTO tags (task_id, tag)
+VALUES ($1, $2)
+RETURNING *;

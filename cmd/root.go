@@ -8,8 +8,9 @@ import (
 	"os"
 	"ttm/pkg/config"
 	"ttm/pkg/store"
-	"ttm/pkg/store/db"
 	"ttm/pkg/store/googledocs"
+	postgres "ttm/pkg/store/postgres"
+	sqlite "ttm/pkg/store/sqlite"
 
 	"github.com/spf13/cobra"
 )
@@ -29,9 +30,9 @@ func init() {
 	var strategy store.StoreStrategy
 	switch cfg.Config.Storage.Type {
 	case "", "sqlite":
-		strategy = db.NewDBStore(db.Sqlite)
+		strategy = sqlite.NewStore()
 	case "postgres":
-		strategy = db.NewDBStore(db.Postgres)
+		strategy = postgres.NewStore()
 	case "google-docs":
 		strategy = googledocs.NewStore(cfg.Config.Storage.GoogleDocs)
 	default:

@@ -54,14 +54,20 @@ func (s *Store) Init() error {
 	return nil
 }
 
-func (s *Store) InsertTask(task models.Task) error {
-	return s.modify(func(data *documentData) error {
+func (s *Store) InsertTask(task models.Task) (models.Task, error) {
+	err := s.modify(func(data *documentData) error {
 		task.ID = nextTaskID(data.Tasks)
 		task.CreatedAt = time.Now()
 		task.UpdatedAt = task.CreatedAt
 		data.Tasks = append(data.Tasks, task)
 		return nil
 	})
+
+	if err != nil {
+		return models.Task{}, err
+	}
+
+	return task, nil
 }
 
 func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
@@ -173,6 +179,12 @@ func (s *Store) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) (
 		}
 	}
 	return sessions, nil
+}
+
+func (s *Store) InsertTags(taskID int64, tags []string) error {
+	return s.updateTask(taskID, func(task *models.Task) {
+		task.Tags = append(task.Tags, tags...)
+	})
 }
 
 func (s *Store) updateTask(taskID int64, update func(*models.Task)) error {

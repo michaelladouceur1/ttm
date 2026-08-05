@@ -10,7 +10,7 @@ import (
 
 type StoreStrategy interface {
 	Init() error
-	InsertTask(task models.Task) error
+	InsertTask(task models.Task) (models.Task, error)
 	GetTaskByID(taskID int64) (models.Task, error)
 	ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error)
 	UpdateTitle(taskID int64, title string) error
@@ -23,6 +23,7 @@ type StoreStrategy interface {
 	AddSession(session models.Session) error
 	GetSessionsByTaskID(taskID int) ([]models.Session, error)
 	GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error)
+	InsertTags(taskID int64, tags []string) error
 }
 
 type Store struct {
@@ -37,7 +38,7 @@ func NewStore(strategy StoreStrategy) *Store {
 
 func Init(strategy StoreStrategy) error {
 	store := NewStore(strategy)
-	return store.Init()
+	return store.strategy.Init()
 }
 
 func (s *Store) UpdateStoreStrategy(strategy StoreStrategy) {
@@ -49,7 +50,14 @@ func (s *Store) Init() error {
 }
 
 func (s *Store) InsertTask(task models.Task) error {
-	return s.strategy.InsertTask(task)
+	newTask, err := s.strategy.InsertTask(task)
+	if err != nil {
+		return err
+	}
+	if err := s.strategy.InsertTags(newTask.ID, task.Tags); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
