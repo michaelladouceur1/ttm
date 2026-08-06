@@ -77,6 +77,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.active = nil
 		m.content = "Task creation cancelled."
 		return m, nil
+	case listClosedMsg:
+		m.active = nil
+		m.content = msg.content
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -176,7 +180,7 @@ func (m *model) execute() {
 		}
 		m.active = newAddModel(m.cfg, m.store, m.input.Width)
 	case "list":
-		m.listTasks(args[1:])
+		m.active = newListModel(m.cfg, m.store, m.input.Width, args[1:])
 	default:
 		m.content = fmt.Sprintf("Unknown command: /%s\n\nType / to see available commands.", args[0])
 	}

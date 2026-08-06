@@ -5,6 +5,8 @@ import (
 	"testing"
 	"ttm/pkg/config"
 	"ttm/pkg/models"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func TestParseCommand(t *testing.T) {
@@ -97,5 +99,29 @@ func TestParseTags(t *testing.T) {
 	want := []string{"work", "urgent", "planning"}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("parseTags() = %#v, want %#v", got, want)
+	}
+}
+
+func TestListCommandCreatesChildModel(t *testing.T) {
+	m := newModel(nil, nil)
+	m.input.SetValue("/list one two")
+	m.execute()
+
+	list, ok := m.active.(listModel)
+	if !ok {
+		t.Fatalf("active model = %T, want listModel", m.active)
+	}
+	if list.content != "Error: /list accepts at most one search query." {
+		t.Errorf("list content = %q", list.content)
+	}
+}
+
+func TestListModelClosesToRoot(t *testing.T) {
+	m := newListModel(nil, nil, 80, []string{"one", "two"})
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	msg := cmd()
+
+	if _, ok := msg.(listClosedMsg); !ok {
+		t.Fatalf("close message = %T, want listClosedMsg", msg)
 	}
 }
