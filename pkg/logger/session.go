@@ -4,40 +4,48 @@ import (
 	"fmt"
 	"time"
 	"ttm/pkg/models"
-
-	"github.com/charmbracelet/lipgloss/tree"
 )
 
+func (l *Logger) LogSessionStart(task models.Task, start time.Time) {
+	fmt.Println(l.style.RenderSummary("Session Started", []SummaryItem{
+		{Key: "Task Title", Value: task.Title},
+		{Key: "Task Description", Value: task.Description},
+		{Key: "Start Time", Value: start.Round(time.Second).Format("2006-01-02 15:04:05")},
+	}))
+}
+
+func (l *Logger) LogSessionEnd(session models.SessionFile, task models.Task) {
+	l.logSessionSummary(session, task, "Session Ended")
+}
+
+func (l *Logger) LogSessionInfo(session models.SessionFile, task models.Task) {
+	l.logSessionSummary(session, task, "Session Info")
+}
+
+func (l *Logger) LogSessionCancel() {
+	l.LogMessage("Session cancelled.")
+}
+
+func (l *Logger) logSessionSummary(session models.SessionFile, task models.Task, title string) {
+	fmt.Println(l.style.RenderSummary(title, []SummaryItem{
+		{Key: "Task Title", Value: task.Title},
+		{Key: "Start Time", Value: session.StartTime.Round(time.Second).Format("2006-01-02 15:04:05")},
+		{Key: "Duration", Value: time.Since(session.StartTime).Round(time.Second).String()},
+	}))
+}
+
 func LogSessionStart(task models.Task, start time.Time) {
-	fmt.Println(createSessionStartSummaryTree(task, start, "Session Started"))
+	defaultLogger.LogSessionStart(task, start)
 }
 
 func LogSessionEnd(session models.SessionFile, task models.Task) {
-	fmt.Println(createSessionSummaryTree(session, task, "Session Ended"))
+	defaultLogger.LogSessionEnd(session, task)
 }
 
 func LogSessionInfo(session models.SessionFile, task models.Task) {
-	fmt.Println(createSessionSummaryTree(session, task, "Session Info"))
+	defaultLogger.LogSessionInfo(session, task)
 }
 
 func LogSessionCancel() {
-	LogMessage("Session cancelled.")
-}
-
-func createSessionStartSummaryTree(task models.Task, start time.Time, title string) *tree.Tree {
-	data := []SummaryTreeItem{
-		{"Task Title", task.Title},
-		{"Task Description", task.Description},
-		{"Start Time", start.Round(time.Second).Format("2006-01-02 15:04:05")},
-	}
-	return createSummaryTree(data, title)
-}
-
-func createSessionSummaryTree(session models.SessionFile, task models.Task, title string) *tree.Tree {
-	data := []SummaryTreeItem{
-		{"Task Title", task.Title},
-		{"Start Time", session.StartTime.Round(time.Second).Format("2006-01-02 15:04:05")},
-		{"Duration", time.Since(session.StartTime).Round(time.Second).String()},
-	}
-	return createSummaryTree(data, title)
+	defaultLogger.LogSessionCancel()
 }

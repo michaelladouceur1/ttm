@@ -78,6 +78,17 @@ email address as an editor. The document content is managed as JSON by TTM; do n
 edit that JSON manually. Credentials remain in the credential file rather than
 being stored in the document or committed to source control.
 
+### Logging themes
+
+Set `logging.theme` in `~/.ttm/config.yaml` to choose the output format. The
+default `classic` theme uses colored tables and summary trees. `compact` is a
+color-free, line-oriented format for narrow terminals and scripting.
+
+```yaml
+logging:
+  theme: compact
+```
+
 #### TODO
 
 - [ ] TUI mode
