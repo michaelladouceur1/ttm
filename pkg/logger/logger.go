@@ -2,13 +2,17 @@ package logger
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"ttm/pkg/models"
+
+	"github.com/charmbracelet/x/term"
 )
 
 const (
 	ClassicStyleName = "classic"
 	CompactStyleName = "compact"
+	MinimalStyleName = "minimal"
 )
 
 type SummaryItem struct {
@@ -33,11 +37,18 @@ func New(style Style) *Logger {
 }
 
 func NewStyle(name string) (Style, error) {
+	width, height, err := term.GetSize(os.Stdout.Fd())
+	if err != nil {
+		width = 80
+		height = 24
+	}
 	switch strings.ToLower(strings.TrimSpace(name)) {
 	case "", ClassicStyleName:
-		return ClassicStyle{}, nil
+		return ClassicStyle{width, height}, nil
 	case CompactStyleName:
 		return CompactStyle{}, nil
+	case MinimalStyleName:
+		return MinimalStyle{width, height}, nil
 	default:
 		return nil, fmt.Errorf("unsupported logging theme %q; choose classic or compact", name)
 	}

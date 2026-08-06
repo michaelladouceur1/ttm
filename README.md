@@ -40,13 +40,14 @@
 - `summary` : Summarize sessions for given time period
   - `ttm session summary`
 
-### TUI Mode
+### Terminal UI
 
-#### Command List
+Run `ttm` without arguments to open the full-screen terminal UI. Type `/` in
+the command input to browse commands, use the arrow keys or Tab to select one,
+and press Enter to run it.
 
-- Add task
-- Start session
-- List tasks
+- `/add "title" ["description"]`: add a task
+- `/list ["query"]`: list open tasks, optionally filtered by a query
 
 ### Shorthand
 
@@ -91,8 +92,15 @@ logging:
 
 #### TODO
 
-- [ ] TUI mode
-- [ ] Notes support per task/session
+- [ ] TUI commands
+  - [ ] /add (started; matching ability to CLI)
+  - [ ] /list (started; matching ability to CLI)
+  - [ ] /update - update task fields
+  - [ ] /detail - shows task details with notes and sessions
+  - [ ] /note - add note to task
+- [ ] Task notes
 - [ ] User support for multi-user environments
+- [ ] Focus (Analogous to sprint) for tasks and sessions
 - [ ] Time-based reports viewing tasks and sessions
+- [ ] Integration with copilot cli; send tasks to copilot agent
 - [ ] Integration with project management tools (e.g., Jira, Trello)

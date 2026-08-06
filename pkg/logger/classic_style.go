@@ -12,7 +12,10 @@ import (
 	"github.com/charmbracelet/lipgloss/tree"
 )
 
-type ClassicStyle struct{}
+type ClassicStyle struct {
+	TermWidth  int
+	TermHeight int
+}
 
 func (ClassicStyle) RenderMessage(message string) string {
 	return lipgloss.NewStyle().Bold(true).Foreground(styles.Main).Render(message)
@@ -48,7 +51,7 @@ func (ClassicStyle) RenderSummary(title string, items []SummaryItem) string {
 		String()
 }
 
-func (ClassicStyle) RenderTasks(tasks []models.Task) string {
+func (cs ClassicStyle) RenderTasks(tasks []models.Task) string {
 	cellStyle := lipgloss.NewStyle().Padding(0, 1).Width(14)
 	columnStyles := []lipgloss.Style{
 		cellStyle.Width(5),
@@ -63,6 +66,7 @@ func (ClassicStyle) RenderTasks(tasks []models.Task) string {
 	}
 	headerStyle := lipgloss.NewStyle().Foreground(styles.Main).Bold(true).Align(lipgloss.Center)
 	table := table.New().
+		Width(max(1, cs.TermWidth-5)).
 		Border(lipgloss.RoundedBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(styles.Main)).
 		Headers("ID", "Title", "Description", "Category", "Priority", "Status", "Tags", "Duration", "Created At").

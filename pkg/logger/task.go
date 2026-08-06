@@ -18,6 +18,10 @@ func (l *Logger) LogTasks(tasks []models.Task) {
 	fmt.Println(l.style.RenderTasks(tasks))
 }
 
+func (l *Logger) RenderTasks(tasks []models.Task) string {
+	return l.style.RenderTasks(tasks)
+}
+
 func (l *Logger) LogCloseTasks(tasks []models.Task) {
 	items := make([]SummaryItem, 0, len(tasks))
 	for i, task := range tasks {
@@ -52,6 +56,10 @@ func LogUpdateTask(task models.Task) {
 
 func LogTasks(tasks []models.Task) {
 	defaultLogger.LogTasks(tasks)
+}
+
+func RenderTasks(tasks []models.Task) string {
+	return defaultLogger.RenderTasks(tasks)
 }
 
 func LogCloseTasks(tasks []models.Task) {
