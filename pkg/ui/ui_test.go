@@ -3,6 +3,8 @@ package ui
 import (
 	"reflect"
 	"testing"
+	"ttm/pkg/config"
+	"ttm/pkg/models"
 )
 
 func TestParseCommand(t *testing.T) {
@@ -46,5 +48,47 @@ func TestUpdateSuggestions(t *testing.T) {
 	m.updateSuggestions()
 	if len(m.suggestions) != 1 || m.suggestions[0].name != "list" {
 		t.Fatalf("suggestions = %#v, want list", m.suggestions)
+	}
+}
+
+func TestAddFormWalksThroughFields(t *testing.T) {
+	m := newModel(&config.Config{
+		AddFlags: config.ConfigDefaultFlags{
+			Category: string(models.CategoryTask),
+			Priority: string(models.PriorityHigh),
+			Status:   string(models.StatusOpen),
+		},
+	}, nil)
+	m.input.SetValue("/add")
+	m.execute()
+
+	if m.addStep != addStepTitle || m.input.Placeholder != "Enter title..." {
+		t.Fatalf("add form did not start at title: step=%d placeholder=%q", m.addStep, m.input.Placeholder)
+	}
+
+	m.input.SetValue("Plan release")
+	m.submitAddField()
+	if m.addStep != addStepDescription || m.draft.Title != "Plan release" {
+		t.Fatalf("title was not saved: step=%d title=%q", m.addStep, m.draft.Title)
+	}
+
+	m.input.SetValue("Prepare notes")
+	m.submitAddField()
+	if m.addStep != addStepPriority || m.draft.Description != "Prepare notes" {
+		t.Fatalf("description was not saved: step=%d description=%q", m.addStep, m.draft.Description)
+	}
+
+	m.input.SetValue("medium")
+	m.submitAddField()
+	if m.addStep != addStepTags || m.draft.Priority != models.PriorityMedium {
+		t.Fatalf("priority was not saved: step=%d priority=%q", m.addStep, m.draft.Priority)
+	}
+}
+
+func TestParseTags(t *testing.T) {
+	got := parseTags("work, urgent, ,planning")
+	want := []string{"work", "urgent", "planning"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("parseTags() = %#v, want %#v", got, want)
 	}
 }

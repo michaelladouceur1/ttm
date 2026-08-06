@@ -46,7 +46,7 @@ Run `ttm` without arguments to open the full-screen terminal UI. Type `/` in
 the command input to browse commands, use the arrow keys or Tab to select one,
 and press Enter to run it.
 
-- `/add "title" ["description"]`: add a task
+- `/add`: add a task by entering its title, description, priority, and tags
 - `/list ["query"]`: list open tasks, optionally filtered by a query
 
 ### Shorthand

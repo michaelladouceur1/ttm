@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"ttm/pkg/config"
+	"ttm/pkg/models"
 	"ttm/pkg/store"
 	"ttm/pkg/styles"
 
@@ -18,7 +19,7 @@ type command struct {
 }
 
 var commands = []command{
-	{name: "add", description: "Add a task: /add \"title\" [\"description\"]"},
+	{name: "add", description: "Add a task with a guided form"},
 	{name: "list", description: "List open tasks, optionally matching a query"},
 }
 
@@ -38,6 +39,25 @@ type model struct {
 	selected    int
 	suggestions []command
 	content     string
+	addStep     addStep
+	draft       models.Task
+	priority    int
+}
+
+type addStep int
+
+const (
+	addStepNone addStep = iota
+	addStepTitle
+	addStepDescription
+	addStepPriority
+	addStepTags
+)
+
+var priorities = []models.Priority{
+	models.PriorityLow,
+	models.PriorityMedium,
+	models.PriorityHigh,
 }
 
 func newModel(cfg *config.Config, st *store.Store) model {
@@ -72,11 +92,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "up":
+			if m.addStep == addStepPriority {
+				m.priority = (m.priority - 1 + len(priorities)) % len(priorities)
+				m.input.SetValue(string(priorities[m.priority]))
+				return m, nil
+			}
 			if len(m.suggestions) > 0 {
 				m.selected = (m.selected - 1 + len(m.suggestions)) % len(m.suggestions)
 				return m, nil
 			}
 		case "down":
+			if m.addStep == addStepPriority {
+				m.priority = (m.priority + 1) % len(priorities)
+				m.input.SetValue(string(priorities[m.priority]))
+				return m, nil
+			}
 			if len(m.suggestions) > 0 {
 				m.selected = (m.selected + 1) % len(m.suggestions)
 				return m, nil
@@ -87,6 +117,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		case "enter":
+			if m.addStep != addStepNone {
+				m.submitAddField()
+				return m, nil
+			}
 			if m.input.Value() == "/" && len(m.suggestions) > 0 {
 				m.completeSuggestion()
 				return m, nil
@@ -94,6 +128,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.execute()
 			return m, nil
 		case "esc":
+			if m.addStep != addStepNone {
+				m.resetAddForm("Task creation cancelled.")
+				return m, nil
+			}
 			m.input.SetValue("")
 			m.suggestions = nil
 			m.selected = 0
@@ -145,7 +183,11 @@ func (m *model) execute() {
 
 	switch args[0] {
 	case "add":
-		m.addTask(args[1:])
+		if len(args) != 1 {
+			m.content = "Usage: /add\n\nTasks are created one field at a time."
+			break
+		}
+		m.startAddForm()
 	case "list":
 		m.listTasks(args[1:])
 	default:
@@ -172,6 +214,17 @@ func (m model) View() string {
 				prefix = "> "
 			}
 			fmt.Fprintf(&body, "%s/%-5s %s\n", prefix, command.name, command.description)
+		}
+		body.WriteString("\n")
+	}
+	if m.addStep == addStepPriority {
+		body.WriteString("Priority\n")
+		for i, priority := range priorities {
+			prefix := "  "
+			if i == m.priority {
+				prefix = "> "
+			}
+			fmt.Fprintf(&body, "%s%s\n", prefix, priority)
 		}
 		body.WriteString("\n")
 	}
