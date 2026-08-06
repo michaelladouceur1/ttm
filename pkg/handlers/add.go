@@ -25,8 +25,6 @@ func AddHandler(cmd *cobra.Command, args []string, store *store.Store) {
 
 	tags := strings.Split(addTagsFlag, ",")
 
-	println("tags: ", tags)
-
 	task := models.Task{
 		Title:       title,
 		Description: description,
