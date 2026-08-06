@@ -92,7 +92,15 @@ logging:
 
 #### TODO
 
-- [ ] Notes support per task/session
+- [ ] TUI commands
+  - [ ] /add (started; matching ability to CLI)
+  - [ ] /list (started; matching ability to CLI)
+  - [ ] /update - update task fields
+  - [ ] /detail - shows task details with notes and sessions
+  - [ ] /note - add note to task
+- [ ] Task notes
 - [ ] User support for multi-user environments
+- [ ] Focus (Analogous to sprint) for tasks and sessions
 - [ ] Time-based reports viewing tasks and sessions
+- [ ] Integration with copilot cli; send tasks to copilot agent
 - [ ] Integration with project management tools (e.g., Jira, Trello)
