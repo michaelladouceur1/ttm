@@ -3,6 +3,7 @@ package logger
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 	"ttm/pkg/models"
 	"ttm/pkg/styles"
@@ -20,6 +21,7 @@ const (
 	CategoryColumn
 	PriorityColumn
 	StatusColumn
+	TagsColumn
 	DurationColumn
 	CreatedAtColumn
 )
@@ -34,7 +36,7 @@ func LogUpdateTask(task models.Task) {
 
 func LogTasks(tasks []models.Task) {
 	t := createTable()
-	t.Headers("Temp ID", "ID", "Title", "Description", "Category", "Priority", "Status", "Duration", "Created At")
+	t.Headers("Temp ID", "ID", "Title", "Description", "Category", "Priority", "Status", "Tags", "Duration", "Created At")
 	for _, task := range tasks {
 		t.Row(createRowStrings(task)...)
 	}
@@ -79,6 +81,7 @@ func createTaskSummaryTree(task models.Task, title string) *tree.Tree {
 		{"Category", string(task.Category)},
 		{"Priority", string(task.Priority)},
 		{"Status", string(task.Status)},
+		{"Tags", strings.Join(task.Tags, ",")},
 	}
 	return createSummaryTree(data, title)
 }
@@ -108,6 +111,8 @@ func createTable() *table.Table {
 				style = priorityStyle
 			case StatusColumn:
 				style = statusStyle
+			case TagsColumn:
+				style = createdAtStyle
 			case DurationColumn:
 				style = cellStyle
 			case CreatedAtColumn:
@@ -136,6 +141,7 @@ func createRowStrings(task models.Task) []string {
 		string(task.Category),
 		string(task.Priority),
 		string(task.Status),
+		strings.Join(task.Tags, ","),
 		toDuration(task.Duration),
 		task.CreatedAt.Format("2006-01-02 15:04:05"),
 	}

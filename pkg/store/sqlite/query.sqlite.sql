@@ -42,3 +42,21 @@ WHERE task_id = ?;
 -- name: GetSessionsByTimeRange :many
 SELECT * FROM sessions
 WHERE start_time >= ? AND end_time <= ?;
+
+-- name: GetTagsByTaskID :many
+SELECT * FROM tags
+WHERE task_id = ?;
+
+-- name: CreateTag :one
+INSERT INTO tags (task_id, tag)
+VALUES (?, ?)
+RETURNING *;
+
+-- name: CreateTags :many
+INSERT INTO tags (task_id, tag)
+VALUES (?, ?)
+RETURNING *;
+
+-- name: DeleteTagsByTaskID :exec
+DELETE FROM tags
+WHERE task_id = ?;

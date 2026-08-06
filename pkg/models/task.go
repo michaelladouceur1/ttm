@@ -9,6 +9,7 @@ import (
 type Category string
 type Priority string
 type Status string
+type Tags []string
 
 const (
 	CategoryTask    Category = "task"
@@ -34,6 +35,7 @@ type Task struct {
 	Category    Category  `json:"category"`
 	Priority    Priority  `json:"priority"`
 	Status      Status    `json:"status"`
+	Tags        []string  `json:"tags"`
 	Duration    time.Time `json:"duration"`
 	OpenedAt    time.Time `json:"opened_at"`
 	ClosedAt    time.Time `json:"closed_at"`

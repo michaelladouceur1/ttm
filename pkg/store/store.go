@@ -10,7 +10,7 @@ import (
 
 type StoreStrategy interface {
 	Init() error
-	InsertTask(task models.Task) error
+	InsertTask(task models.Task) (models.Task, error)
 	GetTaskByID(taskID int64) (models.Task, error)
 	ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error)
 	UpdateTitle(taskID int64, title string) error
@@ -18,11 +18,14 @@ type StoreStrategy interface {
 	UpdateCategory(taskID int64, category models.Category) error
 	UpdatePriority(taskID int64, priority models.Priority) error
 	UpdateStatus(taskID int64, status models.Status) error
+	UpdateTags(taskID int64, tags []string) error
 	UpdateOpenedAt(taskID int64, openedAt time.Time) error
 	UpdateClosedAt(taskID int64, closedAt time.Time) error
 	AddSession(session models.Session) error
 	GetSessionsByTaskID(taskID int) ([]models.Session, error)
 	GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error)
+	InsertTags(taskID int64, tags []string) error
+	GetTagsByTaskID(taskID int64) ([]string, error)
 }
 
 type Store struct {
@@ -37,7 +40,7 @@ func NewStore(strategy StoreStrategy) *Store {
 
 func Init(strategy StoreStrategy) error {
 	store := NewStore(strategy)
-	return store.Init()
+	return store.strategy.Init()
 }
 
 func (s *Store) UpdateStoreStrategy(strategy StoreStrategy) {
@@ -49,11 +52,42 @@ func (s *Store) Init() error {
 }
 
 func (s *Store) InsertTask(task models.Task) error {
-	return s.strategy.InsertTask(task)
+	newTask, err := s.strategy.InsertTask(task)
+	if err != nil {
+		return err
+	}
+
+	if len(task.Tags) > 0 {
+		if err := s.strategy.InsertTags(newTask.ID, task.Tags); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
-	return s.strategy.GetTaskByID(taskID)
+	task, err := s.strategy.GetTaskByID(taskID)
+	if err != nil {
+		return models.Task{}, err
+	}
+
+	sessions, err := s.GetSessionsByTaskID(int(task.ID))
+	if err != nil {
+		return models.Task{}, err
+	}
+
+	task.Sessions = sessions
+	task.CalculateDuration()
+
+	tags, err := s.strategy.GetTagsByTaskID(task.ID)
+	if err != nil {
+		return models.Task{}, err
+	}
+
+	task.Tags = tags
+
+	return task, nil
 }
 
 func (s *Store) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
@@ -71,6 +105,13 @@ func (s *Store) ListTasks(titleDescSearch string, category models.Category, stat
 
 		tasks[i].Sessions = sessions
 		tasks[i].CalculateDuration()
+
+		tags, err := s.strategy.GetTagsByTaskID(task.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		tasks[i].Tags = tags
 	}
 
 	models.SortTasksByID(tasks)
@@ -99,12 +140,20 @@ func (s *Store) UpdateStatus(taskID int64, status models.Status) error {
 	return s.strategy.UpdateStatus(taskID, status)
 }
 
+func (s *Store) UpdateTags(taskID int64, tags []string) error {
+	return s.strategy.UpdateTags(taskID, tags)
+}
+
 func (s *Store) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
 	return s.strategy.UpdateOpenedAt(taskID, openedAt)
 }
 
 func (s *Store) UpdateClosedAt(taskID int64, closedAt time.Time) error {
 	return s.strategy.UpdateClosedAt(taskID, closedAt)
+}
+
+func (s *Store) InsertTags(taskID int64, tags []string) error {
+	return s.strategy.InsertTags(taskID, tags)
 }
 
 func (s *Store) AddSession(session models.Session) error {

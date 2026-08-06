@@ -19,9 +19,11 @@ func NewAddCmd(cfg *config.Config, st *store.Store) *cobra.Command {
 	addCategoryFlag := &cfg.AddFlags.Category
 	addPriorityFlag := &cfg.AddFlags.Priority
 	addStatusFlag := &cfg.AddFlags.Status
+	addTagsFlag := ""
 	addCmd.Flags().StringVarP(addCategoryFlag, "category", "c", *addCategoryFlag, "Default category")
 	addCmd.Flags().StringVarP(addPriorityFlag, "priority", "p", *addPriorityFlag, "Default priority")
 	addCmd.Flags().StringVarP(addStatusFlag, "status", "s", *addStatusFlag, "Default status")
+	addCmd.Flags().StringVarP(&addTagsFlag, "tags", "t", addTagsFlag, "Default tags (comma-separated)")
 
 	return addCmd
 }

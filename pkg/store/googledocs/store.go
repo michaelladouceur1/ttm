@@ -54,14 +54,20 @@ func (s *Store) Init() error {
 	return nil
 }
 
-func (s *Store) InsertTask(task models.Task) error {
-	return s.modify(func(data *documentData) error {
+func (s *Store) InsertTask(task models.Task) (models.Task, error) {
+	err := s.modify(func(data *documentData) error {
 		task.ID = nextTaskID(data.Tasks)
 		task.CreatedAt = time.Now()
 		task.UpdatedAt = task.CreatedAt
 		data.Tasks = append(data.Tasks, task)
 		return nil
 	})
+
+	if err != nil {
+		return models.Task{}, err
+	}
+
+	return task, nil
 }
 
 func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
@@ -122,6 +128,10 @@ func (s *Store) UpdateStatus(taskID int64, status models.Status) error {
 	return s.updateTask(taskID, func(task *models.Task) { task.Status = status })
 }
 
+func (s *Store) UpdateTags(taskID int64, tags []string) error {
+	return s.updateTask(taskID, func(task *models.Task) { task.Tags = tags })
+}
+
 func (s *Store) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
 	return s.updateTask(taskID, func(task *models.Task) { task.OpenedAt = openedAt })
 }
@@ -173,6 +183,28 @@ func (s *Store) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) (
 		}
 	}
 	return sessions, nil
+}
+
+func (s *Store) InsertTags(taskID int64, tags []string) error {
+	return s.updateTask(taskID, func(task *models.Task) {
+		task.Tags = append(task.Tags, tags...)
+	})
+}
+
+func (s *Store) GetTagsByTaskID(taskID int64) ([]string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	data, err := s.read()
+	if err != nil {
+		return nil, err
+	}
+	for _, task := range data.Tasks {
+		if task.ID == taskID {
+			return task.Tags, nil
+		}
+	}
+	return nil, fmt.Errorf("task %d not found", taskID)
 }
 
 func (s *Store) updateTask(taskID int64, update func(*models.Task)) error {
