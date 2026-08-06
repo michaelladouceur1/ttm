@@ -18,6 +18,7 @@ type StoreStrategy interface {
 	UpdateCategory(taskID int64, category models.Category) error
 	UpdatePriority(taskID int64, priority models.Priority) error
 	UpdateStatus(taskID int64, status models.Status) error
+	UpdateTags(taskID int64, tags []string) error
 	UpdateOpenedAt(taskID int64, openedAt time.Time) error
 	UpdateClosedAt(taskID int64, closedAt time.Time) error
 	AddSession(session models.Session) error
@@ -54,9 +55,13 @@ func (s *Store) InsertTask(task models.Task) error {
 	if err != nil {
 		return err
 	}
-	if err := s.strategy.InsertTags(newTask.ID, task.Tags); err != nil {
-		return err
+
+	if len(task.Tags) > 0 {
+		if err := s.strategy.InsertTags(newTask.ID, task.Tags); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
@@ -105,6 +110,10 @@ func (s *Store) UpdatePriority(taskID int64, priority models.Priority) error {
 
 func (s *Store) UpdateStatus(taskID int64, status models.Status) error {
 	return s.strategy.UpdateStatus(taskID, status)
+}
+
+func (s *Store) UpdateTags(taskID int64, tags []string) error {
+	return s.strategy.InsertTags(taskID, tags)
 }
 
 func (s *Store) UpdateOpenedAt(taskID int64, openedAt time.Time) error {

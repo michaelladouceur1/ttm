@@ -132,6 +132,16 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	return i, err
 }
 
+const deleteTagsByTaskID = `-- name: DeleteTagsByTaskID :exec
+DELETE FROM tags
+WHERE task_id = ?
+`
+
+func (q *Queries) DeleteTagsByTaskID(ctx context.Context, taskID sql.NullInt64) error {
+	_, err := q.db.ExecContext(ctx, deleteTagsByTaskID, taskID)
+	return err
+}
+
 const getSessionsByTaskID = `-- name: GetSessionsByTaskID :many
 SELECT id, task_id, start_time, end_time FROM sessions
 WHERE task_id = ?

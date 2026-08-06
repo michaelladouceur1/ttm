@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"strconv"
+	"strings"
 	"time"
 	"ttm/pkg/fs"
 	"ttm/pkg/logger"
@@ -23,6 +24,7 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	categoryFlag, _ := cmd.Flags().GetString("category")
 	priorityFlag, _ := cmd.Flags().GetString("priority")
 	statusFlag, _ := cmd.Flags().GetString("status")
+	tagsFlag, _ := cmd.Flags().GetString("tags")
 	openedAtFlag, _ := cmd.Flags().GetString("openedAt")
 	closedAtFlag, _ := cmd.Flags().GetString("closedAt")
 
@@ -54,7 +56,7 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		return
 	}
 
-	if titleFlag == "" && descriptionFlag == "" && categoryFlag == "" && priorityFlag == "" && statusFlag == "" && openedAtFlag == "" && closedAtFlag == "" {
+	if titleFlag == "" && descriptionFlag == "" && categoryFlag == "" && priorityFlag == "" && statusFlag == "" && tagsFlag == "" && openedAtFlag == "" && closedAtFlag == "" {
 		logger.LogError("Please provide at least one field to update")
 		return
 	}
@@ -95,6 +97,15 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		err = store.UpdateStatus(id, status)
 		if err != nil {
 			logger.LogError("Error updating status: ", err)
+			return
+		}
+	}
+
+	if tagsFlag != "" {
+		tags := strings.Split(tagsFlag, ",")
+		err = store.UpdateTags(id, tags)
+		if err != nil {
+			logger.LogError("Error updating tags: ", err)
 			return
 		}
 	}

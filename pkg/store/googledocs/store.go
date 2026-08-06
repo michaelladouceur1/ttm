@@ -128,6 +128,10 @@ func (s *Store) UpdateStatus(taskID int64, status models.Status) error {
 	return s.updateTask(taskID, func(task *models.Task) { task.Status = status })
 }
 
+func (s *Store) UpdateTags(taskID int64, tags []string) error {
+	return s.updateTask(taskID, func(task *models.Task) { task.Tags = tags })
+}
+
 func (s *Store) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
 	return s.updateTask(taskID, func(task *models.Task) { task.OpenedAt = openedAt })
 }

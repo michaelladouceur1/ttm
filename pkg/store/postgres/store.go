@@ -140,6 +140,27 @@ func (ts *DBLocal) UpdateStatus(taskID int64, status models.Status) error {
 	})
 }
 
+func (ts *DBLocal) UpdateTags(taskID int64, tags []string) error {
+	queries := New(ts.db)
+
+	err := queries.DeleteTagsByTaskID(ts.ctx, toNullInt(int(taskID)))
+	if err != nil {
+		return err
+	}
+
+	for _, tag := range tags {
+		_, err := queries.CreateTag(ts.ctx, CreateTagParams{
+			TaskID: toNullInt(int(taskID)),
+			Tag:    toNullString(tag),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (ts *DBLocal) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
 	return ts.updateTaskField(UpdateTaskFieldParams{
 		ID:       taskID,

@@ -52,6 +52,40 @@ func (q *Queries) CreateTag(ctx context.Context, arg CreateTagParams) (Tag, erro
 	return i, err
 }
 
+const createTags = `-- name: CreateTags :many
+INSERT INTO tags (task_id, tag)
+VALUES ($1, $2)
+RETURNING id, task_id, tag
+`
+
+type CreateTagsParams struct {
+	TaskID sql.NullInt64
+	Tag    sql.NullString
+}
+
+func (q *Queries) CreateTags(ctx context.Context, arg CreateTagsParams) ([]Tag, error) {
+	rows, err := q.db.QueryContext(ctx, createTags, arg.TaskID, arg.Tag)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Tag
+	for rows.Next() {
+		var i Tag
+		if err := rows.Scan(&i.ID, &i.TaskID, &i.Tag); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createTask = `-- name: CreateTask :one
 INSERT INTO tasks (title, description, category, priority, status, opened_at, closed_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -96,6 +130,16 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteTagsByTaskID = `-- name: DeleteTagsByTaskID :exec
+DELETE FROM tags
+WHERE task_id = $1
+`
+
+func (q *Queries) DeleteTagsByTaskID(ctx context.Context, taskID sql.NullInt64) error {
+	_, err := q.db.ExecContext(ctx, deleteTagsByTaskID, taskID)
+	return err
 }
 
 const getSessionsByTaskID = `-- name: GetSessionsByTaskID :many

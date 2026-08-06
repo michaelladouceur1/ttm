@@ -56,3 +56,7 @@ RETURNING *;
 INSERT INTO tags (task_id, tag)
 VALUES (?, ?)
 RETURNING *;
+
+-- name: DeleteTagsByTaskID :exec
+DELETE FROM tags
+WHERE task_id = ?;
