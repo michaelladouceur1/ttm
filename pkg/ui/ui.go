@@ -18,7 +18,7 @@ type command struct {
 }
 
 var commands = []command{
-	{name: "add", description: "Add a task: /add \"title\" [\"description\"]"},
+	{name: "add", description: "Add a task with a guided form"},
 	{name: "list", description: "List open tasks, optionally matching a query"},
 }
 
@@ -38,6 +38,13 @@ type model struct {
 	selected    int
 	suggestions []command
 	content     string
+	active      childModel
+}
+
+type childModel interface {
+	Update(tea.Msg) (childModel, tea.Cmd)
+	InputView() string
+	View() string
 }
 
 func newModel(cfg *config.Config, st *store.Store) model {
@@ -62,15 +69,37 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case addCompleteMsg:
+		m.active = nil
+		m.content = fmt.Sprintf("Added task: %s\n\nUse /list to view tasks.", msg.title)
+		return m, nil
+	case addCancelledMsg:
+		m.active = nil
+		m.content = "Task creation cancelled."
+		return m, nil
+	case listClosedMsg:
+		m.active = nil
+		m.content = msg.content
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 		m.input.Width = max(1, msg.Width-6)
-		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
+		}
+	}
+
+	if m.active != nil {
+		var cmd tea.Cmd
+		m.active, cmd = m.active.Update(msg)
+		return m, cmd
+	}
+
+	if msg, ok := msg.(tea.KeyMsg); ok {
+		switch msg.String() {
 		case "up":
 			if len(m.suggestions) > 0 {
 				m.selected = (m.selected - 1 + len(m.suggestions)) % len(m.suggestions)
@@ -145,9 +174,13 @@ func (m *model) execute() {
 
 	switch args[0] {
 	case "add":
-		m.addTask(args[1:])
+		if len(args) != 1 {
+			m.content = "Usage: /add\n\nTasks are created one field at a time."
+			break
+		}
+		m.active = newAddModel(m.cfg, m.store, m.input.Width)
 	case "list":
-		m.listTasks(args[1:])
+		m.active = newListModel(m.cfg, m.store, m.input.Width, args[1:])
 	default:
 		m.content = fmt.Sprintf("Unknown command: /%s\n\nType / to see available commands.", args[0])
 	}
@@ -157,14 +190,21 @@ func (m *model) execute() {
 }
 
 func (m model) View() string {
+	inputView := m.input.View()
+	bodyContent := m.content
+	if m.active != nil {
+		inputView = m.active.InputView()
+		bodyContent = m.active.View()
+	}
+
 	input := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(styles.Main).
 		Width(max(1, m.width-2)).
-		Render(m.input.View())
+		Render(inputView)
 
 	var body strings.Builder
-	if len(m.suggestions) > 0 {
+	if m.active == nil && len(m.suggestions) > 0 {
 		body.WriteString("Commands\n")
 		for i, command := range m.suggestions {
 			prefix := "  "
@@ -175,7 +215,7 @@ func (m model) View() string {
 		}
 		body.WriteString("\n")
 	}
-	body.WriteString(m.content)
+	body.WriteString(bodyContent)
 
 	content := lipgloss.NewStyle().
 		Width(max(1, m.width-2)).
