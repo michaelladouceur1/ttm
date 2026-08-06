@@ -40,13 +40,14 @@
 - `summary` : Summarize sessions for given time period
   - `ttm session summary`
 
-### TUI Mode
+### Terminal UI
 
-#### Command List
+Run `ttm` without arguments to open the full-screen terminal UI. Type `/` in
+the command input to browse commands, use the arrow keys or Tab to select one,
+and press Enter to run it.
 
-- Add task
-- Start session
-- List tasks
+- `/add "title" ["description"]`: add a task
+- `/list ["query"]`: list open tasks, optionally filtered by a query
 
 ### Shorthand
 
@@ -91,7 +92,6 @@ logging:
 
 #### TODO
 
-- [ ] TUI mode
 - [ ] Notes support per task/session
 - [ ] User support for multi-user environments
 - [ ] Time-based reports viewing tasks and sessions

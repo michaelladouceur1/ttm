@@ -12,6 +12,7 @@ import (
 	"ttm/pkg/store/googledocs"
 	postgres "ttm/pkg/store/postgres"
 	sqlite "ttm/pkg/store/sqlite"
+	"ttm/pkg/ui"
 
 	"github.com/spf13/cobra"
 )
@@ -55,7 +56,9 @@ func init() {
 	RootCmd = &cobra.Command{
 		Use:   "ttm",
 		Short: "Terminal Todo Manager",
-		// Run:   func(cmd *cobra.Command, args []string) { handlers.RootHandler(cmd, args, cfg) },
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return ui.Run(cfg.Config, st)
+		},
 	}
 
 	RootCmd.AddCommand(NewAddCmd(cfg.Config, st))
