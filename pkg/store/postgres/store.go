@@ -14,7 +14,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type DBLocal struct {
+type Store struct {
 	ctx context.Context
 	db  *sql.DB
 }
@@ -22,38 +22,38 @@ type DBLocal struct {
 //go:embed schema.postgres.sql
 var ddl string
 
-func NewStore() *DBLocal {
-	return &DBLocal{}
+func NewStore() *Store {
+	return &Store{}
 }
 
-func (ts *DBLocal) Init() error {
+func (s *Store) Init() error {
 	var err error
 
 	if os.MkdirAll(paths.GetTTMDirectory(), os.ModePerm); err != nil {
 		return err
 	}
 
-	ts.ctx = context.Background()
+	s.ctx = context.Background()
 
-	ts.db, err = sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/ttmdb")
+	s.db, err = sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/ttmdb")
 	if err != nil {
 		return err
 	}
 
-	if _, err := ts.db.ExecContext(ts.ctx, ddl); err != nil {
+	if _, err := s.db.ExecContext(s.ctx, ddl); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ts *DBLocal) InsertTask(task models.Task) (models.Task, error) {
+func (s *Store) InsertTask(task models.Task) (models.Task, error) {
 	task.CreatedAt = time.Now()
 	task.UpdatedAt = time.Now()
 
-	queries := New(ts.db)
+	queries := New(s.db)
 
-	newTask, err := queries.CreateTask(ts.ctx, CreateTaskParams{
+	newTask, err := queries.CreateTask(s.ctx, CreateTaskParams{
 		Title:       toNullString(task.Title),
 		Description: toNullString(task.Description),
 		Category:    toNullString(string(task.Category)),
@@ -72,10 +72,10 @@ func (ts *DBLocal) InsertTask(task models.Task) (models.Task, error) {
 	return dbTaskToTask(newTask), nil
 }
 
-func (ts *DBLocal) GetTaskByID(taskID int64) (models.Task, error) {
-	queries := New(ts.db)
+func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
+	queries := New(s.db)
 
-	dbTask, err := queries.GetTaskById(ts.ctx, taskID)
+	dbTask, err := queries.GetTaskById(s.ctx, taskID)
 
 	if err != nil {
 		return models.Task{}, err
@@ -87,10 +87,10 @@ func (ts *DBLocal) GetTaskByID(taskID int64) (models.Task, error) {
 
 }
 
-func (ts *DBLocal) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
-	queries := New(ts.db)
+func (s *Store) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
+	queries := New(s.db)
 
-	dbTasks, err := queries.ListTasks(ts.ctx, ListTasksParams{
+	dbTasks, err := queries.ListTasks(s.ctx, ListTasksParams{
 		Column1: toNullString(titleDescSearch).String,
 		Column2: toNullString(titleDescSearch).String,
 		Column3: toNullString(string(category)).String,
@@ -107,7 +107,7 @@ func (ts *DBLocal) ListTasks(titleDescSearch string, category models.Category, s
 	return tasks, nil
 }
 
-func (ts *DBLocal) SearchTasks(search models.TaskSearch) ([]models.Task, error) {
+func (s *Store) SearchTasks(search models.TaskSearch) ([]models.Task, error) {
 	query := `SELECT t.id, t.title, t.description, t.category, t.priority, t.status, t.opened_at, t.closed_at, t.created_at, t.updated_at FROM tasks t`
 	clauses := []string{}
 	args := []any{}
@@ -151,7 +151,7 @@ func (ts *DBLocal) SearchTasks(search models.TaskSearch) ([]models.Task, error) 
 		query += " WHERE " + strings.Join(clauses, " AND ")
 	}
 
-	rows, err := ts.db.QueryContext(ts.ctx, query, args...)
+	rows, err := s.db.QueryContext(s.ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -171,51 +171,51 @@ func (ts *DBLocal) SearchTasks(search models.TaskSearch) ([]models.Task, error) 
 	return dbTasksToTasks(dbTasks), nil
 }
 
-func (ts *DBLocal) UpdateTitle(taskID int64, title string) error {
-	return ts.updateTaskField(UpdateTaskFieldParams{
+func (s *Store) UpdateTitle(taskID int64, title string) error {
+	return s.updateTaskField(UpdateTaskFieldParams{
 		ID:    taskID,
 		Title: toNullString(title),
 	})
 }
 
-func (ts *DBLocal) UpdateDescription(taskID int64, description string) error {
-	return ts.updateTaskField(UpdateTaskFieldParams{
+func (s *Store) UpdateDescription(taskID int64, description string) error {
+	return s.updateTaskField(UpdateTaskFieldParams{
 		ID:          taskID,
 		Description: toNullString(description),
 	})
 }
 
-func (ts *DBLocal) UpdateCategory(taskID int64, category models.Category) error {
-	return ts.updateTaskField(UpdateTaskFieldParams{
+func (s *Store) UpdateCategory(taskID int64, category models.Category) error {
+	return s.updateTaskField(UpdateTaskFieldParams{
 		ID:       taskID,
 		Category: toNullString(string(category)),
 	})
 }
 
-func (ts *DBLocal) UpdatePriority(taskID int64, priority models.Priority) error {
-	return ts.updateTaskField(UpdateTaskFieldParams{
+func (s *Store) UpdatePriority(taskID int64, priority models.Priority) error {
+	return s.updateTaskField(UpdateTaskFieldParams{
 		ID:       taskID,
 		Priority: toNullString(string(priority)),
 	})
 }
 
-func (ts *DBLocal) UpdateStatus(taskID int64, status models.Status) error {
-	return ts.updateTaskField(UpdateTaskFieldParams{
+func (s *Store) UpdateStatus(taskID int64, status models.Status) error {
+	return s.updateTaskField(UpdateTaskFieldParams{
 		ID:     taskID,
 		Status: toNullString(string(status)),
 	})
 }
 
-func (ts *DBLocal) UpdateTags(taskID int64, tags []string) error {
-	queries := New(ts.db)
+func (s *Store) UpdateTags(taskID int64, tags []string) error {
+	queries := New(s.db)
 
-	err := queries.DeleteTagsByTaskID(ts.ctx, toNullInt(int(taskID)))
+	err := queries.DeleteTagsByTaskID(s.ctx, toNullInt(int(taskID)))
 	if err != nil {
 		return err
 	}
 
 	for _, tag := range tags {
-		_, err := queries.CreateTag(ts.ctx, CreateTagParams{
+		_, err := queries.CreateTag(s.ctx, CreateTagParams{
 			TaskID: toNullInt(int(taskID)),
 			Tag:    toNullString(tag),
 		})
@@ -227,26 +227,26 @@ func (ts *DBLocal) UpdateTags(taskID int64, tags []string) error {
 	return nil
 }
 
-func (ts *DBLocal) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
-	return ts.updateTaskField(UpdateTaskFieldParams{
+func (s *Store) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
+	return s.updateTaskField(UpdateTaskFieldParams{
 		ID:       taskID,
 		OpenedAt: toNullTime(openedAt),
 	})
 }
 
-func (ts *DBLocal) UpdateClosedAt(taskID int64, closedAt time.Time) error {
-	return ts.updateTaskField(UpdateTaskFieldParams{
+func (s *Store) UpdateClosedAt(taskID int64, closedAt time.Time) error {
+	return s.updateTaskField(UpdateTaskFieldParams{
 		ID:       taskID,
 		ClosedAt: toNullTime(closedAt),
 	})
 }
 
-func (ts *DBLocal) updateTaskField(params UpdateTaskFieldParams) error {
+func (s *Store) updateTaskField(params UpdateTaskFieldParams) error {
 	params.UpdatedAt = toNullTime(time.Now())
 
-	queries := New(ts.db)
+	queries := New(s.db)
 
-	_, err := queries.UpdateTaskField(ts.ctx, params)
+	_, err := queries.UpdateTaskField(s.ctx, params)
 
 	if err != nil {
 		return err
@@ -255,10 +255,10 @@ func (ts *DBLocal) updateTaskField(params UpdateTaskFieldParams) error {
 	return nil
 }
 
-func (ts *DBLocal) AddSession(session models.Session) error {
-	queries := New(ts.db)
+func (s *Store) AddSession(session models.Session) error {
+	queries := New(s.db)
 
-	_, err := queries.CreateSession(ts.ctx, CreateSessionParams{
+	_, err := queries.CreateSession(s.ctx, CreateSessionParams{
 		TaskID:    toNullInt(int(session.TaskId)),
 		StartTime: toNullTime(session.StartTime),
 		EndTime:   toNullTime(session.EndTime),
@@ -271,10 +271,10 @@ func (ts *DBLocal) AddSession(session models.Session) error {
 	return nil
 }
 
-func (ts *DBLocal) GetSessionsByTaskID(taskID int) ([]models.Session, error) {
-	queries := New(ts.db)
+func (s *Store) GetSessionsByTaskID(taskID int) ([]models.Session, error) {
+	queries := New(s.db)
 
-	dbSessions, err := queries.GetSessionsByTaskID(ts.ctx, toNullInt(taskID))
+	dbSessions, err := queries.GetSessionsByTaskID(s.ctx, toNullInt(taskID))
 
 	sessions := []models.Session{}
 
@@ -299,10 +299,10 @@ func (ts *DBLocal) GetSessionsByTaskID(taskID int) ([]models.Session, error) {
 
 }
 
-func (ts *DBLocal) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error) {
-	queries := New(ts.db)
+func (s *Store) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error) {
+	queries := New(s.db)
 
-	dbSessions, err := queries.GetSessionsByTimeRange(ts.ctx, GetSessionsByTimeRangeParams{
+	dbSessions, err := queries.GetSessionsByTimeRange(s.ctx, GetSessionsByTimeRangeParams{
 		StartTime: toNullTime(startTime),
 		EndTime:   toNullTime(endTime),
 	})
@@ -330,11 +330,11 @@ func (ts *DBLocal) GetSessionsByTimeRange(startTime time.Time, endTime time.Time
 
 }
 
-func (ts *DBLocal) InsertTags(taskID int64, tags []string) error {
-	queries := New(ts.db)
+func (s *Store) InsertTags(taskID int64, tags []string) error {
+	queries := New(s.db)
 
 	for _, tag := range tags {
-		_, err := queries.CreateTag(ts.ctx, CreateTagParams{
+		_, err := queries.CreateTag(s.ctx, CreateTagParams{
 			TaskID: toNullInt(int(taskID)),
 			Tag:    toNullString(tag),
 		})
@@ -346,10 +346,10 @@ func (ts *DBLocal) InsertTags(taskID int64, tags []string) error {
 	return nil
 }
 
-func (ts *DBLocal) GetTagsByTaskID(taskID int64) ([]string, error) {
-	queries := New(ts.db)
+func (s *Store) GetTagsByTaskID(taskID int64) ([]string, error) {
+	queries := New(s.db)
 
-	dbTags, err := queries.GetTagsByTaskID(ts.ctx, toNullInt(int(taskID)))
+	dbTags, err := queries.GetTagsByTaskID(s.ctx, toNullInt(int(taskID)))
 	if err != nil {
 		return nil, err
 	}
