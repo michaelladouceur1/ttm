@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"os"
+	"strings"
 	"time"
 	"ttm/pkg/models"
 	"ttm/pkg/paths"
@@ -103,6 +104,63 @@ func (ts *DBLocal) ListTasks(titleDescSearch string, category models.Category, s
 	tasks := dbTasksToTasks(dbTasks)
 
 	return tasks, nil
+}
+
+func (ts *DBLocal) SearchTasks(search models.TaskSearch) ([]models.Task, error) {
+	query := `SELECT t.id, t.title, t.description, t.category, t.priority, t.status, t.opened_at, t.closed_at, t.created_at, t.updated_at FROM tasks t`
+	clauses := []string{}
+	args := []any{}
+	addMatch := func(column, value string) {
+		if value == "" {
+			return
+		}
+		clauses = append(clauses, "LOWER(COALESCE(t."+column+", '')) LIKE '%' || LOWER(?) || '%'")
+		args = append(args, value)
+	}
+	addTagMatch := func(value string) string {
+		args = append(args, value)
+		return "EXISTS (SELECT 1 FROM tags tag WHERE tag.task_id = t.id AND LOWER(COALESCE(tag.tag, '')) LIKE '%' || LOWER(?) || '%')"
+	}
+
+	if search.General != "" {
+		args = append(args, search.General, search.General, search.General, search.General, search.General, search.General, search.General)
+		clauses = append(clauses, `(LOWER(COALESCE(t.title, '')) LIKE '%' || LOWER(?) || '%' OR
+			LOWER(COALESCE(t.description, '')) LIKE '%' || LOWER(?) || '%' OR
+			LOWER(COALESCE(t.category, '')) LIKE '%' || LOWER(?) || '%' OR
+			LOWER(COALESCE(t.priority, '')) LIKE '%' || LOWER(?) || '%' OR
+			LOWER(COALESCE(t.status, '')) LIKE '%' || LOWER(?) || '%' OR
+			EXISTS (SELECT 1 FROM tags tag WHERE tag.task_id = t.id AND LOWER(COALESCE(tag.tag, '')) LIKE '%' || LOWER(?) || '%'))`)
+	}
+	addMatch("title", search.Title)
+	addMatch("description", search.Description)
+	addMatch("category", search.Category)
+	addMatch("priority", search.Priority)
+	addMatch("status", search.Status)
+	for _, tag := range search.Tags {
+		clauses = append(clauses, addTagMatch(tag))
+	}
+	if len(clauses) > 0 {
+		query += " WHERE " + strings.Join(clauses, " AND ")
+	}
+
+	rows, err := ts.db.QueryContext(ts.ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var dbTasks []Task
+	for rows.Next() {
+		var task Task
+		if err := rows.Scan(&task.ID, &task.Title, &task.Description, &task.Category, &task.Priority, &task.Status, &task.OpenedAt, &task.ClosedAt, &task.CreatedAt, &task.UpdatedAt); err != nil {
+			return nil, err
+		}
+		dbTasks = append(dbTasks, task)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return dbTasksToTasks(dbTasks), nil
 }
 
 func (ts *DBLocal) UpdateTitle(taskID int64, title string) error {

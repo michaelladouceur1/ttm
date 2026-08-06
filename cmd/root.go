@@ -58,6 +58,7 @@ func init() {
 	RootCmd.AddCommand(NewEndCmd(st))
 	RootCmd.AddCommand(NewInfoCmd(st))
 	RootCmd.AddCommand(NewListCmd(cfg.Config, st))
+	RootCmd.AddCommand(NewSearchCmd(st))
 	RootCmd.AddCommand(NewStartCmd(st))
 	RootCmd.AddCommand(NewUpdateCmd(st))
 	RootCmd.AddCommand(NewSummaryCmd(cfg.Config, st))
