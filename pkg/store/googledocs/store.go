@@ -191,6 +191,22 @@ func (s *Store) InsertTags(taskID int64, tags []string) error {
 	})
 }
 
+func (s *Store) GetTagsByTaskID(taskID int64) ([]string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	data, err := s.read()
+	if err != nil {
+		return nil, err
+	}
+	for _, task := range data.Tasks {
+		if task.ID == taskID {
+			return task.Tags, nil
+		}
+	}
+	return nil, fmt.Errorf("task %d not found", taskID)
+}
+
 func (s *Store) updateTask(taskID int64, update func(*models.Task)) error {
 	return s.modify(func(data *documentData) error {
 		for i := range data.Tasks {

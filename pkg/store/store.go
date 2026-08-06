@@ -25,6 +25,7 @@ type StoreStrategy interface {
 	GetSessionsByTaskID(taskID int) ([]models.Session, error)
 	GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error)
 	InsertTags(taskID int64, tags []string) error
+	GetTagsByTaskID(taskID int64) ([]string, error)
 }
 
 type Store struct {
@@ -66,7 +67,27 @@ func (s *Store) InsertTask(task models.Task) error {
 }
 
 func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
-	return s.strategy.GetTaskByID(taskID)
+	task, err := s.strategy.GetTaskByID(taskID)
+	if err != nil {
+		return models.Task{}, err
+	}
+
+	sessions, err := s.GetSessionsByTaskID(int(task.ID))
+	if err != nil {
+		return models.Task{}, err
+	}
+
+	task.Sessions = sessions
+	task.CalculateDuration()
+
+	tags, err := s.strategy.GetTagsByTaskID(task.ID)
+	if err != nil {
+		return models.Task{}, err
+	}
+
+	task.Tags = tags
+
+	return task, nil
 }
 
 func (s *Store) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
@@ -84,6 +105,13 @@ func (s *Store) ListTasks(titleDescSearch string, category models.Category, stat
 
 		tasks[i].Sessions = sessions
 		tasks[i].CalculateDuration()
+
+		tags, err := s.strategy.GetTagsByTaskID(task.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		tasks[i].Tags = tags
 	}
 
 	models.SortTasksByID(tasks)
@@ -113,7 +141,7 @@ func (s *Store) UpdateStatus(taskID int64, status models.Status) error {
 }
 
 func (s *Store) UpdateTags(taskID int64, tags []string) error {
-	return s.strategy.InsertTags(taskID, tags)
+	return s.strategy.UpdateTags(taskID, tags)
 }
 
 func (s *Store) UpdateOpenedAt(taskID int64, openedAt time.Time) error {

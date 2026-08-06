@@ -280,6 +280,22 @@ func (ts *DBLocal) InsertTags(taskID int64, tags []string) error {
 	return nil
 }
 
+func (ts *DBLocal) GetTagsByTaskID(taskID int64) ([]string, error) {
+	queries := New(ts.db)
+
+	dbTags, err := queries.GetTagsByTaskID(ts.ctx, toNullInt(int(taskID)))
+	if err != nil {
+		return nil, err
+	}
+
+	tags := []string{}
+	for _, dbTag := range dbTags {
+		tags = append(tags, dbTag.Tag.String)
+	}
+
+	return tags, nil
+}
+
 func toNullString(v interface{}) sql.NullString {
 	switch val := v.(type) {
 	case string:
