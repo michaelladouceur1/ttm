@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"ttm/pkg/config"
+	"ttm/pkg/logger"
 	"ttm/pkg/store"
 	"ttm/pkg/store/googledocs"
 	postgres "ttm/pkg/store/postgres"
@@ -24,6 +25,11 @@ func init() {
 	cfg, err := config.NewConfig()
 	if err != nil {
 		fmt.Println("Error initializing config: ", err)
+		os.Exit(1)
+	}
+
+	if err := logger.Configure(cfg.Config.Logging.Theme); err != nil {
+		fmt.Println("Error initializing logger: ", err)
 		os.Exit(1)
 	}
 

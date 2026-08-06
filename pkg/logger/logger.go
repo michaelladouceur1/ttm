@@ -2,48 +2,70 @@ package logger
 
 import (
 	"fmt"
-	"ttm/pkg/styles"
-
-	"github.com/charmbracelet/lipgloss"
+	"strings"
+	"ttm/pkg/models"
 )
 
 const (
-	Separator       = "─"
-	SeparatorMargin = 2
+	ClassicStyleName = "classic"
+	CompactStyleName = "compact"
 )
 
-var (
-	// General styles
-	headerStyle = lipgloss.NewStyle().Bold(true).Foreground(styles.Main)
-	textStyle   = lipgloss.NewStyle().Foreground(styles.Highlight1)
-	errorStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#d34545ff"))
+type SummaryItem struct {
+	Key   string
+	Value string
+}
 
-	treeConnStyle = lipgloss.NewStyle().Foreground(styles.Highlight2)
+// Style controls how logger output is rendered.
+type Style interface {
+	RenderMessage(message string) string
+	RenderError(message string) string
+	RenderSummary(title string, items []SummaryItem) string
+	RenderTasks(tasks []models.Task) string
+}
 
-	// Table styles
-	// Header style
-	tableHeaderStyle = lipgloss.NewStyle().Foreground(styles.Main).Bold(true).Align(lipgloss.Center)
+type Logger struct {
+	style Style
+}
 
-	// Cell styles
-	cellStyle        = lipgloss.NewStyle().Padding(0, 1).Width(14)
-	tempIdStyle      = cellStyle.Width(9)
-	idStyle          = cellStyle.Width(5)
-	titleStyle       = cellStyle.Width(20)
-	descriptionStyle = cellStyle.Width(30)
-	categoryStyle    = cellStyle.Width(10)
-	priorityStyle    = cellStyle.Width(10)
-	statusStyle      = cellStyle.Width(8)
-	createdAtStyle   = cellStyle.Width(21)
+func New(style Style) *Logger {
+	return &Logger{style: style}
+}
 
-	// Row styles
-	oddRowStyle  = cellStyle.Foreground(styles.Highlight2)
-	evenRowStyle = cellStyle.Foreground(styles.Highlight3)
-)
+func NewStyle(name string) (Style, error) {
+	switch strings.ToLower(strings.TrimSpace(name)) {
+	case "", ClassicStyleName:
+		return ClassicStyle{}, nil
+	case CompactStyleName:
+		return CompactStyle{}, nil
+	default:
+		return nil, fmt.Errorf("unsupported logging theme %q; choose classic or compact", name)
+	}
+}
+
+var defaultLogger = New(ClassicStyle{})
+
+func Configure(styleName string) error {
+	style, err := NewStyle(styleName)
+	if err != nil {
+		return err
+	}
+	defaultLogger = New(style)
+	return nil
+}
+
+func (l *Logger) LogMessage(strs ...string) {
+	fmt.Println(l.style.RenderMessage(strings.Join(strs, "")))
+}
+
+func (l *Logger) LogError(strs ...any) {
+	fmt.Println(l.style.RenderError(fmt.Sprint(strs...)))
+}
 
 func LogMessage(strs ...string) {
-	fmt.Println(headerStyle.Render(strs...))
+	defaultLogger.LogMessage(strs...)
 }
 
 func LogError(strs ...any) {
-	fmt.Println(errorStyle.Render(fmt.Sprint(strs...)))
+	defaultLogger.LogError(strs...)
 }

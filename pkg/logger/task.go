@@ -2,155 +2,73 @@ package logger
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
-	"time"
 	"ttm/pkg/models"
-	"ttm/pkg/styles"
-
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
-	"github.com/charmbracelet/lipgloss/tree"
 )
 
-const (
-	TempIdColumn = iota
-	IdColumn
-	TitleColumn
-	DescriptionColumn
-	CategoryColumn
-	PriorityColumn
-	StatusColumn
-	TagsColumn
-	DurationColumn
-	CreatedAtColumn
-)
-
-func LogAddTask(task models.Task) {
-	fmt.Println(createTaskSummaryTree(task, "Task Added"))
+func (l *Logger) LogAddTask(task models.Task) {
+	fmt.Println(l.style.RenderSummary("Task Added", taskSummaryItems(task)))
 }
 
-func LogUpdateTask(task models.Task) {
-	fmt.Println(createTaskSummaryTree(task, "Task Updated"))
+func (l *Logger) LogUpdateTask(task models.Task) {
+	fmt.Println(l.style.RenderSummary("Task Updated", taskSummaryItems(task)))
 }
 
-func LogTasks(tasks []models.Task) {
-	t := createTable()
-	t.Headers("Temp ID", "ID", "Title", "Description", "Category", "Priority", "Status", "Tags", "Duration", "Created At")
-	for _, task := range tasks {
-		t.Row(createRowStrings(task)...)
-	}
-	fmt.Println(t)
+func (l *Logger) LogTasks(tasks []models.Task) {
+	fmt.Println(l.style.RenderTasks(tasks))
 }
 
-func LogCloseTasks(tasks []models.Task) {
-	data := []SummaryTreeItem{}
+func (l *Logger) LogCloseTasks(tasks []models.Task) {
+	items := make([]SummaryItem, 0, len(tasks))
 	for i, task := range tasks {
-		data = append(data, SummaryTreeItem{
+		items = append(items, SummaryItem{
 			Key:   fmt.Sprintf("Task %d", i+1),
 			Value: task.Title,
 		})
 	}
-	fmt.Println(createSummaryTree(data, "Tasks Closed"))
+	fmt.Println(l.style.RenderSummary("Tasks Closed", items))
 }
 
-func LogSessionSummary(taskSummary models.TaskSummary) {
+func (l *Logger) LogSessionSummary(taskSummary models.TaskSummary) {
 	for _, day := range taskSummary.Days {
 		if len(day.Tasks) == 0 {
 			continue
 		}
-		fmt.Println(createSessionDaySummaryTree(day))
+		items := make([]SummaryItem, 0, len(day.Tasks))
+		for _, task := range day.Tasks {
+			items = append(items, SummaryItem{Key: task.Title, Value: task.Description})
+		}
+		fmt.Println(l.style.RenderSummary(day.Day.Format("2006-01-02"), items))
 	}
 }
 
-func createSessionDaySummaryTree(day models.TaskSummaryDay) *tree.Tree {
-	data := []SummaryTreeItem{}
-	for _, task := range day.Tasks {
-		data = append(data, SummaryTreeItem{
-			Key:   task.Title,
-			Value: task.Description,
-		})
+func LogAddTask(task models.Task) {
+	defaultLogger.LogAddTask(task)
+}
+
+func LogUpdateTask(task models.Task) {
+	defaultLogger.LogUpdateTask(task)
+}
+
+func LogTasks(tasks []models.Task) {
+	defaultLogger.LogTasks(tasks)
+}
+
+func LogCloseTasks(tasks []models.Task) {
+	defaultLogger.LogCloseTasks(tasks)
+}
+
+func LogSessionSummary(taskSummary models.TaskSummary) {
+	defaultLogger.LogSessionSummary(taskSummary)
+}
+
+func taskSummaryItems(task models.Task) []SummaryItem {
+	return []SummaryItem{
+		{Key: "Title", Value: task.Title},
+		{Key: "Description", Value: task.Description},
+		{Key: "Category", Value: string(task.Category)},
+		{Key: "Priority", Value: string(task.Priority)},
+		{Key: "Status", Value: string(task.Status)},
+		{Key: "Tags", Value: strings.Join(task.Tags, ",")},
 	}
-	return createSummaryTree(data, day.Day.Format("2006-01-02"))
-}
-
-func createTaskSummaryTree(task models.Task, title string) *tree.Tree {
-	data := []SummaryTreeItem{
-		{"Title", task.Title},
-		{"Description", task.Description},
-		{"Category", string(task.Category)},
-		{"Priority", string(task.Priority)},
-		{"Status", string(task.Status)},
-		{"Tags", strings.Join(task.Tags, ",")},
-	}
-	return createSummaryTree(data, title)
-}
-
-func createTable() *table.Table {
-	return table.New().
-		Border(lipgloss.RoundedBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(styles.Main)).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == table.HeaderRow {
-				return tableHeaderStyle
-			}
-
-			var style lipgloss.Style
-			switch col {
-			case TempIdColumn:
-				style = tempIdStyle
-			case IdColumn:
-				style = idStyle
-			case TitleColumn:
-				style = titleStyle
-			case DescriptionColumn:
-				style = descriptionStyle
-			case CategoryColumn:
-				style = categoryStyle
-			case PriorityColumn:
-				style = priorityStyle
-			case StatusColumn:
-				style = statusStyle
-			case TagsColumn:
-				style = createdAtStyle
-			case DurationColumn:
-				style = cellStyle
-			case CreatedAtColumn:
-				style = createdAtStyle
-			default:
-				style = cellStyle
-			}
-
-			switch row % 2 {
-			case 0: // even
-				style = style.Foreground(styles.Highlight3)
-			default: // odd
-				style = style.Foreground(styles.Highlight2)
-			}
-
-			return style
-		})
-}
-
-func createRowStrings(task models.Task) []string {
-	return []string{
-		toIntString(task.ListID),
-		toIntString(task.ID),
-		task.Title,
-		task.Description,
-		string(task.Category),
-		string(task.Priority),
-		string(task.Status),
-		strings.Join(task.Tags, ","),
-		toDuration(task.Duration),
-		task.CreatedAt.Format("2006-01-02 15:04:05"),
-	}
-}
-
-func toIntString(i int64) string {
-	return strconv.FormatInt(i, 10)
-}
-
-func toDuration(t time.Time) string {
-	return fmt.Sprintf("%02dh%02dm%02ds", int(t.Hour()), int(t.Minute()), int(t.Second()))
 }

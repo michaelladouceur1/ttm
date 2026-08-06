@@ -13,6 +13,7 @@ type Config struct {
 	MaxTasksToDisplay int                `yaml:"maxTasksToDisplay"`
 	AddFlags          ConfigDefaultFlags `yaml:"addFlags"`
 	ListFlags         ConfigDefaultFlags `yaml:"listFlags"`
+	Logging           LoggingConfig      `yaml:"logging"`
 	Storage           StorageConfig      `yaml:"storage"`
 }
 
@@ -27,6 +28,10 @@ type StorageConfig struct {
 	GoogleDocs GoogleDocsConfig `yaml:"googleDocs"`
 }
 
+type LoggingConfig struct {
+	Theme string `yaml:"theme"`
+}
+
 type GoogleDocsConfig struct {
 	DocumentID      string `yaml:"documentId"`
 	CredentialsFile string `yaml:"credentialsFile"`
@@ -38,6 +43,9 @@ func NewConfig() (*gonfig.Gonfig[Config], error) {
 		MaxTasksToDisplay: 25,
 		Storage: StorageConfig{
 			Type: "sqlite",
+		},
+		Logging: LoggingConfig{
+			Theme: "classic",
 		},
 		AddFlags: ConfigDefaultFlags{
 			Category: string(models.CategoryTask),
