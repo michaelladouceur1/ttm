@@ -62,26 +62,33 @@ func TestAddFormWalksThroughFields(t *testing.T) {
 	m.input.SetValue("/add")
 	m.execute()
 
-	if m.addStep != addStepTitle || m.input.Placeholder != "Enter title..." {
-		t.Fatalf("add form did not start at title: step=%d placeholder=%q", m.addStep, m.input.Placeholder)
+	add, ok := m.active.(addModel)
+	if !ok {
+		t.Fatalf("active model = %T, want addModel", m.active)
+	}
+	if add.step != addStepTitle || add.input.Placeholder != "Enter title..." {
+		t.Fatalf("add form did not start at title: step=%d placeholder=%q", add.step, add.input.Placeholder)
 	}
 
-	m.input.SetValue("Plan release")
-	m.submitAddField()
-	if m.addStep != addStepDescription || m.draft.Title != "Plan release" {
-		t.Fatalf("title was not saved: step=%d title=%q", m.addStep, m.draft.Title)
+	add.input.SetValue("Plan release")
+	updated, _ := add.submitAddField()
+	add = updated.(addModel)
+	if add.step != addStepDescription || add.draft.Title != "Plan release" {
+		t.Fatalf("title was not saved: step=%d title=%q", add.step, add.draft.Title)
 	}
 
-	m.input.SetValue("Prepare notes")
-	m.submitAddField()
-	if m.addStep != addStepPriority || m.draft.Description != "Prepare notes" {
-		t.Fatalf("description was not saved: step=%d description=%q", m.addStep, m.draft.Description)
+	add.input.SetValue("Prepare notes")
+	updated, _ = add.submitAddField()
+	add = updated.(addModel)
+	if add.step != addStepPriority || add.draft.Description != "Prepare notes" {
+		t.Fatalf("description was not saved: step=%d description=%q", add.step, add.draft.Description)
 	}
 
-	m.input.SetValue("medium")
-	m.submitAddField()
-	if m.addStep != addStepTags || m.draft.Priority != models.PriorityMedium {
-		t.Fatalf("priority was not saved: step=%d priority=%q", m.addStep, m.draft.Priority)
+	add.input.SetValue("medium")
+	updated, _ = add.submitAddField()
+	add = updated.(addModel)
+	if add.step != addStepTags || add.draft.Priority != models.PriorityMedium {
+		t.Fatalf("priority was not saved: step=%d priority=%q", add.step, add.draft.Priority)
 	}
 }
 

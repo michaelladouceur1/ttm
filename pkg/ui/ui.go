@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"ttm/pkg/config"
-	"ttm/pkg/models"
 	"ttm/pkg/store"
 	"ttm/pkg/styles"
 
@@ -39,25 +38,13 @@ type model struct {
 	selected    int
 	suggestions []command
 	content     string
-	addStep     addStep
-	draft       models.Task
-	priority    int
+	active      childModel
 }
 
-type addStep int
-
-const (
-	addStepNone addStep = iota
-	addStepTitle
-	addStepDescription
-	addStepPriority
-	addStepTags
-)
-
-var priorities = []models.Priority{
-	models.PriorityLow,
-	models.PriorityMedium,
-	models.PriorityHigh,
+type childModel interface {
+	Update(tea.Msg) (childModel, tea.Cmd)
+	InputView() string
+	View() string
 }
 
 func newModel(cfg *config.Config, st *store.Store) model {
@@ -82,31 +69,39 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case addCompleteMsg:
+		m.active = nil
+		m.content = fmt.Sprintf("Added task: %s\n\nUse /list to view tasks.", msg.title)
+		return m, nil
+	case addCancelledMsg:
+		m.active = nil
+		m.content = "Task creation cancelled."
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 		m.input.Width = max(1, msg.Width-6)
-		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
+		}
+	}
+
+	if m.active != nil {
+		var cmd tea.Cmd
+		m.active, cmd = m.active.Update(msg)
+		return m, cmd
+	}
+
+	if msg, ok := msg.(tea.KeyMsg); ok {
+		switch msg.String() {
 		case "up":
-			if m.addStep == addStepPriority {
-				m.priority = (m.priority - 1 + len(priorities)) % len(priorities)
-				m.input.SetValue(string(priorities[m.priority]))
-				return m, nil
-			}
 			if len(m.suggestions) > 0 {
 				m.selected = (m.selected - 1 + len(m.suggestions)) % len(m.suggestions)
 				return m, nil
 			}
 		case "down":
-			if m.addStep == addStepPriority {
-				m.priority = (m.priority + 1) % len(priorities)
-				m.input.SetValue(string(priorities[m.priority]))
-				return m, nil
-			}
 			if len(m.suggestions) > 0 {
 				m.selected = (m.selected + 1) % len(m.suggestions)
 				return m, nil
@@ -117,10 +112,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		case "enter":
-			if m.addStep != addStepNone {
-				m.submitAddField()
-				return m, nil
-			}
 			if m.input.Value() == "/" && len(m.suggestions) > 0 {
 				m.completeSuggestion()
 				return m, nil
@@ -128,10 +119,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.execute()
 			return m, nil
 		case "esc":
-			if m.addStep != addStepNone {
-				m.resetAddForm("Task creation cancelled.")
-				return m, nil
-			}
 			m.input.SetValue("")
 			m.suggestions = nil
 			m.selected = 0
@@ -187,7 +174,7 @@ func (m *model) execute() {
 			m.content = "Usage: /add\n\nTasks are created one field at a time."
 			break
 		}
-		m.startAddForm()
+		m.active = newAddModel(m.cfg, m.store, m.input.Width)
 	case "list":
 		m.listTasks(args[1:])
 	default:
@@ -199,14 +186,21 @@ func (m *model) execute() {
 }
 
 func (m model) View() string {
+	inputView := m.input.View()
+	bodyContent := m.content
+	if m.active != nil {
+		inputView = m.active.InputView()
+		bodyContent = m.active.View()
+	}
+
 	input := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(styles.Main).
 		Width(max(1, m.width-2)).
-		Render(m.input.View())
+		Render(inputView)
 
 	var body strings.Builder
-	if len(m.suggestions) > 0 {
+	if m.active == nil && len(m.suggestions) > 0 {
 		body.WriteString("Commands\n")
 		for i, command := range m.suggestions {
 			prefix := "  "
@@ -217,18 +211,7 @@ func (m model) View() string {
 		}
 		body.WriteString("\n")
 	}
-	if m.addStep == addStepPriority {
-		body.WriteString("Priority\n")
-		for i, priority := range priorities {
-			prefix := "  "
-			if i == m.priority {
-				prefix = "> "
-			}
-			fmt.Fprintf(&body, "%s%s\n", prefix, priority)
-		}
-		body.WriteString("\n")
-	}
-	body.WriteString(m.content)
+	body.WriteString(bodyContent)
 
 	content := lipgloss.NewStyle().
 		Width(max(1, m.width-2)).
