@@ -152,6 +152,10 @@ func (s *Store) UpdateClosedAt(taskID int64, closedAt time.Time) error {
 	return s.strategy.UpdateClosedAt(taskID, closedAt)
 }
 
+func (s *Store) InsertTags(taskID int64, tags []string) error {
+	return s.strategy.InsertTags(taskID, tags)
+}
+
 func (s *Store) AddSession(session models.Session) error {
 	return s.strategy.AddSession(session)
 }

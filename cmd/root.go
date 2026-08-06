@@ -61,6 +61,7 @@ func init() {
 	RootCmd.AddCommand(NewStartCmd(st))
 	RootCmd.AddCommand(NewUpdateCmd(st))
 	RootCmd.AddCommand(NewSummaryCmd(cfg.Config, st))
+	RootCmd.AddCommand(NewTagCmd(st))
 }
 
 func Execute() {
