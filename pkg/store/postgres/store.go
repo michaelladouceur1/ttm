@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"fmt"
 	"os"
+	"strings"
 	"time"
 	"ttm/pkg/models"
 	"ttm/pkg/paths"
@@ -103,6 +105,70 @@ func (ts *DBLocal) ListTasks(titleDescSearch string, category models.Category, s
 	tasks := dbTasksToTasks(dbTasks)
 
 	return tasks, nil
+}
+
+func (ts *DBLocal) SearchTasks(search models.TaskSearch) ([]models.Task, error) {
+	query := `SELECT t.id, t.title, t.description, t.category, t.priority, t.status, t.opened_at, t.closed_at, t.created_at, t.updated_at FROM tasks t`
+	clauses := []string{}
+	args := []any{}
+	placeholder := func(value string) string {
+		args = append(args, value)
+		return fmt.Sprintf("$%d", len(args))
+	}
+	addMatch := func(column, value string) {
+		if value == "" {
+			return
+		}
+		clauses = append(clauses, "COALESCE(t."+column+", '') ILIKE '%' || "+placeholder(value)+" || '%'")
+	}
+	addTagMatch := func(value string) string {
+		return "EXISTS (SELECT 1 FROM tags tag WHERE tag.task_id = t.id AND COALESCE(tag.tag, '') ILIKE '%' || " + placeholder(value) + " || '%')"
+	}
+
+	if search.General != "" {
+		title := placeholder(search.General)
+		description := placeholder(search.General)
+		category := placeholder(search.General)
+		priority := placeholder(search.General)
+		status := placeholder(search.General)
+		tag := placeholder(search.General)
+		clauses = append(clauses, "(COALESCE(t.title, '') ILIKE '%' || "+title+" || '%' OR "+
+			"COALESCE(t.description, '') ILIKE '%' || "+description+" || '%' OR "+
+			"COALESCE(t.category, '') ILIKE '%' || "+category+" || '%' OR "+
+			"COALESCE(t.priority, '') ILIKE '%' || "+priority+" || '%' OR "+
+			"COALESCE(t.status, '') ILIKE '%' || "+status+" || '%' OR "+
+			"EXISTS (SELECT 1 FROM tags tag WHERE tag.task_id = t.id AND COALESCE(tag.tag, '') ILIKE '%' || "+tag+" || '%'))")
+	}
+	addMatch("title", search.Title)
+	addMatch("description", search.Description)
+	addMatch("category", search.Category)
+	addMatch("priority", search.Priority)
+	addMatch("status", search.Status)
+	for _, tag := range search.Tags {
+		clauses = append(clauses, addTagMatch(tag))
+	}
+	if len(clauses) > 0 {
+		query += " WHERE " + strings.Join(clauses, " AND ")
+	}
+
+	rows, err := ts.db.QueryContext(ts.ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var dbTasks []Task
+	for rows.Next() {
+		var task Task
+		if err := rows.Scan(&task.ID, &task.Title, &task.Description, &task.Category, &task.Priority, &task.Status, &task.OpenedAt, &task.ClosedAt, &task.CreatedAt, &task.UpdatedAt); err != nil {
+			return nil, err
+		}
+		dbTasks = append(dbTasks, task)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return dbTasksToTasks(dbTasks), nil
 }
 
 func (ts *DBLocal) UpdateTitle(taskID int64, title string) error {

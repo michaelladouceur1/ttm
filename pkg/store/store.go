@@ -13,6 +13,7 @@ type StoreStrategy interface {
 	InsertTask(task models.Task) (models.Task, error)
 	GetTaskByID(taskID int64) (models.Task, error)
 	ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error)
+	SearchTasks(search models.TaskSearch) ([]models.Task, error)
 	UpdateTitle(taskID int64, title string) error
 	UpdateDescription(taskID int64, description string) error
 	UpdateCategory(taskID int64, category models.Category) error
@@ -96,6 +97,19 @@ func (s *Store) ListTasks(titleDescSearch string, category models.Category, stat
 		return nil, err
 	}
 
+	return s.populateTasks(tasks)
+}
+
+func (s *Store) SearchTasks(search models.TaskSearch) ([]models.Task, error) {
+	tasks, err := s.strategy.SearchTasks(search)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.populateTasks(tasks)
+}
+
+func (s *Store) populateTasks(tasks []models.Task) ([]models.Task, error) {
 	// TODO: Refactor to run in parallel
 	for i, task := range tasks {
 		sessions, err := s.GetSessionsByTaskID(int(task.ID))

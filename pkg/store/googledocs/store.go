@@ -108,6 +108,60 @@ func (s *Store) ListTasks(search string, category models.Category, status models
 	return tasks, nil
 }
 
+func (s *Store) SearchTasks(search models.TaskSearch) ([]models.Task, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	data, err := s.read()
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := make([]models.Task, 0, len(data.Tasks))
+	for _, task := range data.Tasks {
+		if taskMatchesSearch(task, search) {
+			tasks = append(tasks, task)
+		}
+	}
+	return tasks, nil
+}
+
+func taskMatchesSearch(task models.Task, search models.TaskSearch) bool {
+	contains := func(value, search string) bool {
+		return search == "" || strings.Contains(strings.ToLower(value), strings.ToLower(search))
+	}
+	hasTag := func(search string) bool {
+		for _, tag := range task.Tags {
+			if contains(tag, search) {
+				return true
+			}
+		}
+		return false
+	}
+	if search.General != "" &&
+		!contains(task.Title, search.General) &&
+		!contains(task.Description, search.General) &&
+		!contains(string(task.Category), search.General) &&
+		!contains(string(task.Priority), search.General) &&
+		!contains(string(task.Status), search.General) &&
+		!hasTag(search.General) {
+		return false
+	}
+	if !contains(task.Title, search.Title) ||
+		!contains(task.Description, search.Description) ||
+		!contains(string(task.Category), search.Category) ||
+		!contains(string(task.Priority), search.Priority) ||
+		!contains(string(task.Status), search.Status) {
+		return false
+	}
+	for _, tag := range search.Tags {
+		if !hasTag(tag) {
+			return false
+		}
+	}
+	return true
+}
+
 func (s *Store) UpdateTitle(taskID int64, title string) error {
 	return s.updateTask(taskID, func(task *models.Task) { task.Title = title })
 }

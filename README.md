@@ -52,6 +52,7 @@
 
 - `ttm add`: Add a task
 - `ttm list`: List tasks
+- `ttm search <query>`: Search task fields. Use field filters such as `"$tags:work,urgent $title:Task 1"`.
 - `ttm close`: Close task
 - `ttm start`: Start session
 - `ttm pause`: Pause session
