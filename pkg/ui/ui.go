@@ -185,7 +185,7 @@ func (m *model) execute() {
 		}
 		m.active = newAddModel(m.cfg, m.store, m.input.Width)
 	case "list":
-		m.active = newListModel(m.cfg, m.store, m.input.Width, args[1:])
+		m.active = newListModel(m.cfg, m.store, m.width, m.height, args[1:])
 	case "detail":
 		if len(args) != 2 {
 			m.content = "Usage: /detail <task_id>"

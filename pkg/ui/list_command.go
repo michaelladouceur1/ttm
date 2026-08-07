@@ -9,6 +9,7 @@ import (
 	"ttm/pkg/store"
 
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -17,23 +18,25 @@ type listClosedMsg struct {
 }
 
 type listModel struct {
-	input   textinput.Model
-	cfg     *config.Config
-	store   *store.Store
-	content string
+	input    textinput.Model
+	cfg      *config.Config
+	store    *store.Store
+	content  string
+	viewport viewport.Model
 }
 
-func newListModel(cfg *config.Config, st *store.Store, inputWidth int, args []string) listModel {
+func newListModel(cfg *config.Config, st *store.Store, width, height int, args []string) listModel {
 	input := textinput.New()
 	input.Prompt = "> "
 	input.Placeholder = "Enter search query..."
-	input.Width = inputWidth
+	input.Width = max(1, width-6)
 	input.Focus()
 
 	m := listModel{
-		input: input,
-		cfg:   cfg,
-		store: st,
+		input:    input,
+		cfg:      cfg,
+		store:    st,
+		viewport: viewport.New(max(1, width-4), max(1, height-6)),
 	}
 	if len(args) == 1 {
 		m.input.SetValue(args[0])
@@ -46,6 +49,8 @@ func (m listModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.input.Width = max(1, msg.Width-6)
+		m.viewport.Width = max(1, msg.Width-4)
+		m.viewport.Height = max(1, msg.Height-6)
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -59,6 +64,10 @@ func (m listModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 			return m, nil
 		case "esc":
 			return m, func() tea.Msg { return listClosedMsg{content: m.content} }
+		case "up", "down", "pgup", "pgdown", "home", "end":
+			var cmd tea.Cmd
+			m.viewport, cmd = m.viewport.Update(msg)
+			return m, cmd
 		}
 	}
 
@@ -72,12 +81,12 @@ func (m listModel) InputView() string {
 }
 
 func (m listModel) View() string {
-	return m.content
+	return m.viewport.View()
 }
 
 func (m *listModel) listTasks(args []string) {
 	if len(args) > 1 {
-		m.content = "Error: /list accepts at most one search query."
+		m.setContent("Error: /list accepts at most one search query.")
 		return
 	}
 
@@ -92,19 +101,24 @@ func (m *listModel) listTasks(args []string) {
 		models.Priority(m.cfg.ListFlags.Priority),
 	)
 	if err != nil {
-		m.content = "Error listing tasks: " + err.Error()
+		m.setContent("Error listing tasks: " + err.Error())
 		return
 	}
 	if len(tasks) == 0 {
-		m.content = "No tasks found."
+		m.setContent("No tasks found.")
 		return
 	}
 
 	err = fs.UpdateIDMapFile(tasks)
 	if err != nil {
-		m.content = "Error updating ID map file: " + err.Error()
+		m.setContent("Error updating ID map file: " + err.Error())
 		return
 	}
 
-	m.content = logger.RenderTasks(tasks)
+	m.setContent(logger.RenderTasks(tasks))
+}
+
+func (m *listModel) setContent(content string) {
+	m.content = content
+	m.viewport.SetContent(content)
 }

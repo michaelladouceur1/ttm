@@ -6,6 +6,7 @@ import (
 	"ttm/pkg/config"
 	"ttm/pkg/models"
 
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -42,8 +43,8 @@ func TestUpdateSuggestions(t *testing.T) {
 	m := newModel(nil, nil)
 	m.input.SetValue("/")
 	m.updateSuggestions()
-	if len(m.suggestions) != 2 {
-		t.Fatalf("suggestions = %d, want 2", len(m.suggestions))
+	if len(m.suggestions) != len(commands) {
+		t.Fatalf("suggestions = %d, want %d", len(m.suggestions), len(commands))
 	}
 
 	m.input.SetValue("/li")
@@ -117,11 +118,22 @@ func TestListCommandCreatesChildModel(t *testing.T) {
 }
 
 func TestListModelClosesToRoot(t *testing.T) {
-	m := newListModel(nil, nil, 80, []string{"one", "two"})
+	m := newListModel(nil, nil, 80, 24, []string{"one", "two"})
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	msg := cmd()
 
 	if _, ok := msg.(listClosedMsg); !ok {
 		t.Fatalf("close message = %T, want listClosedMsg", msg)
+	}
+}
+
+func TestListViewportScrollsRenderedContent(t *testing.T) {
+	m := listModel{viewport: viewport.New(20, 1)}
+	m.setContent("first\nsecond")
+
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m = updated.(listModel)
+	if m.viewport.YOffset != 1 {
+		t.Errorf("viewport offset = %d, want 1", m.viewport.YOffset)
 	}
 }
