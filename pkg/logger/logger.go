@@ -25,6 +25,7 @@ type Style interface {
 	RenderMessage(message string) string
 	RenderError(message string) string
 	RenderSummary(title string, items []SummaryItem) string
+	RenderTaskDetails(task models.Task) string
 	RenderTasks(tasks []models.Task) string
 }
 
@@ -43,10 +44,10 @@ func NewStyle(name string) (Style, error) {
 		height = 24
 	}
 	switch strings.ToLower(strings.TrimSpace(name)) {
-	case "", ClassicStyleName:
-		return ClassicStyle{width, height}, nil
-	case CompactStyleName:
-		return CompactStyle{}, nil
+	// case "", ClassicStyleName:
+	// 	return ClassicStyle{width, height}, nil
+	// case CompactStyleName:
+	// 	return CompactStyle{}, nil
 	case MinimalStyleName:
 		return MinimalStyle{width, height}, nil
 	default:
@@ -54,7 +55,7 @@ func NewStyle(name string) (Style, error) {
 	}
 }
 
-var defaultLogger = New(ClassicStyle{})
+var defaultLogger = New(MinimalStyle{80, 24})
 
 func Configure(styleName string) error {
 	style, err := NewStyle(styleName)

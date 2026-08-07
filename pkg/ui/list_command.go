@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 	"ttm/pkg/config"
+	"ttm/pkg/fs"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
 	"ttm/pkg/store"
@@ -96,6 +97,12 @@ func (m *listModel) listTasks(args []string) {
 	}
 	if len(tasks) == 0 {
 		m.content = "No tasks found."
+		return
+	}
+
+	err = fs.UpdateIDMapFile(tasks)
+	if err != nil {
+		m.content = "Error updating ID map file: " + err.Error()
 		return
 	}
 

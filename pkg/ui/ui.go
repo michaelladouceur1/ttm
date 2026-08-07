@@ -20,6 +20,7 @@ type command struct {
 var commands = []command{
 	{name: "add", description: "Add a task with a guided form"},
 	{name: "list", description: "List open tasks, optionally matching a query"},
+	{name: "detail", description: "Show details for a task, including notes and sessions"},
 }
 
 // Run starts the interactive terminal UI.
@@ -78,6 +79,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.content = "Task creation cancelled."
 		return m, nil
 	case listClosedMsg:
+		m.active = nil
+		m.content = msg.content
+		return m, nil
+	case detailClosedMsg:
 		m.active = nil
 		m.content = msg.content
 		return m, nil
@@ -181,6 +186,12 @@ func (m *model) execute() {
 		m.active = newAddModel(m.cfg, m.store, m.input.Width)
 	case "list":
 		m.active = newListModel(m.cfg, m.store, m.input.Width, args[1:])
+	case "detail":
+		if len(args) != 2 {
+			m.content = "Usage: /detail <task_id>"
+			break
+		}
+		m.active = newDetailModel(m.cfg, m.store, args[1])
 	default:
 		m.content = fmt.Sprintf("Unknown command: /%s\n\nType / to see available commands.", args[0])
 	}

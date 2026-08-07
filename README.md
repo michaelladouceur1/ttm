@@ -93,13 +93,16 @@ logging:
 #### TODO
 
 - [ ] TUI commands
-  - [ ] /add (started; matching ability to CLI)
-  - [ ] /list (started; matching ability to CLI)
+  - [x] /add (started; matching ability to CLI)
+  - [ ] /list (started; matches ability to CLI but needs to only list with filter for priority, status, tags, etc.)
+  - [ ] /search - search task fields
   - [ ] /update - update task fields
   - [ ] /detail - shows task details with notes and sessions
   - [ ] /note - add note to task
+- [ ] Commands legend and help
 - [ ] Task notes
 - [ ] User support for multi-user environments
+- [ ] Command history (e.g., up arrow to repeat last command)
 - [ ] Focus (Analogous to sprint) for tasks and sessions
 - [ ] Time-based reports viewing tasks and sessions
 - [ ] Integration with copilot cli; send tasks to copilot agent

@@ -11,18 +11,6 @@ import (
 	"github.com/charmbracelet/lipgloss/tree"
 )
 
-const (
-	IDWidth           = 5
-	TitleWidth        = 20
-	CategoryWidth     = 12
-	PriorityWidth     = 12
-	StatusWidth       = 12
-	TagsWidth         = 40
-	DurationWidth     = 15
-	CreatedAtWidth    = 21
-	DefaultTableWidth = IDWidth + TitleWidth + CategoryWidth + PriorityWidth + StatusWidth + TagsWidth + DurationWidth + CreatedAtWidth
-)
-
 type MinimalStyle struct {
 	TermWidth  int
 	TermHeight int
@@ -62,6 +50,88 @@ func (MinimalStyle) RenderSummary(title string, items []SummaryItem) string {
 		String()
 }
 
+func (ms MinimalStyle) RenderTaskDetails(task models.Task) string {
+
+	padding := 3
+
+	dID := strconv.FormatInt(task.ListID, 10)
+	dTitle := task.Title
+	dPriority := string(task.Priority)
+	dStatus := string(task.Status)
+	dDuration := task.Duration.Format("15:04")
+	dCreatedAt := task.CreatedAt.Format("2006-01-02 15:04")
+	dClosedAt := task.ClosedAt.Format("2006-01-02 15:04")
+
+	cellStyle := lipgloss.NewStyle()
+	columns := []lipgloss.Style{
+		cellStyle.Width(max(2+padding, len(dID)+padding)),         // ID
+		cellStyle.Width(max(35, len(dTitle)+padding)),             // Title
+		cellStyle.Width(max(8+padding, len(dPriority)+padding)),   // Priority
+		cellStyle.Width(max(6+padding, len(dStatus)+padding)),     // Status
+		cellStyle.Width(max(8+padding, len(dDuration)+padding)),   // Duration
+		cellStyle.Width(max(10+padding, len(dCreatedAt)+padding)), // Created At
+		cellStyle.Width(max(9+padding, len(dClosedAt)+padding)),   // Closed At
+	}
+
+	width := 0
+	for _, col := range columns {
+		width += col.GetWidth()
+	}
+
+	topRowTable := table.New().
+		Border(lipgloss.HiddenBorder()).
+		StyleFunc(func(row, column int) lipgloss.Style {
+			if row == 0 {
+				return lipgloss.NewStyle().Bold(true).Foreground(styles.Main)
+			}
+			return columns[column].Foreground(styles.Highlight1)
+		}).
+		Row(
+			"ID",
+			"Title",
+			"Priority",
+			"Status",
+			"Duration",
+			"Created At",
+			"Closed At",
+		).
+		Row(
+			dID,
+			dTitle,
+			dPriority,
+			dStatus,
+			dDuration,
+			dCreatedAt,
+			dClosedAt,
+		)
+
+	descTable := table.New().
+		Width(width).
+		Border(lipgloss.HiddenBorder()).
+		StyleFunc(func(row, column int) lipgloss.Style {
+			if row == 0 {
+				return lipgloss.NewStyle().Bold(true).Foreground(styles.Main)
+			}
+			return lipgloss.NewStyle().Foreground(styles.Highlight1)
+		}).
+		Row("Description").
+		Row(task.Description)
+
+	return topRowTable.String() + "\n" + descTable.String()
+}
+
+const (
+	IDWidth           = 5
+	TitleWidth        = 20
+	CategoryWidth     = 12
+	PriorityWidth     = 12
+	StatusWidth       = 12
+	TagsWidth         = 40
+	DurationWidth     = 15
+	CreatedAtWidth    = 21
+	DefaultTableWidth = IDWidth + TitleWidth + CategoryWidth + PriorityWidth + StatusWidth + TagsWidth + DurationWidth + CreatedAtWidth
+)
+
 func (ms MinimalStyle) RenderTasks(tasks []models.Task) string {
 	cellStyle := lipgloss.NewStyle()
 	columnStyles := []lipgloss.Style{
@@ -97,20 +167,9 @@ func (ms MinimalStyle) RenderTasks(tasks []models.Task) string {
 		})
 
 	for _, task := range tasks {
-		trimmedTitle := task.Title
-		if len(trimmedTitle) > TitleWidth-5 {
-			trimmedTitle = trimmedTitle[:TitleWidth-5] + "..."
-		}
-
-		trimmedDescription := task.Description
-		if len(trimmedDescription) > descriptionWidth-20 {
-			trimmedDescription = trimmedDescription[:descriptionWidth-20] + "..."
-		}
-
-		trimmedTags := strings.Join(task.Tags, ",")
-		if len(trimmedTags) > TagsWidth-5 {
-			trimmedTags = trimmedTags[:TagsWidth-5] + "..."
-		}
+		trimmedTitle := trimString(task.Title, TitleWidth-5)
+		trimmedDescription := trimString(task.Description, descriptionWidth-20)
+		trimmedTags := trimString(strings.Join(task.Tags, ","), TagsWidth-5)
 
 		table.Row(
 			strconv.FormatInt(task.ListID, 10),
@@ -125,4 +184,14 @@ func (ms MinimalStyle) RenderTasks(tasks []models.Task) string {
 		)
 	}
 	return table.String()
+}
+
+func trimString(s string, maxLength int) string {
+	if len(s) <= maxLength {
+		return s
+	}
+	if maxLength <= 3 {
+		return s[:maxLength]
+	}
+	return s[:maxLength-3] + "..."
 }
