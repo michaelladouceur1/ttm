@@ -46,6 +46,8 @@ func (s *Store) Init() error {
 	return nil
 }
 
+// tasks
+
 func (s *Store) InsertTask(task models.Task) (models.Task, error) {
 	task.CreatedAt = time.Now()
 	task.UpdatedAt = time.Now()
@@ -198,27 +200,6 @@ func (s *Store) UpdateStatus(taskID int64, status models.Status) error {
 	})
 }
 
-func (s *Store) UpdateTags(taskID int64, tags []string) error {
-	queries := New(s.db)
-
-	err := queries.DeleteTagsByTaskID(s.ctx, toNullInt(int(taskID)))
-	if err != nil {
-		return err
-	}
-
-	for _, tag := range tags {
-		_, err := queries.CreateTag(s.ctx, CreateTagParams{
-			TaskID: toNullInt(int(taskID)),
-			Tag:    toNullString(tag),
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (s *Store) UpdateOpenedAt(taskID int64, openedAt time.Time) error {
 	return s.updateTaskField(UpdateTaskFieldParams{
 		ID:       taskID,
@@ -246,6 +227,8 @@ func (s *Store) updateTaskField(params UpdateTaskFieldParams) error {
 
 	return nil
 }
+
+// sessions
 
 func (s *Store) AddSession(session models.Session) error {
 	queries := New(s.db)
@@ -322,8 +305,31 @@ func (s *Store) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) (
 
 }
 
+// tags
+
 func (s *Store) InsertTags(taskID int64, tags []string) error {
 	queries := New(s.db)
+
+	for _, tag := range tags {
+		_, err := queries.CreateTag(s.ctx, CreateTagParams{
+			TaskID: toNullInt(int(taskID)),
+			Tag:    toNullString(tag),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Store) UpdateTags(taskID int64, tags []string) error {
+	queries := New(s.db)
+
+	err := queries.DeleteTagsByTaskID(s.ctx, toNullInt(int(taskID)))
+	if err != nil {
+		return err
+	}
 
 	for _, tag := range tags {
 		_, err := queries.CreateTag(s.ctx, CreateTagParams{
@@ -352,6 +358,53 @@ func (s *Store) GetTagsByTaskID(taskID int64) ([]string, error) {
 	}
 
 	return tags, nil
+}
+
+// notes
+
+func (s *Store) InsertNote(note models.Note) (models.Note, error) {
+	queries := New(s.db)
+
+	newNote, err := queries.CreateNote(s.ctx, CreateNoteParams{
+		TaskID:    toNullInt(int(note.TaskID)),
+		Content:   toNullString(note.Content),
+		CreatedAt: toNullTime(note.CreatedAt),
+		UpdatedAt: toNullTime(note.UpdatedAt),
+	})
+
+	if err != nil {
+		return models.Note{}, err
+	}
+
+	return models.Note{
+		ID:        newNote.ID,
+		TaskID:    newNote.TaskID.Int64,
+		Content:   newNote.Content.String,
+		CreatedAt: newNote.CreatedAt.Time,
+		UpdatedAt: newNote.UpdatedAt.Time,
+	}, nil
+}
+
+func (s *Store) GetNotesByTaskID(taskID int64) ([]models.Note, error) {
+	queries := New(s.db)
+
+	dbNotes, err := queries.GetNotesByTaskID(s.ctx, toNullInt(int(taskID)))
+	if err != nil {
+		return nil, err
+	}
+
+	notes := []models.Note{}
+	for _, dbNote := range dbNotes {
+		notes = append(notes, models.Note{
+			ID:        dbNote.ID,
+			TaskID:    dbNote.TaskID.Int64,
+			Content:   dbNote.Content.String,
+			CreatedAt: dbNote.CreatedAt.Time,
+			UpdatedAt: dbNote.UpdatedAt.Time,
+		})
+	}
+
+	return notes, nil
 }
 
 func toNullString(v interface{}) sql.NullString {

@@ -362,6 +362,51 @@ func (s *Store) GetTagsByTaskID(taskID int64) ([]string, error) {
 	return tags, nil
 }
 
+func (s *Store) InsertNote(note models.Note) (models.Note, error) {
+	queries := New(s.db)
+
+	newNote, err := queries.CreateNote(s.ctx, CreateNoteParams{
+		TaskID:    toNullInt(int(note.TaskID)),
+		Content:   toNullString(note.Content),
+		CreatedAt: toNullTime(note.CreatedAt),
+		UpdatedAt: toNullTime(note.UpdatedAt),
+	})
+
+	if err != nil {
+		return models.Note{}, err
+	}
+
+	return models.Note{
+		ID:        newNote.ID,
+		TaskID:    newNote.TaskID.Int64,
+		Content:   newNote.Content.String,
+		CreatedAt: newNote.CreatedAt.Time,
+		UpdatedAt: newNote.UpdatedAt.Time,
+	}, nil
+}
+
+func (s *Store) GetNotesByTaskID(taskID int64) ([]models.Note, error) {
+	queries := New(s.db)
+
+	dbNotes, err := queries.GetNotesByTaskID(s.ctx, toNullInt(int(taskID)))
+	if err != nil {
+		return nil, err
+	}
+
+	notes := []models.Note{}
+	for _, dbNote := range dbNotes {
+		notes = append(notes, models.Note{
+			ID:        dbNote.ID,
+			TaskID:    dbNote.TaskID.Int64,
+			Content:   dbNote.Content.String,
+			CreatedAt: dbNote.CreatedAt.Time,
+			UpdatedAt: dbNote.UpdatedAt.Time,
+		})
+	}
+
+	return notes, nil
+}
+
 func toNullString(v interface{}) sql.NullString {
 	switch val := v.(type) {
 	case string:

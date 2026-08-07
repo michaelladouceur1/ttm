@@ -60,3 +60,12 @@ RETURNING *;
 -- name: DeleteTagsByTaskID :exec
 DELETE FROM tags
 WHERE task_id = $1;
+
+-- name: CreateNote :one
+INSERT INTO notes (task_id, content, created_at, updated_at)
+VALUES ($1, $2, $3, $4)
+RETURNING *;
+
+-- name: GetNotesByTaskID :many
+SELECT * FROM notes
+WHERE task_id = $1;

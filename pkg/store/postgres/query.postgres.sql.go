@@ -10,6 +10,37 @@ import (
 	"database/sql"
 )
 
+const createNote = `-- name: CreateNote :one
+INSERT INTO notes (task_id, content, created_at, updated_at)
+VALUES ($1, $2, $3, $4)
+RETURNING id, task_id, content, created_at, updated_at
+`
+
+type CreateNoteParams struct {
+	TaskID    sql.NullInt64
+	Content   sql.NullString
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
+func (q *Queries) CreateNote(ctx context.Context, arg CreateNoteParams) (Note, error) {
+	row := q.db.QueryRowContext(ctx, createNote,
+		arg.TaskID,
+		arg.Content,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i Note
+	err := row.Scan(
+		&i.ID,
+		&i.TaskID,
+		&i.Content,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createSession = `-- name: CreateSession :one
 INSERT INTO sessions (task_id, start_time, end_time)
 VALUES ($1, $2, $3)
@@ -140,6 +171,40 @@ WHERE task_id = $1
 func (q *Queries) DeleteTagsByTaskID(ctx context.Context, taskID sql.NullInt64) error {
 	_, err := q.db.ExecContext(ctx, deleteTagsByTaskID, taskID)
 	return err
+}
+
+const getNotesByTaskID = `-- name: GetNotesByTaskID :many
+SELECT id, task_id, content, created_at, updated_at FROM notes
+WHERE task_id = $1
+`
+
+func (q *Queries) GetNotesByTaskID(ctx context.Context, taskID sql.NullInt64) ([]Note, error) {
+	rows, err := q.db.QueryContext(ctx, getNotesByTaskID, taskID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Note
+	for rows.Next() {
+		var i Note
+		if err := rows.Scan(
+			&i.ID,
+			&i.TaskID,
+			&i.Content,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getSessionsByTaskID = `-- name: GetSessionsByTaskID :many

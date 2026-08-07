@@ -23,3 +23,11 @@ CREATE TABLE IF NOT EXISTS tags (
     task_id BIGINT REFERENCES tasks(id),
     tag TEXT
 );
+
+CREATE TABLE IF NOT EXISTS notes (
+    id BIGSERIAL PRIMARY KEY,
+    task_id BIGINT REFERENCES tasks(id),
+    content TEXT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);

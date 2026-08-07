@@ -8,6 +8,14 @@ import (
 	"database/sql"
 )
 
+type Note struct {
+	ID        int64
+	TaskID    sql.NullInt64
+	Content   sql.NullString
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
 type Session struct {
 	ID        int64
 	TaskID    sql.NullInt64
