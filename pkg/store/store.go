@@ -187,3 +187,17 @@ func (s *Store) GetSessionsByTaskID(taskID int) ([]models.Session, error) {
 func (s *Store) GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error) {
 	return s.strategy.GetSessionsByTimeRange(startTime, endTime)
 }
+
+func (s *Store) InsertNote(taskID int64, content string) (models.Note, error) {
+	return s.strategy.InsertNote(models.Note{
+		ID:        0,
+		TaskID:    taskID,
+		Content:   content,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+}
+
+func (s *Store) GetNotesByTaskID(taskID int64) ([]models.Note, error) {
+	return s.strategy.GetNotesByTaskID(taskID)
+}
