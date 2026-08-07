@@ -8,6 +8,8 @@ import (
 	"ttm/pkg/models"
 	"ttm/pkg/store"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -33,6 +35,30 @@ type addCompleteMsg struct {
 
 type addCancelledMsg struct{}
 
+type addKeyMap struct {
+	next     key.Binding
+	priority key.Binding
+	cancel   key.Binding
+	help     key.Binding
+}
+
+func newAddKeyMap() addKeyMap {
+	return addKeyMap{
+		next:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "next")),
+		priority: key.NewBinding(key.WithKeys("up", "down"), key.WithHelp("up/down", "select priority")),
+		cancel:   key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "cancel")),
+		help:     key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
+	}
+}
+
+func (k addKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.next, k.cancel, k.help}
+}
+
+func (k addKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{{k.next, k.priority, k.cancel, k.help}}
+}
+
 type addModel struct {
 	input    textinput.Model
 	cfg      *config.Config
@@ -41,6 +67,8 @@ type addModel struct {
 	draft    models.Task
 	priority int
 	content  string
+	help     help.Model
+	keys     addKeyMap
 }
 
 func newAddModel(cfg *config.Config, st *store.Store, inputWidth int) addModel {
@@ -50,6 +78,9 @@ func newAddModel(cfg *config.Config, st *store.Store, inputWidth int) addModel {
 	input.Width = inputWidth
 	input.Focus()
 
+	keys := newAddKeyMap()
+	help := help.New()
+	help.Width = max(1, inputWidth)
 	return addModel{
 		input:    input,
 		cfg:      cfg,
@@ -57,12 +88,23 @@ func newAddModel(cfg *config.Config, st *store.Store, inputWidth int) addModel {
 		step:     addStepTitle,
 		priority: priorityIndex(models.Priority(cfg.AddFlags.Priority)),
 		content:  "Create task\n\nTitle",
+		help:     help,
+		keys:     keys,
 	}
 }
 
 func (m addModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
-	if key, ok := msg.(tea.KeyMsg); ok {
-		switch key.String() {
+	if window, ok := msg.(tea.WindowSizeMsg); ok {
+		m.input.Width = max(1, window.Width-6)
+		m.help.Width = max(1, window.Width-4)
+		return m, nil
+	}
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		if key.Matches(keyMsg, m.keys.help) {
+			m.help.ShowAll = !m.help.ShowAll
+			return m, nil
+		}
+		switch keyMsg.String() {
 		case "up":
 			if m.step == addStepPriority {
 				m.priority = (m.priority - 1 + len(priorities)) % len(priorities)
@@ -105,6 +147,8 @@ func (m addModel) View() string {
 		body.WriteString("\n")
 	}
 	body.WriteString(m.content)
+	body.WriteString("\n")
+	body.WriteString(m.help.View(m.keys))
 	return body.String()
 }
 

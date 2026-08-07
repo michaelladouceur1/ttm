@@ -191,7 +191,7 @@ func (m *model) execute() {
 			m.content = "Usage: /detail <task_id>"
 			break
 		}
-		m.active = newDetailModel(m.cfg, m.store, args[1])
+		m.active = newDetailModel(m.cfg, m.store, args[1], m.input.Width)
 	default:
 		m.content = fmt.Sprintf("Unknown command: /%s\n\nType / to see available commands.", args[0])
 	}

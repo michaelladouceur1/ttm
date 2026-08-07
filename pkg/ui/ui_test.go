@@ -137,3 +137,26 @@ func TestListViewportScrollsRenderedContent(t *testing.T) {
 		t.Errorf("viewport offset = %d, want 1", m.viewport.YOffset)
 	}
 }
+
+func TestCommandHelpViews(t *testing.T) {
+	cfg := &config.Config{
+		AddFlags: config.ConfigDefaultFlags{
+			Priority: string(models.PriorityHigh),
+		},
+	}
+
+	add := newAddModel(cfg, nil, 80)
+	if add.help.View(add.keys) == "" {
+		t.Error("add help view is empty")
+	}
+
+	list := newListModel(nil, nil, 80, 24, []string{"one", "two"})
+	if list.help.View(list.keys) == "" {
+		t.Error("list help view is empty")
+	}
+
+	detail := newDetailModel(nil, nil, "invalid", 80)
+	if detail.help.View(detail.keys) == "" {
+		t.Error("detail help view is empty")
+	}
+}
