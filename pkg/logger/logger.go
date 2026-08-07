@@ -25,7 +25,6 @@ type Style interface {
 	RenderMessage(message string) string
 	RenderError(message string) string
 	RenderSummary(title string, items []SummaryItem) string
-	RenderTaskDetails(task models.Task) string
 	RenderTasks(tasks []models.Task) string
 }
 

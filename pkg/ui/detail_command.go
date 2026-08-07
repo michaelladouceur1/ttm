@@ -2,13 +2,17 @@ package ui
 
 import (
 	"strconv"
+	"strings"
 	"ttm/pkg/config"
 	"ttm/pkg/fs"
-	"ttm/pkg/logger"
+	"ttm/pkg/models"
 	"ttm/pkg/store"
+	"ttm/pkg/styles"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
 type detailClosedMsg struct {
@@ -80,5 +84,90 @@ func (m *detailModel) loadTaskDetails() {
 		return
 	}
 
-	m.content = logger.RenderTaskDetails(task)
+	var content strings.Builder
+	mainTable, width := m.renderMainTable(task)
+	content.WriteString(mainTable)
+	content.WriteString("\n")
+	content.WriteString(m.renderDescription(task, width))
+
+	m.content = content.String()
+}
+
+func (m *detailModel) renderMainTable(task models.Task) (string, int) {
+	padding := 5
+
+	dID := strconv.FormatInt(task.ListID, 10)
+	dTitle := task.Title
+	dPriority := string(task.Priority)
+	dStatus := string(task.Status)
+	dDuration := task.Duration.Format("15:04")
+	dCreatedAt := task.CreatedAt.Format("2006-01-02 15:04")
+	dClosedAt := task.ClosedAt.Format("2006-01-02 15:04")
+
+	cellStyle := lipgloss.NewStyle().Foreground(styles.Highlight1)
+	columns := []lipgloss.Style{
+		cellStyle.Width(max(2+padding, len(dID)+padding)),         // ID
+		cellStyle.Width(max(35, len(dTitle)+padding)),             // Title
+		cellStyle.Width(max(8+padding, len(dPriority)+padding)),   // Priority
+		cellStyle.Width(max(6+padding, len(dStatus)+padding)),     // Status
+		cellStyle.Width(max(8+padding, len(dDuration)+padding)),   // Duration
+		cellStyle.Width(max(10+padding, len(dCreatedAt)+padding)), // Created At
+		cellStyle.Width(max(9+padding, len(dClosedAt)+padding)),   // Closed At
+	}
+
+	width := 0
+	for _, col := range columns {
+		width += col.GetWidth()
+	}
+
+	table := table.New().
+		Border(lipgloss.HiddenBorder()).
+		StyleFunc(func(row, column int) lipgloss.Style {
+			if row == 0 {
+				return lipgloss.NewStyle().Bold(true).Foreground(styles.Main)
+			}
+			return columns[column]
+		}).
+		Row(
+			"ID",
+			"Title",
+			"Priority",
+			"Status",
+			"Duration",
+			"Created At",
+			"Closed At",
+		).
+		Row(
+			dID,
+			dTitle,
+			dPriority,
+			dStatus,
+			dDuration,
+			dCreatedAt,
+			dClosedAt,
+		)
+
+	return table.String(), width
+}
+
+func (m *detailModel) renderDescription(task models.Task, width int) string {
+	cellStyle := lipgloss.NewStyle().Foreground(styles.Highlight1)
+	columns := []lipgloss.Style{
+		cellStyle.PaddingRight(5), // Description
+		cellStyle.Width(20),       // Tags
+	}
+
+	table := table.New().
+		Width(width).
+		Border(lipgloss.HiddenBorder()).
+		StyleFunc(func(row, column int) lipgloss.Style {
+			if row == 0 {
+				return lipgloss.NewStyle().Bold(true).Foreground(styles.Main)
+			}
+			return columns[column]
+		}).
+		Row("Description", "Tags").
+		Row(task.Description, strings.Join(task.Tags, ", "))
+
+	return table.String()
 }
