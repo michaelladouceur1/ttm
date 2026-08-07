@@ -23,6 +23,7 @@ type Store struct {
 type documentData struct {
 	Tasks    []models.Task    `json:"tasks"`
 	Sessions []models.Session `json:"sessions"`
+	Notes    []models.Note    `json:"notes"`
 }
 
 func NewStore(cfg config.GoogleDocsConfig) *Store {
@@ -261,6 +262,41 @@ func (s *Store) GetTagsByTaskID(taskID int64) ([]string, error) {
 	return nil, fmt.Errorf("task %d not found", taskID)
 }
 
+func (s *Store) InsertNote(note models.Note) (models.Note, error) {
+	err := s.modify(func(data *documentData) error {
+		if !hasTask(data.Tasks, note.TaskID) {
+			return fmt.Errorf("task %d not found", note.TaskID)
+		}
+		note.ID = nextNoteID(data.Notes)
+		note.CreatedAt = time.Now()
+		data.Notes = append(data.Notes, note)
+		return nil
+	})
+
+	if err != nil {
+		return models.Note{}, err
+	}
+
+	return note, nil
+}
+
+func (s *Store) GetNotesByTaskID(taskID int64) ([]models.Note, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	data, err := s.read()
+	if err != nil {
+		return nil, err
+	}
+	notes := []models.Note{}
+	for _, note := range data.Notes {
+		if note.TaskID == taskID {
+			notes = append(notes, note)
+		}
+	}
+	return notes, nil
+}
+
 func (s *Store) updateTask(taskID int64, update func(*models.Task)) error {
 	return s.modify(func(data *documentData) error {
 		for i := range data.Tasks {
@@ -399,4 +435,14 @@ func hasTask(tasks []models.Task, taskID int64) bool {
 		}
 	}
 	return false
+}
+
+func nextNoteID(notes []models.Note) int64 {
+	var maxID int64
+	for _, note := range notes {
+		if note.ID > maxID {
+			maxID = note.ID
+		}
+	}
+	return maxID + 1
 }

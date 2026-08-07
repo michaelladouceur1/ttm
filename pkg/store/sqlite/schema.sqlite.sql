@@ -23,3 +23,11 @@ CREATE TABLE IF NOT EXISTS tags (
     task_id INTEGER,
     tag TEXT
 );
+
+CREATE TABLE IF NOT EXISTS notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER,
+    content TEXT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);

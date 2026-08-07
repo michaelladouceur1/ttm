@@ -1,3 +1,5 @@
+-- TASKS 
+
 -- name: GetTaskById :one
 SELECT * FROM tasks
 WHERE id = ?;
@@ -30,6 +32,8 @@ SET
 WHERE id = ?
 RETURNING *;
 
+-- SESSIONS 
+
 -- name: CreateSession :one
 INSERT INTO sessions (task_id, start_time, end_time)
 VALUES (?, ?, ?)
@@ -42,6 +46,8 @@ WHERE task_id = ?;
 -- name: GetSessionsByTimeRange :many
 SELECT * FROM sessions
 WHERE start_time >= ? AND end_time <= ?;
+
+-- TAGS 
 
 -- name: GetTagsByTaskID :many
 SELECT * FROM tags
@@ -59,4 +65,15 @@ RETURNING *;
 
 -- name: DeleteTagsByTaskID :exec
 DELETE FROM tags
+WHERE task_id = ?;
+
+-- NOTES 
+
+-- name: CreateNote :one
+INSERT INTO notes (task_id, content, created_at, updated_at)
+VALUES (?, ?, ?, ?)
+RETURNING *;
+
+-- name: GetNotesByTaskID :many
+SELECT * FROM notes
 WHERE task_id = ?;

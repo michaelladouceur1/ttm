@@ -10,6 +10,7 @@ import (
 
 type StoreStrategy interface {
 	Init() error
+	// Tasks
 	InsertTask(task models.Task) (models.Task, error)
 	GetTaskByID(taskID int64) (models.Task, error)
 	ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error)
@@ -22,11 +23,16 @@ type StoreStrategy interface {
 	UpdateTags(taskID int64, tags []string) error
 	UpdateOpenedAt(taskID int64, openedAt time.Time) error
 	UpdateClosedAt(taskID int64, closedAt time.Time) error
+	// Sessions
 	AddSession(session models.Session) error
 	GetSessionsByTaskID(taskID int) ([]models.Session, error)
 	GetSessionsByTimeRange(startTime time.Time, endTime time.Time) ([]models.Session, error)
+	// Tags
 	InsertTags(taskID int64, tags []string) error
 	GetTagsByTaskID(taskID int64) ([]string, error)
+	// Notes
+	InsertNote(note models.Note) (models.Note, error)
+	GetNotesByTaskID(taskID int64) ([]models.Note, error)
 }
 
 type Store struct {
