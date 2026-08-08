@@ -50,7 +50,7 @@ func NewStyle(name string) (Style, error) {
 	case MinimalStyleName:
 		return MinimalStyle{width, height}, nil
 	default:
-		return nil, fmt.Errorf("unsupported logging theme %q; choose classic or compact", name)
+		return nil, fmt.Errorf("unsupported logging theme %q; choose minimal", name)
 	}
 }
 

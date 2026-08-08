@@ -45,7 +45,7 @@ func NewConfig() (*gonfig.Gonfig[Config], error) {
 			Type: "sqlite",
 		},
 		Logging: LoggingConfig{
-			Theme: "classic",
+			Theme: "minimal",
 		},
 		AddFlags: ConfigDefaultFlags{
 			Category: string(models.CategoryTask),

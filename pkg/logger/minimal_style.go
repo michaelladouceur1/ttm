@@ -117,6 +117,9 @@ func (ms MinimalStyle) RenderTasks(tasks []models.Task) string {
 }
 
 func trimString(s string, maxLength int) string {
+	if maxLength <= 0 {
+		return ""
+	}
 	if len(s) <= maxLength {
 		return s
 	}
