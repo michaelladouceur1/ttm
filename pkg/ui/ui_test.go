@@ -108,9 +108,9 @@ func TestListCommandCreatesChildModel(t *testing.T) {
 	m.input.SetValue("/list one two")
 	m.execute()
 
-	list, ok := m.active.(listModel)
+	list, ok := m.active.(tasksModel)
 	if !ok {
-		t.Fatalf("active model = %T, want listModel", m.active)
+		t.Fatalf("active model = %T, want tasksModel", m.active)
 	}
 	if list.content != "Error: /list accepts at most one search query." {
 		t.Errorf("list content = %q", list.content)
@@ -118,21 +118,21 @@ func TestListCommandCreatesChildModel(t *testing.T) {
 }
 
 func TestListModelClosesToRoot(t *testing.T) {
-	m := newListModel(nil, nil, 80, 24, []string{"one", "two"})
+	m := newTasksModel(nil, nil, 80, 24, []string{"one", "two"})
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	msg := cmd()
 
-	if _, ok := msg.(listClosedMsg); !ok {
-		t.Fatalf("close message = %T, want listClosedMsg", msg)
+	if _, ok := msg.(tasksClosedMsg); !ok {
+		t.Fatalf("close message = %T, want tasksClosedMsg", msg)
 	}
 }
 
 func TestListViewportScrollsRenderedContent(t *testing.T) {
-	m := listModel{viewport: viewport.New(20, 1)}
+	m := tasksModel{viewport: viewport.New(20, 1)}
 	m.setContent("first\nsecond")
 
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyDown})
-	m = updated.(listModel)
+	m = updated.(tasksModel)
 	if m.viewport.YOffset != 1 {
 		t.Errorf("viewport offset = %d, want 1", m.viewport.YOffset)
 	}

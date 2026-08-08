@@ -13,11 +13,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type listClosedMsg struct {
+type tasksClosedMsg struct {
 	content string
 }
 
-type listModel struct {
+type tasksModel struct {
 	input    textinput.Model
 	cfg      *config.Config
 	store    *store.Store
@@ -25,14 +25,14 @@ type listModel struct {
 	viewport viewport.Model
 }
 
-func newListModel(cfg *config.Config, st *store.Store, width, height int, args []string) listModel {
+func newTasksModel(cfg *config.Config, st *store.Store, width, height int, args []string) tasksModel {
 	input := textinput.New()
 	input.Prompt = "> "
 	input.Placeholder = "Enter search query..."
 	input.Width = max(1, width-6)
 	input.Focus()
 
-	m := listModel{
+	m := tasksModel{
 		input:    input,
 		cfg:      cfg,
 		store:    st,
@@ -45,7 +45,7 @@ func newListModel(cfg *config.Config, st *store.Store, width, height int, args [
 	return m
 }
 
-func (m listModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
+func (m tasksModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.input.Width = max(1, msg.Width-6)
@@ -63,7 +63,7 @@ func (m listModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 			}
 			return m, nil
 		case "esc":
-			return m, func() tea.Msg { return listClosedMsg{content: m.content} }
+			return m, func() tea.Msg { return tasksClosedMsg{content: m.content} }
 		case "up", "down", "pgup", "pgdown", "home", "end":
 			var cmd tea.Cmd
 			m.viewport, cmd = m.viewport.Update(msg)
@@ -76,15 +76,15 @@ func (m listModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 	return m, cmd
 }
 
-func (m listModel) InputView() string {
+func (m tasksModel) InputView() string {
 	return m.input.View()
 }
 
-func (m listModel) View() string {
+func (m tasksModel) View() string {
 	return m.viewport.View()
 }
 
-func (m *listModel) listTasks(args []string) {
+func (m *tasksModel) listTasks(args []string) {
 	if len(args) > 1 {
 		m.setContent("Error: /list accepts at most one search query.")
 		return
@@ -118,7 +118,7 @@ func (m *listModel) listTasks(args []string) {
 	m.setContent(logger.RenderTasks(tasks))
 }
 
-func (m *listModel) setContent(content string) {
+func (m *tasksModel) setContent(content string) {
 	m.content = content
 	m.viewport.SetContent(content)
 }

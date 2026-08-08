@@ -19,7 +19,7 @@ type command struct {
 
 var commands = []command{
 	{name: "add", description: "Add a task with a guided form"},
-	{name: "list", description: "List open tasks, optionally matching a query"},
+	{name: "tasks", description: "List open tasks, optionally matching a query"},
 	{name: "detail", description: "Show details for a task, including notes and sessions"},
 	{name: "note", description: "Add a task note"},
 }
@@ -73,13 +73,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case addCompleteMsg:
 		m.active = nil
-		m.content = fmt.Sprintf("Added task: %s\n\nUse /list to view tasks.", msg.title)
+		m.content = fmt.Sprintf("Added task: %s\n\nUse /tasks to view tasks.", msg.title)
 		return m, nil
 	case addCancelledMsg:
 		m.active = nil
 		m.content = "Task creation cancelled."
 		return m, nil
-	case listClosedMsg:
+	case tasksClosedMsg:
 		m.active = nil
 		m.content = msg.content
 		return m, nil
@@ -189,8 +189,8 @@ func (m *model) execute() {
 			break
 		}
 		m.active = newAddModel(m.cfg, m.store, m.input.Width)
-	case "list":
-		m.active = newListModel(m.cfg, m.store, m.width, m.height, args[1:])
+	case "tasks":
+		m.active = newTasksModel(m.cfg, m.store, m.width, m.height, args[1:])
 	case "detail":
 		if len(args) != 2 {
 			m.content = "Usage: /detail <task_id>"

@@ -94,11 +94,17 @@ logging:
 
 - [ ] TUI commands
   - [x] /add (started; matching ability to CLI)
-  - [ ] /list (started; matches ability to CLI but needs to only list with filter for priority, status, tags, etc.)
+  - [ ] /tag - add tag to task
+  - [ ] /note - add note to task
+  - [ ] /start - start session for task
+  - [ ] /pause - pause session for task
+  - [ ] /end - end session for task
+  - [ ] /cancel - cancel session for task
+  - [ ] /tasks (started; matches ability to CLI but needs to only list with filter for priority, status, tags, etc.)
+  - [ ] /tags - list all tags and their counts
   - [ ] /search - search task fields
   - [ ] /update - update task fields
   - [ ] /detail - shows task details with notes and sessions
-  - [ ] /note - add note to task
 - [ ] Commands legend and help
 - [ ] Task notes
 - [ ] User support for multi-user environments
