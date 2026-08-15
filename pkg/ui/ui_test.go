@@ -120,7 +120,7 @@ func TestListCommandCreatesChildModel(t *testing.T) {
 }
 
 func TestListModelClosesToRoot(t *testing.T) {
-	m := newTasksModel(nil, nil, 80, 24, []string{"one", "two"})
+	m := newTasksModel(nil, nil, 80, []string{"one", "two"})
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	msg := cmd()
 
@@ -129,12 +129,14 @@ func TestListModelClosesToRoot(t *testing.T) {
 	}
 }
 
-func TestListViewportScrollsRenderedContent(t *testing.T) {
-	m := tasksModel{viewport: viewport.New(20, 1)}
-	m.setContent("first\nsecond")
+func TestRootViewportScrollsCommandContent(t *testing.T) {
+	m := newModel(nil, nil)
+	m.viewport = viewport.New(20, 1)
+	m.active = detailModel{content: "first\nsecond"}
+	m.setViewportContent()
 
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyDown})
-	m = updated.(tasksModel)
+	m = updated.(model)
 	if m.viewport.YOffset != 1 {
 		t.Errorf("viewport offset = %d, want 1", m.viewport.YOffset)
 	}

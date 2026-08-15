@@ -54,7 +54,7 @@ func (m detailModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 		}
 	}
 
-	return m, func() tea.Msg { return detailClosedMsg{content: m.content} } // Return a close message immediately to reset back to main command view
+	return m, func() tea.Msg { return detailClosedMsg{content: m.content} }
 }
 
 func (m detailModel) InputView() string {

@@ -8,6 +8,7 @@ import (
 	"ttm/pkg/styles"
 
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -41,6 +42,7 @@ type model struct {
 	suggestions []command
 	content     string
 	active      childModel
+	viewport    viewport.Model
 }
 
 type childModel interface {
@@ -55,14 +57,17 @@ func newModel(cfg *config.Config, st *store.Store) model {
 	input.Placeholder = "Type / for commands"
 	input.Focus()
 
-	return model{
-		input:   input,
-		cfg:     cfg,
-		store:   st,
-		width:   80,
-		height:  24,
-		content: "Type / to see available commands.\n\nUse Ctrl+C to exit.",
+	m := model{
+		input:    input,
+		cfg:      cfg,
+		store:    st,
+		width:    80,
+		height:   24,
+		content:  "Type / to see available commands.\n\nUse Ctrl+C to exit.",
+		viewport: viewport.New(76, 18),
 	}
+	m.setViewportContent()
+	return m
 }
 
 func (m model) Init() tea.Cmd {
@@ -74,27 +79,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case addCompleteMsg:
 		m.active = nil
 		m.content = fmt.Sprintf("Added task: %s\n\nUse /tasks to view tasks.", msg.title)
+		m.setViewportContent()
 		return m, nil
 	case addCancelledMsg:
 		m.active = nil
 		m.content = "Task creation cancelled."
+		m.setViewportContent()
 		return m, nil
 	case tasksClosedMsg:
 		m.active = nil
 		m.content = msg.content
+		m.setViewportContent()
 		return m, nil
 	case detailClosedMsg:
 		m.active = nil
 		m.content = msg.content
+		m.setViewportContent()
 		return m, nil
 	case noteClosedMsg:
 		m.active = nil
 		m.content = msg.content
+		m.setViewportContent()
 		return m, nil
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 		m.input.Width = max(1, msg.Width-6)
+		m.viewport.Width = max(1, msg.Width-4)
+		m.viewport.Height = max(1, msg.Height-6)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -105,6 +117,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.active != nil {
 		var cmd tea.Cmd
 		m.active, cmd = m.active.Update(msg)
+		m.setViewportContent()
+		if isViewportNavigation(msg) {
+			m.viewport, _ = m.viewport.Update(msg)
+		}
 		return m, cmd
 	}
 
@@ -113,16 +129,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "up":
 			if len(m.suggestions) > 0 {
 				m.selected = (m.selected - 1 + len(m.suggestions)) % len(m.suggestions)
+				m.setViewportContent()
 				return m, nil
 			}
 		case "down":
 			if len(m.suggestions) > 0 {
 				m.selected = (m.selected + 1) % len(m.suggestions)
+				m.setViewportContent()
 				return m, nil
 			}
 		case "tab":
 			if len(m.suggestions) > 0 {
 				m.completeSuggestion()
+				m.setViewportContent()
 				return m, nil
 			}
 		case "enter":
@@ -131,11 +150,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			m.execute()
+			m.setViewportContent()
 			return m, nil
 		case "esc":
 			m.input.SetValue("")
 			m.suggestions = nil
 			m.selected = 0
+			m.setViewportContent()
 			return m, nil
 		}
 	}
@@ -143,6 +164,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.input, cmd = m.input.Update(msg)
 	m.updateSuggestions()
+	m.setViewportContent()
+	if isViewportNavigation(msg) {
+		m.viewport, _ = m.viewport.Update(msg)
+	}
 	return m, cmd
 }
 
@@ -190,7 +215,7 @@ func (m *model) execute() {
 		}
 		m.active = newAddModel(m.cfg, m.store, m.input.Width)
 	case "tasks":
-		m.active = newTasksModel(m.cfg, m.store, m.width, m.height, args[1:])
+		m.active = newTasksModel(m.cfg, m.store, m.width, args[1:])
 	case "detail":
 		if len(args) != 2 {
 			m.content = "Usage: /detail <task_id>"
@@ -213,10 +238,8 @@ func (m *model) execute() {
 
 func (m model) View() string {
 	inputView := m.input.View()
-	bodyContent := m.content
 	if m.active != nil {
 		inputView = m.active.InputView()
-		bodyContent = m.active.View()
 	}
 
 	input := lipgloss.NewStyle().
@@ -225,6 +248,15 @@ func (m model) View() string {
 		Width(max(1, m.width-2)).
 		Render(inputView)
 
+	content := lipgloss.NewStyle().
+		Width(max(1, m.width-2)).
+		Padding(1, 1).
+		Render(m.viewport.View())
+
+	return input + "\n" + content
+}
+
+func (m *model) setViewportContent() {
 	var body strings.Builder
 	if m.active == nil && len(m.suggestions) > 0 {
 		body.WriteString("Commands\n")
@@ -237,15 +269,25 @@ func (m model) View() string {
 		}
 		body.WriteString("\n")
 	}
-	body.WriteString(bodyContent)
+	if m.active != nil {
+		body.WriteString(m.active.View())
+	} else {
+		body.WriteString(m.content)
+	}
+	m.viewport.SetContent(body.String())
+}
 
-	content := lipgloss.NewStyle().
-		Width(max(1, m.width-2)).
-		Height(max(1, m.height-4)).
-		Padding(1, 1).
-		Render(body.String())
-
-	return input + "\n" + content
+func isViewportNavigation(msg tea.Msg) bool {
+	key, ok := msg.(tea.KeyMsg)
+	if !ok {
+		return false
+	}
+	switch key.String() {
+	case "up", "down", "pgup", "pgdown", "home", "end":
+		return true
+	default:
+		return false
+	}
 }
 
 func parseCommand(input string) ([]string, error) {
