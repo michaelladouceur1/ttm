@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 	"ttm/pkg/config"
 	"ttm/pkg/store"
 	"ttm/pkg/styles"
@@ -22,6 +23,9 @@ var commands = []command{
 	{name: "add", description: "Add a task with a guided form"},
 	{name: "tasks", description: "List open tasks, optionally matching a query"},
 	{name: "tags", description: "List all tags and their task counts"},
+	{name: "start", description: "Start a session for a task"},
+	{name: "end", description: "End and save the active session"},
+	{name: "cancel", description: "Discard the active session"},
 	{name: "detail", description: "Show details for a task, including notes and sessions"},
 	{name: "note", description: "Add a task note"},
 }
@@ -228,6 +232,24 @@ func (m *model) execute() {
 			break
 		}
 		m.active = newTagsModel(m.store)
+	case "start":
+		if len(args) != 2 {
+			m.content = "Usage: /start <task_id>"
+			break
+		}
+		m.content = startSession(m.store, args[1], time.Now())
+	case "end":
+		if len(args) != 1 {
+			m.content = "Usage: /end"
+			break
+		}
+		m.content = endSession(m.store, time.Now())
+	case "cancel":
+		if len(args) != 1 {
+			m.content = "Usage: /cancel"
+			break
+		}
+		m.content = cancelSession()
 	case "detail":
 		if len(args) != 2 {
 			m.content = "Usage: /detail <task_id>"

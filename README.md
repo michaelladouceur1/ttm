@@ -49,6 +49,9 @@ and press Enter to run it.
 - `/add`: add a task by entering its title, description, priority, and tags
 - `/tasks ["query"]`: list open tasks, optionally filtered by a query
 - `/tags`: list all tags and their task counts
+- `/start <task_id>`: start a session for a listed task
+- `/end`: end and save the active session
+- `/cancel`: discard the active session
 
 ### Shorthand
 

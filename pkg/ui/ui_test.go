@@ -6,7 +6,10 @@ import (
 	"testing"
 	"time"
 	"ttm/pkg/config"
+	"ttm/pkg/fs"
 	"ttm/pkg/models"
+	"ttm/pkg/store"
+	sqlite "ttm/pkg/store/sqlite"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -53,6 +56,103 @@ func TestUpdateSuggestions(t *testing.T) {
 	m.updateSuggestions()
 	if len(m.suggestions) != 1 || m.suggestions[0].name != "tags" {
 		t.Fatalf("suggestions = %#v, want tags", m.suggestions)
+	}
+}
+
+func TestStartCommandRequiresTaskID(t *testing.T) {
+	m := newModel(nil, nil)
+	m.input.SetValue("/start")
+	m.execute()
+
+	if m.content != "Usage: /start <task_id>" {
+		t.Errorf("start content = %q", m.content)
+	}
+}
+
+func TestStartSessionRejectsInvalidTaskID(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	content := startSession(nil, "not-a-task-id", time.Time{})
+	if !strings.Contains(content, "Error starting session:") {
+		t.Errorf("startSession() = %q, want an invalid ID error", content)
+	}
+}
+
+func TestStartSessionCreatesSessionForMappedTask(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Write tests"}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if err := fs.UpdateIDMapFile([]models.Task{{ID: 1, ListID: 1}}); err != nil {
+		t.Fatalf("UpdateIDMapFile() error = %v", err)
+	}
+
+	startedAt := time.Date(2026, time.August, 14, 23, 55, 0, 0, time.UTC)
+	content := startSession(st, "1", startedAt)
+	if !strings.Contains(content, "Session started.") {
+		t.Fatalf("startSession() = %q", content)
+	}
+
+	session, err := fs.ReadSessionFile()
+	if err != nil {
+		t.Fatalf("ReadSessionFile() error = %v", err)
+	}
+	if session.TaskID != 1 || !session.StartTime.Equal(startedAt) {
+		t.Errorf("session = %#v, want task 1 at %v", session, startedAt)
+	}
+}
+
+func TestEndSessionSavesAndRemovesActiveSession(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Write tests"}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+
+	startedAt := time.Date(2026, time.August, 14, 23, 0, 0, 0, time.UTC)
+	endedAt := startedAt.Add(25 * time.Minute)
+	if err := fs.CreateSessionFile(1, startedAt); err != nil {
+		t.Fatalf("CreateSessionFile() error = %v", err)
+	}
+
+	content := endSession(st, endedAt)
+	if !strings.Contains(content, "Session ended.") {
+		t.Fatalf("endSession() = %q", content)
+	}
+	if fs.SessionFileExists() {
+		t.Error("session file still exists after ending the session")
+	}
+
+	sessions, err := st.GetSessionsByTaskID(1)
+	if err != nil {
+		t.Fatalf("GetSessionsByTaskID() error = %v", err)
+	}
+	if len(sessions) != 1 || !sessions[0].StartTime.Equal(startedAt) || !sessions[0].EndTime.Equal(endedAt) {
+		t.Errorf("sessions = %#v, want one session from %v to %v", sessions, startedAt, endedAt)
+	}
+}
+
+func TestCancelSessionRemovesActiveSessionWithoutSaving(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	if err := fs.CreateSessionFile(1, time.Now()); err != nil {
+		t.Fatalf("CreateSessionFile() error = %v", err)
+	}
+
+	if content := cancelSession(); content != "Session cancelled." {
+		t.Errorf("cancelSession() = %q", content)
+	}
+	if fs.SessionFileExists() {
+		t.Error("session file still exists after cancelling the session")
 	}
 }
 
@@ -124,7 +224,7 @@ func TestRenderTagCounts(t *testing.T) {
 		{Tag: "planning", Count: 2},
 		{Tag: "work", Count: 1},
 	})
-	if rendered != "Tags\n\nplanning (2)\nwork (1)" {
+	if rendered != "Tags\n\n(2) planning\n(1) work" {
 		t.Errorf("renderTagCounts() = %q", rendered)
 	}
 }
