@@ -363,28 +363,21 @@ func (s *Store) GetTagsByTaskID(taskID int64) ([]string, error) {
 }
 
 func (s *Store) ListTagCounts() ([]models.TagCount, error) {
-	rows, err := s.db.QueryContext(s.ctx, `
-		SELECT tag, COUNT(DISTINCT task_id)
-		FROM tags
-		WHERE tag IS NOT NULL AND tag <> ''
-		GROUP BY tag
-		ORDER BY LOWER(tag), tag`)
+	queries := New(s.db)
+
+	dbTags, err := queries.ListTags(s.ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var tags []models.TagCount
-	for rows.Next() {
-		var tag models.TagCount
-		if err := rows.Scan(&tag.Tag, &tag.Count); err != nil {
-			return nil, err
-		}
-		tags = append(tags, tag)
+	tags := []models.TagCount{}
+	for _, dbTag := range dbTags {
+		tags = append(tags, models.TagCount{
+			Tag:   dbTag.Tag.String,
+			Count: int(dbTag.TaskCount),
+		})
 	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
+
 	return tags, nil
 }
 

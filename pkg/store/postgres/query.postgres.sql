@@ -43,6 +43,13 @@ WHERE task_id = $1;
 SELECT * FROM sessions
 WHERE start_time >= $1 AND end_time <= $2;
 
+-- name: ListTags :many
+SELECT tag, COUNT(DISTINCT task_id) AS task_count
+FROM tags
+WHERE tag IS NOT NULL AND tag <> ''
+GROUP BY tag
+ORDER BY LOWER(tag), tag;
+
 -- name: GetTagsByTaskID :many
 SELECT * FROM tags
 WHERE task_id = $1;
