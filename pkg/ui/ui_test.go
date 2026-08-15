@@ -49,10 +49,10 @@ func TestUpdateSuggestions(t *testing.T) {
 		t.Fatalf("suggestions = %d, want %d", len(m.suggestions), len(commands))
 	}
 
-	m.input.SetValue("/li")
+	m.input.SetValue("/tag")
 	m.updateSuggestions()
-	if len(m.suggestions) != 1 || m.suggestions[0].name != "list" {
-		t.Fatalf("suggestions = %#v, want list", m.suggestions)
+	if len(m.suggestions) != 1 || m.suggestions[0].name != "tags" {
+		t.Fatalf("suggestions = %#v, want tags", m.suggestions)
 	}
 }
 
@@ -105,9 +105,9 @@ func TestParseTags(t *testing.T) {
 	}
 }
 
-func TestListCommandCreatesChildModel(t *testing.T) {
+func TestTasksCommandCreatesChildModel(t *testing.T) {
 	m := newModel(nil, nil)
-	m.input.SetValue("/list one two")
+	m.input.SetValue("/tasks one two")
 	m.execute()
 
 	list, ok := m.active.(tasksModel)
@@ -115,7 +115,27 @@ func TestListCommandCreatesChildModel(t *testing.T) {
 		t.Fatalf("active model = %T, want tasksModel", m.active)
 	}
 	if list.content != "Error: /list accepts at most one search query." {
-		t.Errorf("list content = %q", list.content)
+		t.Errorf("tasks content = %q", list.content)
+	}
+}
+
+func TestRenderTagCounts(t *testing.T) {
+	rendered := renderTagCounts([]models.TagCount{
+		{Tag: "planning", Count: 2},
+		{Tag: "work", Count: 1},
+	})
+	if rendered != "Tags\n\nplanning (2)\nwork (1)" {
+		t.Errorf("renderTagCounts() = %q", rendered)
+	}
+}
+
+func TestTagsModelClosesToRoot(t *testing.T) {
+	m := tagsModel{content: "Tags\n\nwork (1)"}
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	msg := cmd()
+
+	if _, ok := msg.(tagsClosedMsg); !ok {
+		t.Fatalf("close message = %T, want tagsClosedMsg", msg)
 	}
 }
 

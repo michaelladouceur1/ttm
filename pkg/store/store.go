@@ -30,6 +30,7 @@ type StoreStrategy interface {
 	// Tags
 	InsertTags(taskID int64, tags []string) error
 	GetTagsByTaskID(taskID int64) ([]string, error)
+	ListTagCounts() ([]models.TagCount, error)
 	// Notes
 	InsertNote(note models.Note) (models.Note, error)
 	GetNotesByTaskID(taskID int64) ([]models.Note, error)
@@ -174,6 +175,10 @@ func (s *Store) UpdateClosedAt(taskID int64, closedAt time.Time) error {
 
 func (s *Store) InsertTags(taskID int64, tags []string) error {
 	return s.strategy.InsertTags(taskID, tags)
+}
+
+func (s *Store) ListTagCounts() ([]models.TagCount, error) {
+	return s.strategy.ListTagCounts()
 }
 
 func (s *Store) AddSession(session models.Session) error {

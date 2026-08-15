@@ -360,6 +360,32 @@ func (s *Store) GetTagsByTaskID(taskID int64) ([]string, error) {
 	return tags, nil
 }
 
+func (s *Store) ListTagCounts() ([]models.TagCount, error) {
+	rows, err := s.db.QueryContext(s.ctx, `
+		SELECT tag, COUNT(DISTINCT task_id)
+		FROM tags
+		WHERE tag IS NOT NULL AND tag <> ''
+		GROUP BY tag
+		ORDER BY LOWER(tag), tag`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tags []models.TagCount
+	for rows.Next() {
+		var tag models.TagCount
+		if err := rows.Scan(&tag.Tag, &tag.Count); err != nil {
+			return nil, err
+		}
+		tags = append(tags, tag)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return tags, nil
+}
+
 // notes
 
 func (s *Store) InsertNote(note models.Note) (models.Note, error) {
