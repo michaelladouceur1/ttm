@@ -2,7 +2,9 @@ package ui
 
 import (
 	"reflect"
+	"strings"
 	"testing"
+	"time"
 	"ttm/pkg/config"
 	"ttm/pkg/models"
 
@@ -135,5 +137,21 @@ func TestListViewportScrollsRenderedContent(t *testing.T) {
 	m = updated.(tasksModel)
 	if m.viewport.YOffset != 1 {
 		t.Errorf("viewport offset = %d, want 1", m.viewport.YOffset)
+	}
+}
+
+func TestRenderNotesShowsCreationTimeAndContent(t *testing.T) {
+	notes := []models.Note{
+		{
+			Content:   "Follow up with the design team.",
+			CreatedAt: time.Date(2026, time.August, 14, 20, 1, 0, 0, time.UTC),
+		},
+	}
+
+	rendered := (&detailModel{}).renderNotes(notes, 80)
+	for _, want := range []string{"Notes", "Created At", "2026-08-14 20:01", "Follow up with the design team."} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("renderNotes() = %q, want it to contain %q", rendered, want)
+		}
 	}
 }

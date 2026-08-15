@@ -89,6 +89,15 @@ func (m *detailModel) loadTaskDetails() {
 	content.WriteString(mainTable)
 	content.WriteString("\n")
 	content.WriteString(m.renderDescription(task, width))
+	content.WriteString("\n")
+
+	notes, err := m.store.GetNotesByTaskID(taskID)
+	if err != nil {
+		m.content = "Failed to load task notes: " + err.Error()
+		return
+	}
+
+	content.WriteString(m.renderNotes(notes, width))
 
 	m.content = content.String()
 }
@@ -170,4 +179,34 @@ func (m *detailModel) renderDescription(task models.Task, width int) string {
 		Row(task.Description, strings.Join(task.Tags, ", "))
 
 	return table.String()
+}
+
+func (m *detailModel) renderNotes(notes []models.Note, width int) string {
+	heading := lipgloss.NewStyle().Bold(true).Foreground(styles.Main).Render("Notes")
+	if len(notes) == 0 {
+		return heading
+	}
+
+	cellStyle := lipgloss.NewStyle().Foreground(styles.Highlight1)
+	columns := []lipgloss.Style{
+		cellStyle.Width(21), // Created At
+		cellStyle,           // Note
+	}
+
+	table := table.New().
+		Width(width).
+		Border(lipgloss.HiddenBorder()).
+		StyleFunc(func(row, column int) lipgloss.Style {
+			if row == 0 {
+				return lipgloss.NewStyle().Bold(true).Foreground(styles.Main)
+			}
+			return columns[column]
+		}).
+		Row("Created At", "Note")
+
+	for _, note := range notes {
+		table.Row(note.CreatedAt.Format("2006-01-02 15:04"), note.Content)
+	}
+
+	return heading + "\n" + table.String()
 }
