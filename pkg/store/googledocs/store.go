@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -260,6 +261,42 @@ func (s *Store) GetTagsByTaskID(taskID int64) ([]string, error) {
 		}
 	}
 	return nil, fmt.Errorf("task %d not found", taskID)
+}
+
+func (s *Store) ListTagCounts() ([]models.TagCount, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	data, err := s.read()
+	if err != nil {
+		return nil, err
+	}
+
+	counts := make(map[string]int)
+	for _, task := range data.Tasks {
+		taskTags := make(map[string]struct{})
+		for _, tag := range task.Tags {
+			taskTags[tag] = struct{}{}
+		}
+		for tag := range taskTags {
+			if tag != "" {
+				counts[tag]++
+			}
+		}
+	}
+
+	tags := make([]models.TagCount, 0, len(counts))
+	for tag, count := range counts {
+		tags = append(tags, models.TagCount{Tag: tag, Count: count})
+	}
+	sort.Slice(tags, func(i, j int) bool {
+		left, right := strings.ToLower(tags[i].Tag), strings.ToLower(tags[j].Tag)
+		if left == right {
+			return tags[i].Tag < tags[j].Tag
+		}
+		return left < right
+	})
+	return tags, nil
 }
 
 func (s *Store) InsertNote(note models.Note) (models.Note, error) {

@@ -21,6 +21,7 @@ type command struct {
 var commands = []command{
 	{name: "add", description: "Add a task with a guided form"},
 	{name: "tasks", description: "List open tasks, optionally matching a query"},
+	{name: "tags", description: "List all tags and their task counts"},
 	{name: "detail", description: "Show details for a task, including notes and sessions"},
 	{name: "note", description: "Add a task note"},
 }
@@ -87,6 +88,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.setViewportContent()
 		return m, nil
 	case tasksClosedMsg:
+		m.active = nil
+		m.content = msg.content
+		m.setViewportContent()
+		return m, nil
+	case tagsClosedMsg:
 		m.active = nil
 		m.content = msg.content
 		m.setViewportContent()
@@ -216,6 +222,12 @@ func (m *model) execute() {
 		m.active = newAddModel(m.cfg, m.store, m.input.Width)
 	case "tasks":
 		m.active = newTasksModel(m.cfg, m.store, m.width, args[1:])
+	case "tags":
+		if len(args) != 1 {
+			m.content = "Usage: /tags"
+			break
+		}
+		m.active = newTagsModel(m.store)
 	case "detail":
 		if len(args) != 2 {
 			m.content = "Usage: /detail <task_id>"

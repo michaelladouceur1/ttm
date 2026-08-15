@@ -329,6 +329,42 @@ func (q *Queries) GetTaskById(ctx context.Context, id int64) (Task, error) {
 	return i, err
 }
 
+const listTags = `-- name: ListTags :many
+SELECT tag, COUNT(DISTINCT task_id) AS task_count
+FROM tags
+WHERE tag IS NOT NULL AND tag <> ''
+GROUP BY tag
+ORDER BY LOWER(tag), tag
+`
+
+type ListTagsRow struct {
+	Tag       sql.NullString
+	TaskCount int64
+}
+
+func (q *Queries) ListTags(ctx context.Context) ([]ListTagsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTags)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTagsRow
+	for rows.Next() {
+		var i ListTagsRow
+		if err := rows.Scan(&i.Tag, &i.TaskCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTasks = `-- name: ListTasks :many
 SELECT id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
 WHERE 

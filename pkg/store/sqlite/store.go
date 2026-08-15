@@ -360,6 +360,25 @@ func (s *Store) GetTagsByTaskID(taskID int64) ([]string, error) {
 	return tags, nil
 }
 
+func (s *Store) ListTagCounts() ([]models.TagCount, error) {
+	queries := New(s.db)
+
+	dbTagCounts, err := queries.ListTags(s.ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	tags := []models.TagCount{}
+	for _, dbTagCount := range dbTagCounts {
+		tags = append(tags, models.TagCount{
+			Tag:   dbTagCount.Tag.String,
+			Count: int(dbTagCount.TaskCount),
+		})
+	}
+
+	return tags, nil
+}
+
 // notes
 
 func (s *Store) InsertNote(note models.Note) (models.Note, error) {
