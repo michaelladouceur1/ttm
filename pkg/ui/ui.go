@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 	"ttm/pkg/config"
@@ -21,11 +22,11 @@ type command struct {
 
 var commands = []command{
 	{name: "add", description: "Add a task with a guided form"},
+	{name: "cancel", description: "Discard the active session"},
 	{name: "tasks", description: "List open tasks, optionally matching a query"},
 	{name: "tags", description: "List all tags and their task counts"},
 	{name: "start", description: "Start a session for a task"},
 	{name: "end", description: "End and save the active session"},
-	{name: "cancel", description: "Discard the active session"},
 	{name: "detail", description: "Show details for a task, including notes and sessions"},
 	{name: "note", description: "Add a task note"},
 }
@@ -92,11 +93,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.setViewportContent()
 		return m, nil
 	case tasksClosedMsg:
-		m.active = nil
-		m.content = msg.content
-		m.setViewportContent()
-		return m, nil
-	case tagsClosedMsg:
 		m.active = nil
 		m.content = msg.content
 		m.setViewportContent()
@@ -190,7 +186,14 @@ func (m *model) updateSuggestions() {
 	}
 
 	m.suggestions = m.suggestions[:0]
-	for _, command := range commands {
+
+	orderedCommands := make([]command, len(commands))
+	copy(orderedCommands, commands)
+	sort.Slice(orderedCommands, func(i, j int) bool {
+		return orderedCommands[i].name < orderedCommands[j].name
+	})
+
+	for _, command := range orderedCommands {
 		if strings.HasPrefix(command.name, strings.ToLower(value)) {
 			m.suggestions = append(m.suggestions, command)
 		}
@@ -231,7 +234,7 @@ func (m *model) execute() {
 			m.content = "Usage: /tags"
 			break
 		}
-		m.active = newTagsModel(m.store)
+		m.content = listTags(m.store)
 	case "start":
 		if len(args) != 2 {
 			m.content = "Usage: /start <task_id>"
@@ -293,13 +296,19 @@ func (m model) View() string {
 func (m *model) setViewportContent() {
 	var body strings.Builder
 	if m.active == nil && len(m.suggestions) > 0 {
+		longestSuggestion := 0
+		for _, command := range m.suggestions {
+			if len(command.name) > longestSuggestion {
+				longestSuggestion = len(command.name)
+			}
+		}
 		body.WriteString("Commands\n")
 		for i, command := range m.suggestions {
 			prefix := "  "
 			if i == m.selected {
 				prefix = "> "
 			}
-			fmt.Fprintf(&body, "%s/%-5s %s\n", prefix, command.name, command.description)
+			fmt.Fprintf(&body, "%s/%-*s   %s\n", prefix, longestSuggestion, command.name, command.description)
 		}
 		body.WriteString("\n")
 	}
