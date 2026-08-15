@@ -1,16 +1,14 @@
 package ui
 
 import (
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 	"strings"
 	"ttm/pkg/config"
 	"ttm/pkg/fs"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
 	"ttm/pkg/store"
-
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type tasksClosedMsg struct {
@@ -18,14 +16,13 @@ type tasksClosedMsg struct {
 }
 
 type tasksModel struct {
-	input    textinput.Model
-	cfg      *config.Config
-	store    *store.Store
-	content  string
-	viewport viewport.Model
+	input   textinput.Model
+	cfg     *config.Config
+	store   *store.Store
+	content string
 }
 
-func newTasksModel(cfg *config.Config, st *store.Store, width, height int, args []string) tasksModel {
+func newTasksModel(cfg *config.Config, st *store.Store, width int, args []string) tasksModel {
 	input := textinput.New()
 	input.Prompt = "> "
 	input.Placeholder = "Enter search query..."
@@ -33,10 +30,9 @@ func newTasksModel(cfg *config.Config, st *store.Store, width, height int, args 
 	input.Focus()
 
 	m := tasksModel{
-		input:    input,
-		cfg:      cfg,
-		store:    st,
-		viewport: viewport.New(max(1, width-4), max(1, height-6)),
+		input: input,
+		cfg:   cfg,
+		store: st,
 	}
 	if len(args) == 1 {
 		m.input.SetValue(args[0])
@@ -49,8 +45,6 @@ func (m tasksModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.input.Width = max(1, msg.Width-6)
-		m.viewport.Width = max(1, msg.Width-4)
-		m.viewport.Height = max(1, msg.Height-6)
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -64,10 +58,6 @@ func (m tasksModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 			return m, nil
 		case "esc":
 			return m, func() tea.Msg { return tasksClosedMsg{content: m.content} }
-		case "up", "down", "pgup", "pgdown", "home", "end":
-			var cmd tea.Cmd
-			m.viewport, cmd = m.viewport.Update(msg)
-			return m, cmd
 		}
 	}
 
@@ -81,7 +71,7 @@ func (m tasksModel) InputView() string {
 }
 
 func (m tasksModel) View() string {
-	return m.viewport.View()
+	return m.content
 }
 
 func (m *tasksModel) listTasks(args []string) {
@@ -120,5 +110,4 @@ func (m *tasksModel) listTasks(args []string) {
 
 func (m *tasksModel) setContent(content string) {
 	m.content = content
-	m.viewport.SetContent(content)
 }
