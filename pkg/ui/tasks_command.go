@@ -56,19 +56,21 @@ func newTasksModel(cfg *config.Config, st *store.Store) tasksModel {
 		cfg:   cfg,
 		store: st,
 		groups: []filterGroup{
-			newFilterGroup("Category", categoryFilterOptions, cfg.ListFlags.Category),
-			newFilterGroup("Status", statusFilterOptions, cfg.ListFlags.Status),
-			newFilterGroup("Priority", priorityFilterOptions, cfg.ListFlags.Priority),
+			newFilterGroup("Category", categoryFilterOptions, cfg.ListFlags.Category...),
+			newFilterGroup("Status", statusFilterOptions, cfg.ListFlags.Status...),
+			newFilterGroup("Priority", priorityFilterOptions, cfg.ListFlags.Priority...),
 		},
 	}
 	m.listTasks()
 	return m
 }
 
-func newFilterGroup(name string, options []filterOption, defaultValue string) filterGroup {
+func newFilterGroup(name string, options []filterOption, defaultValues ...string) filterGroup {
 	selected := make(map[string]bool)
-	if defaultValue != "" {
-		selected[defaultValue] = true
+	for _, value := range defaultValues {
+		if value != "" {
+			selected[value] = true
+		}
 	}
 	return filterGroup{name: name, options: options, selected: selected}
 }
@@ -153,46 +155,68 @@ func (m *tasksModel) toggleCurrent() {
 	m.listTasks()
 }
 
-func (m *tasksModel) matchesFilters(task models.Task) bool {
-	return groupMatches(m.groups[0], string(task.Category)) &&
-		groupMatches(m.groups[1], string(task.Status)) &&
-		groupMatches(m.groups[2], string(task.Priority))
-}
-
-func groupMatches(group filterGroup, value string) bool {
-	if len(group.selected) == 0 {
-		return true
-	}
-	return group.selected[value]
-}
-
 func (m *tasksModel) listTasks() {
-	tasks, err := m.store.ListTasks("", "", "", "")
+	categories := m.selectedCategories(m.groups[m.groupIndex("Category")])
+	statuses := m.selectedStatuses(m.groups[m.groupIndex("Status")])
+	priorities := m.selectedPriorities(m.groups[m.groupIndex("Priority")])
+
+	tasks, err := m.store.ListTasks(
+		categories,
+		statuses,
+		priorities,
+	)
 	if err != nil {
 		m.setContent("Error listing tasks: " + err.Error())
 		return
 	}
 
-	filtered := make([]models.Task, 0, len(tasks))
-	for _, task := range tasks {
-		if m.matchesFilters(task) {
-			filtered = append(filtered, task)
-		}
-	}
-
-	if len(filtered) == 0 {
-		m.setContent("No tasks found.")
-		return
-	}
-
-	if err := fs.UpdateIDMapFile(filtered); err != nil {
+	if err := fs.UpdateIDMapFile(tasks); err != nil {
 		m.setContent("Error updating ID map file: " + err.Error())
 		return
 	}
 
-	m.setContent(logger.RenderTasks(filtered))
+	m.setContent(logger.RenderTasks(tasks))
 }
 
 func (m *tasksModel) setContent(content string) {
 	m.content = content
+}
+
+func (m *tasksModel) groupIndex(name string) int {
+	for i, group := range m.groups {
+		if group.name == name {
+			return i
+		}
+	}
+	return -1
+}
+
+func (m *tasksModel) selectedCategories(group filterGroup) []models.Category {
+	values := make([]models.Category, 0, len(group.selected))
+	for value, selected := range group.selected {
+		if selected {
+			values = append(values, models.Category(value))
+		}
+	}
+	return values
+}
+
+func (m *tasksModel) selectedStatuses(group filterGroup) []models.Status {
+	values := make([]models.Status, 0, len(group.selected))
+	for value, selected := range group.selected {
+		if selected {
+			values = append(values, models.Status(value))
+		}
+	}
+	return values
+}
+
+func (m *tasksModel) selectedPriorities(group filterGroup) []models.Priority {
+	values := make([]models.Priority, 0, len(group.selected))
+	for value, selected := range group.selected {
+		if selected {
+			values = append(values, models.Priority(value))
+		}
+	}
+	return values
 }

@@ -12,7 +12,7 @@ type Config struct {
 	DaysToDisplay     int                `yaml:"daysToDisplay"`
 	MaxTasksToDisplay int                `yaml:"maxTasksToDisplay"`
 	AddFlags          ConfigDefaultFlags `yaml:"addFlags"`
-	ListFlags         ConfigDefaultFlags `yaml:"listFlags"`
+	ListFlags         ConfigListFlags    `yaml:"listFlags"`
 	Logging           LoggingConfig      `yaml:"logging"`
 	Storage           StorageConfig      `yaml:"storage"`
 }
@@ -21,6 +21,12 @@ type ConfigDefaultFlags struct {
 	Category string `yaml:"category"`
 	Priority string `yaml:"priority"`
 	Status   string `yaml:"status"`
+}
+
+type ConfigListFlags struct {
+	Category []string `yaml:"category"`
+	Priority []string `yaml:"priority"`
+	Status   []string `yaml:"status"`
 }
 
 type StorageConfig struct {
@@ -52,10 +58,10 @@ func NewConfig() (*gonfig.Gonfig[Config], error) {
 			Priority: string(models.PriorityHigh),
 			Status:   string(models.StatusOpen),
 		},
-		ListFlags: ConfigDefaultFlags{
-			Category: "",
-			Priority: "",
-			Status:   string(models.StatusOpen),
+		ListFlags: ConfigListFlags{
+			Category: []string{},
+			Priority: []string{},
+			Status:   []string{string(models.StatusOpen)},
 		},
 	}
 

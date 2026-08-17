@@ -375,30 +375,32 @@ func (q *Queries) ListTags(ctx context.Context) ([]ListTagsRow, error) {
 
 const listTasks = `-- name: ListTasks :many
 SELECT id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
-WHERE 
-    (?1 IS NULL OR ?1 = '' OR title LIKE '%' || ?1 || '%')
-    AND (?2 IS NULL OR ?2 = '' OR description LIKE '%' || ?2 || '%')
-    AND (?3 IS NULL OR ?3 = '' OR category = ?3)
-    AND (?4 IS NULL OR ?4 = '' OR priority = ?4)
-    AND (?5 IS NULL OR ?5 = '' OR status = ?5)
+WHERE
+  (
+    ?1 IS NULL
+    OR ?1 = ''
+    OR category IN (SELECT value FROM json_each(?1))
+  )
+  AND (
+    ?2 IS NULL
+    OR ?2 = ''
+    OR priority IN (SELECT value FROM json_each(?2))
+  )
+  AND (
+    ?3 IS NULL
+    OR ?3 = ''
+    OR status IN (SELECT value FROM json_each(?3))
+  )
 `
 
 type ListTasksParams struct {
-	Title       interface{}
-	Description interface{}
-	Category    interface{}
-	Priority    interface{}
-	Status      interface{}
+	CategoriesJson interface{}
+	PrioritiesJson interface{}
+	StatusesJson   interface{}
 }
 
 func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, error) {
-	rows, err := q.db.QueryContext(ctx, listTasks,
-		arg.Title,
-		arg.Description,
-		arg.Category,
-		arg.Priority,
-		arg.Status,
-	)
+	rows, err := q.db.QueryContext(ctx, listTasks, arg.CategoriesJson, arg.PrioritiesJson, arg.StatusesJson)
 	if err != nil {
 		return nil, err
 	}

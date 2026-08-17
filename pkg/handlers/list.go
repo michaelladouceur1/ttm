@@ -14,35 +14,39 @@ func ListHandler(cmd *cobra.Command, args []string, cfg *config.Config, store *s
 	listCategoryFlag := &cfg.ListFlags.Category
 	listPriorityFlag := &cfg.ListFlags.Priority
 	listStatusFlag := &cfg.ListFlags.Status
-	var titleDescSearch string
-	if len(args) > 0 {
-		titleDescSearch = args[0]
+
+	categories := []models.Category{}
+	for _, cat := range *listCategoryFlag {
+		category := models.Category(cat)
+		if err := category.Validate(); err != nil {
+			logger.LogError("Error listing tasks: ", err)
+			return
+		}
+		categories = append(categories, category)
 	}
 
-	category := models.Category(*listCategoryFlag)
-	status := models.Status(*listStatusFlag)
-	priority := models.Priority(*listPriorityFlag)
-
-	var err error
-	err = category.Validate()
-	if err != nil {
-		logger.LogError("Error listing tasks: ", err)
-		return
+	priorities := []models.Priority{}
+	for _, prio := range *listPriorityFlag {
+		priority := models.Priority(prio)
+		if err := priority.Validate(); err != nil {
+			logger.LogError("Error listing tasks: ", err)
+			return
+		}
+		priorities = append(priorities, priority)
 	}
 
-	err = status.Validate()
-	if err != nil {
-		logger.LogError("Error listing tasks: ", err)
-		return
+	statuses := []models.Status{}
+	for _, stat := range *listStatusFlag {
+		println("status: ", stat)
+		status := models.Status(stat)
+		if err := status.Validate(); err != nil {
+			logger.LogError("Error listing tasks: ", err)
+			return
+		}
+		statuses = append(statuses, status)
 	}
 
-	err = priority.Validate()
-	if err != nil {
-		logger.LogError("Error listing tasks: ", err)
-		return
-	}
-
-	tasks, err := store.ListTasks(titleDescSearch, category, status, priority)
+	tasks, err := store.ListTasks(categories, statuses, priorities)
 	if err != nil {
 		logger.LogError("Error listing tasks: ", err)
 		return

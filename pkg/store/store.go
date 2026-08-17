@@ -13,7 +13,7 @@ type StoreStrategy interface {
 	// Tasks
 	InsertTask(task models.Task) (models.Task, error)
 	GetTaskByID(taskID int64) (models.Task, error)
-	ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error)
+	ListTasks(categories []models.Category, statuses []models.Status, priorities []models.Priority) ([]models.Task, error)
 	SearchTasks(search models.TaskSearch) ([]models.Task, error)
 	UpdateTitle(taskID int64, title string) error
 	UpdateDescription(taskID int64, description string) error
@@ -98,8 +98,8 @@ func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
 	return task, nil
 }
 
-func (s *Store) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
-	tasks, err := s.strategy.ListTasks(titleDescSearch, category, status, priority)
+func (s *Store) ListTasks(categories []models.Category, statuses []models.Status, priorities []models.Priority) ([]models.Task, error) {
+	tasks, err := s.strategy.ListTasks(categories, statuses, priorities)
 	if err != nil {
 		return nil, err
 	}

@@ -19,9 +19,9 @@ func NewListCmd(cfg *config.Config, store *store.Store) *cobra.Command {
 	listPriorityFlag := &cfg.ListFlags.Priority
 	listStatusFlag := &cfg.ListFlags.Status
 
-	listCmd.Flags().StringVarP(listCategoryFlag, "category", "c", *listCategoryFlag, "Filter tasks by category")
-	listCmd.Flags().StringVarP(listPriorityFlag, "priority", "p", *listPriorityFlag, "Filter tasks by priority")
-	listCmd.Flags().StringVarP(listStatusFlag, "status", "s", *listStatusFlag, "Filter tasks by status")
+	listCmd.Flags().StringArrayP("category", "c", *listCategoryFlag, "Filter tasks by category")
+	listCmd.Flags().StringArrayP("priority", "p", *listPriorityFlag, "Filter tasks by priority")
+	listCmd.Flags().StringArrayP("status", "s", *listStatusFlag, "Filter tasks by status")
 
 	return listCmd
 }
