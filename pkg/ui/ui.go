@@ -23,6 +23,7 @@ type command struct {
 var commands = []command{
 	{name: "add", description: "Add a task with a guided form"},
 	{name: "cancel", description: "Discard the active session"},
+	{name: "close", description: "Close one or more tasks"},
 	{name: "tasks", description: "List open tasks, optionally matching a query"},
 	{name: "tags", description: "List all tags and their task counts"},
 	{name: "start", description: "Start a session for a task"},
@@ -253,6 +254,12 @@ func (m *model) execute() {
 			break
 		}
 		m.content = cancelSession()
+	case "close":
+		if len(args) < 2 {
+			m.content = "Usage: /close <task_id>..."
+			break
+		}
+		m.content = closeTasks(m.store, args[1:])
 	case "detail":
 		if len(args) != 2 {
 			m.content = "Usage: /detail <task_id>"
