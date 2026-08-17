@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 	"ttm/pkg/config"
 	"ttm/pkg/fs"
@@ -48,13 +47,15 @@ type tasksModel struct {
 	store   *store.Store
 	groups  []filterGroup
 	cursor  int
+	width   int
 	content string
 }
 
-func newTasksModel(cfg *config.Config, st *store.Store) tasksModel {
+func newTasksModel(cfg *config.Config, st *store.Store, width int) tasksModel {
 	m := tasksModel{
 		cfg:   cfg,
 		store: st,
+		width: width,
 		groups: []filterGroup{
 			newFilterGroup("Category", categoryFilterOptions, cfg.ListFlags.Category...),
 			newFilterGroup("Status", statusFilterOptions, cfg.ListFlags.Status...),
@@ -76,7 +77,12 @@ func newFilterGroup(name string, options []filterOption, defaultValues ...string
 }
 
 func (m tasksModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
-	if key, ok := msg.(tea.KeyMsg); ok {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		return m, nil
+	case tea.KeyMsg:
+		key := msg
 		switch key.String() {
 		case "up":
 			total := m.totalOptions()
@@ -109,8 +115,17 @@ func (m tasksModel) renderFilters() string {
 	var body strings.Builder
 	cursor := 0
 	body.WriteString("Filters\n")
+
+	labelWidth := 0
 	for _, group := range m.groups {
-		fmt.Fprintf(&body, "\n%s\n", group.name)
+		if width := len(group.name) + 1; width > labelWidth {
+			labelWidth = width
+		}
+	}
+	lineWidth := max(1, m.width-4)
+	for _, group := range m.groups {
+		label := group.name + ":"
+		line := label + strings.Repeat(" ", labelWidth-len(label))
 		for _, option := range group.options {
 			prefix := "  "
 			if cursor == m.cursor {
@@ -120,9 +135,17 @@ func (m tasksModel) renderFilters() string {
 			if group.selected[option.value] {
 				checkbox = "[x]"
 			}
-			fmt.Fprintf(&body, "%s%s %s\n", prefix, checkbox, option.label)
+			optionText := prefix + checkbox + " " + option.label
+			if len(line)+1+len(optionText) > lineWidth && len(line) > labelWidth {
+				body.WriteString(line)
+				body.WriteByte('\n')
+				line = strings.Repeat(" ", labelWidth)
+			}
+			line += " " + optionText
 			cursor++
 		}
+		body.WriteString(line)
+		body.WriteByte('\n')
 	}
 	return body.String()
 }

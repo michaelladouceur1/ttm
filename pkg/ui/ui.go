@@ -233,7 +233,7 @@ func (m *model) execute() {
 			m.content = "Usage: /tasks"
 			break
 		}
-		m.active = newTasksModel(m.cfg, m.store)
+		m.active = newTasksModel(m.cfg, m.store, m.width)
 	case "tags":
 		if len(args) != 1 {
 			m.content = "Usage: /tags"

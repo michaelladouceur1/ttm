@@ -229,7 +229,7 @@ func TestTasksCommandCreatesChildModel(t *testing.T) {
 		t.Fatalf("InsertTask() error = %v", err)
 	}
 
-	cfg := &config.Config{ListFlags: config.ConfigDefaultFlags{Status: string(models.StatusOpen)}}
+	cfg := &config.Config{ListFlags: config.ConfigListFlags{Status: []string{string(models.StatusOpen)}}}
 	m := newModel(cfg, st)
 	m.input.SetValue("/tasks")
 	m.execute()
@@ -257,8 +257,8 @@ func TestTasksCommandTogglingFilterUpdatesTasks(t *testing.T) {
 		t.Fatalf("InsertTask() error = %v", err)
 	}
 
-	cfg := &config.Config{ListFlags: config.ConfigDefaultFlags{Status: string(models.StatusOpen)}}
-	m := newTasksModel(cfg, st)
+	cfg := &config.Config{ListFlags: config.ConfigListFlags{Status: []string{string(models.StatusOpen)}}}
+	m := newTasksModel(cfg, st, 80)
 	if !strings.Contains(m.content, "Open task") || strings.Contains(m.content, "Closed task") {
 		t.Fatalf("default filtered content = %q, want only open task", m.content)
 	}
@@ -273,6 +273,43 @@ func TestTasksCommandTogglingFilterUpdatesTasks(t *testing.T) {
 	}
 }
 
+func TestTaskFiltersRenderOptionsHorizontally(t *testing.T) {
+	m := tasksModel{
+		width: 80,
+		groups: []filterGroup{
+			newFilterGroup("Category", categoryFilterOptions),
+			newFilterGroup("Status", statusFilterOptions, string(models.StatusOpen)),
+			newFilterGroup("Priority", priorityFilterOptions),
+		},
+	}
+
+	rendered := m.renderFilters()
+	for _, want := range []string{
+		"Category: > [ ] Task   [ ] Meeting",
+		"Status:     [x] Open   [ ] Closed",
+		"Priority:   [ ] Low   [ ] Medium   [ ] High",
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("renderFilters() = %q, want it to contain %q", rendered, want)
+		}
+	}
+}
+
+func TestTaskFiltersWrapAtTerminalWidth(t *testing.T) {
+	m := tasksModel{
+		width: 32,
+		groups: []filterGroup{
+			newFilterGroup("Category", categoryFilterOptions),
+		},
+	}
+
+	for _, line := range strings.Split(strings.TrimSpace(m.renderFilters()), "\n") {
+		if len(line) > 28 {
+			t.Errorf("filter line %q exceeds available width", line)
+		}
+	}
+}
+
 func TestRenderTagCounts(t *testing.T) {
 	rendered := renderTagCounts([]models.TagCount{
 		{Tag: "planning", Count: 2},
@@ -283,13 +320,13 @@ func TestRenderTagCounts(t *testing.T) {
 	}
 }
 
-func TestTagsModelClosesToRoot(t *testing.T) {
-	m := tagsModel{content: "Tags\n\nwork (1)"}
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
-	msg := cmd()
+func TestTagsCommandRejectsArguments(t *testing.T) {
+	m := newModel(nil, nil)
+	m.input.SetValue("/tags extra")
+	m.execute()
 
-	if _, ok := msg.(tagsClosedMsg); !ok {
-		t.Fatalf("close message = %T, want tagsClosedMsg", msg)
+	if m.content != "Usage: /tags" {
+		t.Errorf("tags content = %q", m.content)
 	}
 }
 
