@@ -8,6 +8,7 @@ import (
 	"os"
 	"ttm/pkg/config"
 	"ttm/pkg/logger"
+	"ttm/pkg/paths"
 	"ttm/pkg/store"
 	"ttm/pkg/store/googledocs"
 	postgres "ttm/pkg/store/postgres"
@@ -26,6 +27,13 @@ func init() {
 	cfg, err := config.NewConfig()
 	if err != nil {
 		fmt.Println("Error initializing config: ", err)
+		os.Exit(1)
+	}
+
+	// Create the main app directory if it doesn't exist
+	ttmDir := paths.GetTTMDirectory()
+	if err := os.MkdirAll(ttmDir, 0755); err != nil {
+		fmt.Printf("Error creating app directory %s: %v\n", ttmDir, err)
 		os.Exit(1)
 	}
 
