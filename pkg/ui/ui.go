@@ -24,6 +24,7 @@ var commands = []command{
 	{name: "add", description: "Add a task with a guided form"},
 	{name: "cancel", description: "Discard the active session"},
 	{name: "close", description: "Close one or more tasks"},
+	{name: "search", description: "Search tasks by text or field filters"},
 	{name: "tasks", description: "List tasks with category, status, and priority filters"},
 	{name: "tags", description: "List all tags and their task counts"},
 	{name: "start", description: "Start a session for a task"},
@@ -94,6 +95,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.setViewportContent()
 		return m, nil
 	case tasksClosedMsg:
+		m.active = nil
+		m.content = msg.content
+		m.setViewportContent()
+		return m, nil
+	case searchClosedMsg:
 		m.active = nil
 		m.content = msg.content
 		m.setViewportContent()
@@ -234,6 +240,12 @@ func (m *model) execute() {
 			break
 		}
 		m.active = newTasksModel(m.cfg, m.store, m.width)
+	case "search":
+		if len(args) != 1 {
+			m.content = "Usage: /search"
+			break
+		}
+		m.active = newSearchModel(m.store, m.width)
 	case "tags":
 		if len(args) != 1 {
 			m.content = "Usage: /tags"

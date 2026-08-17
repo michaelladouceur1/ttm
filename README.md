@@ -49,6 +49,7 @@ and press Enter to run it.
 - `/add`: add a task by entering its title, description, priority, and tags
 - `/tasks ["query"]`: list open tasks, optionally filtered by a query
 - `/tags`: list all tags and their task counts
+- `/search`: search task text or use `*field:value` filters
 - `/start <task_id>`: start a session for a listed task
 - `/end`: end and save the active session
 - `/cancel`: discard the active session
@@ -104,7 +105,7 @@ logging:
   - [ ] /pause - pause session for task
   - [x] /end - end session for task
   - [x] /cancel - cancel session for task
-  - [ ] /tasks (started; matches ability to CLI but needs to only list with filter for priority, status, tags, etc.)
+  - [x] /tasks (started; matches ability to CLI but needs to only list with filter for priority, status, tags, etc.)
   - [x] /tags - list all tags and their counts
   - [ ] /search - search task fields
   - [ ] /update - update task fields

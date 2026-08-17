@@ -69,6 +69,56 @@ func TestStartCommandRequiresTaskID(t *testing.T) {
 	}
 }
 
+func TestSearchCommandCreatesChildModel(t *testing.T) {
+	m := newModel(nil, nil)
+	m.input.SetValue("/search")
+	m.execute()
+
+	if _, ok := m.active.(searchModel); !ok {
+		t.Errorf("active model = %T, want searchModel", m.active)
+	}
+}
+
+func TestSearchModelUpdatesMatchingTasks(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Plan release", Status: models.StatusOpen}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Write tests", Status: models.StatusOpen}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+
+	m := newSearchModel(st, 80)
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("release")})
+	m = updated.(searchModel)
+	if !strings.Contains(m.content, "Plan release") || strings.Contains(m.content, "Write tests") {
+		t.Errorf("search content = %q", m.content)
+	}
+
+	taskID, err := fs.GetTaskIDFromTempID(1)
+	if err != nil {
+		t.Fatalf("GetTaskIDFromTempID() error = %v", err)
+	}
+	if taskID != 1 {
+		t.Errorf("mapped task ID = %d, want 1", taskID)
+	}
+}
+
+func TestSearchModelClosesToRoot(t *testing.T) {
+	m := searchModel{content: "Search results"}
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	msg := cmd()
+
+	if _, ok := msg.(searchClosedMsg); !ok {
+		t.Fatalf("close message = %T, want searchClosedMsg", msg)
+	}
+}
+
 func TestStartSessionRejectsInvalidTaskID(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 
