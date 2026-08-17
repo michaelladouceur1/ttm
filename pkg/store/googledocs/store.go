@@ -88,7 +88,7 @@ func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
 	return models.Task{}, fmt.Errorf("task %d not found", taskID)
 }
 
-func (s *Store) ListTasks(search string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
+func (s *Store) ListTasks(category []models.Category, status []models.Status, priority []models.Priority) ([]models.Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -99,15 +99,40 @@ func (s *Store) ListTasks(search string, category models.Category, status models
 
 	tasks := make([]models.Task, 0, len(data.Tasks))
 	for _, task := range data.Tasks {
-		if (search == "" || strings.Contains(task.Title, search)) &&
-			(search == "" || strings.Contains(task.Description, search)) &&
-			(category == "" || task.Category == category) &&
-			(status == "" || task.Status == status) &&
-			(priority == "" || task.Priority == priority) {
+		if (len(category) == 0 || containsCategory(category, task.Category)) &&
+			(len(status) == 0 || containsStatus(status, task.Status)) &&
+			(len(priority) == 0 || containsPriority(priority, task.Priority)) {
 			tasks = append(tasks, task)
 		}
 	}
 	return tasks, nil
+}
+
+func containsCategory(categories []models.Category, category models.Category) bool {
+	for _, c := range categories {
+		if c == category {
+			return true
+		}
+	}
+	return false
+}
+
+func containsStatus(statuses []models.Status, status models.Status) bool {
+	for _, s := range statuses {
+		if s == status {
+			return true
+		}
+	}
+	return false
+}
+
+func containsPriority(priorities []models.Priority, priority models.Priority) bool {
+	for _, p := range priorities {
+		if p == priority {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Store) SearchTasks(search models.TaskSearch) ([]models.Task, error) {

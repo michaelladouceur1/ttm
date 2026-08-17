@@ -4,12 +4,22 @@ WHERE id = $1;
 
 -- name: ListTasks :many
 SELECT * FROM tasks
-WHERE 
-    ($1::text IS NULL OR $1::text = '' OR title ILIKE '%' || $1::text || '%')
-    AND ($2::text IS NULL OR $2::text = '' OR description ILIKE '%' || $2::text || '%')
-    AND ($3::text IS NULL OR $3::text = '' OR category = $3::text)
-    AND ($4::text IS NULL OR $4::text = '' OR priority = $4::text)
-    AND ($5::text IS NULL OR $5::text = '' OR status = $5::text);
+WHERE
+  (
+    $1 IS NULL
+    OR $1 = ''
+    OR category IN (SELECT value FROM json_each($1))
+  )
+  AND (
+    $2 IS NULL
+    OR $2 = ''
+    OR priority IN (SELECT value FROM json_each($2))
+  )
+  AND (
+    $3 IS NULL
+    OR $3 = ''
+    OR status IN (SELECT value FROM json_each($3))
+  );
 
 -- name: CreateTask :one
 INSERT INTO tasks (title, description, category, priority, status, opened_at, closed_at, created_at, updated_at)

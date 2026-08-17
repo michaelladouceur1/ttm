@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"ttm/pkg/config"
 	"ttm/pkg/fs"
@@ -8,7 +9,6 @@ import (
 	"ttm/pkg/models"
 	"ttm/pkg/store"
 
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -16,92 +16,161 @@ type tasksClosedMsg struct {
 	content string
 }
 
+type filterOption struct {
+	label string
+	value string
+}
+
+type filterGroup struct {
+	name     string
+	options  []filterOption
+	selected map[string]bool
+}
+
+var categoryFilterOptions = []filterOption{
+	{label: "Task", value: string(models.CategoryTask)},
+	{label: "Meeting", value: string(models.CategoryMeeting)},
+}
+
+var statusFilterOptions = []filterOption{
+	{label: "Open", value: string(models.StatusOpen)},
+	{label: "Closed", value: string(models.StatusClosed)},
+}
+
+var priorityFilterOptions = []filterOption{
+	{label: "Low", value: string(models.PriorityLow)},
+	{label: "Medium", value: string(models.PriorityMedium)},
+	{label: "High", value: string(models.PriorityHigh)},
+}
+
 type tasksModel struct {
-	input   textinput.Model
 	cfg     *config.Config
 	store   *store.Store
+	groups  []filterGroup
+	cursor  int
 	content string
 }
 
-func newTasksModel(cfg *config.Config, st *store.Store, width int, args []string) tasksModel {
-	input := textinput.New()
-	input.Prompt = "> "
-	input.Placeholder = "Enter search query..."
-	input.Width = max(1, width-6)
-	input.Focus()
-
+func newTasksModel(cfg *config.Config, st *store.Store) tasksModel {
 	m := tasksModel{
-		input: input,
 		cfg:   cfg,
 		store: st,
+		groups: []filterGroup{
+			newFilterGroup("Category", categoryFilterOptions, cfg.ListFlags.Category...),
+			newFilterGroup("Status", statusFilterOptions, cfg.ListFlags.Status...),
+			newFilterGroup("Priority", priorityFilterOptions, cfg.ListFlags.Priority...),
+		},
 	}
-	if len(args) == 1 {
-		m.input.SetValue(args[0])
-	}
-	m.listTasks(args)
+	m.listTasks()
 	return m
 }
 
+func newFilterGroup(name string, options []filterOption, defaultValues ...string) filterGroup {
+	selected := make(map[string]bool)
+	for _, value := range defaultValues {
+		if value != "" {
+			selected[value] = true
+		}
+	}
+	return filterGroup{name: name, options: options, selected: selected}
+}
+
 func (m tasksModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.input.Width = max(1, msg.Width-6)
-		return m, nil
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
-			query := strings.TrimSpace(m.input.Value())
-			if query == "" {
-				m.listTasks(nil)
-			} else {
-				m.listTasks([]string{query})
-			}
+	if key, ok := msg.(tea.KeyMsg); ok {
+		switch key.String() {
+		case "up":
+			total := m.totalOptions()
+			m.cursor = (m.cursor - 1 + total) % total
+			return m, nil
+		case "down":
+			total := m.totalOptions()
+			m.cursor = (m.cursor + 1) % total
+			return m, nil
+		case " ", "enter":
+			m.toggleCurrent()
 			return m, nil
 		case "esc":
 			return m, func() tea.Msg { return tasksClosedMsg{content: m.content} }
 		}
 	}
 
-	var cmd tea.Cmd
-	m.input, cmd = m.input.Update(msg)
-	return m, cmd
+	return m, nil
 }
 
 func (m tasksModel) InputView() string {
-	return m.input.View()
+	return "↑/↓ move   space/enter toggle filter   esc close"
 }
 
 func (m tasksModel) View() string {
-	return m.content
+	return m.renderFilters() + "\n" + m.content
 }
 
-func (m *tasksModel) listTasks(args []string) {
-	if len(args) > 1 {
-		m.setContent("Error: /tasks accepts at most one search query.")
+func (m tasksModel) renderFilters() string {
+	var body strings.Builder
+	cursor := 0
+	body.WriteString("Filters\n")
+	for _, group := range m.groups {
+		fmt.Fprintf(&body, "\n%s\n", group.name)
+		for _, option := range group.options {
+			prefix := "  "
+			if cursor == m.cursor {
+				prefix = "> "
+			}
+			checkbox := "[ ]"
+			if group.selected[option.value] {
+				checkbox = "[x]"
+			}
+			fmt.Fprintf(&body, "%s%s %s\n", prefix, checkbox, option.label)
+			cursor++
+		}
+	}
+	return body.String()
+}
+
+func (m *tasksModel) totalOptions() int {
+	total := 0
+	for _, group := range m.groups {
+		total += len(group.options)
+	}
+	return total
+}
+
+func (m *tasksModel) optionAt(index int) (*filterGroup, filterOption) {
+	for i := range m.groups {
+		group := &m.groups[i]
+		if index < len(group.options) {
+			return group, group.options[index]
+		}
+		index -= len(group.options)
+	}
+	return nil, filterOption{}
+}
+
+func (m *tasksModel) toggleCurrent() {
+	group, option := m.optionAt(m.cursor)
+	if group == nil {
 		return
 	}
+	group.selected[option.value] = !group.selected[option.value]
+	m.listTasks()
+}
 
-	query := ""
-	if len(args) == 1 {
-		query = args[0]
-	}
+func (m *tasksModel) listTasks() {
+	categories := m.selectedCategories(m.groups[m.groupIndex("Category")])
+	statuses := m.selectedStatuses(m.groups[m.groupIndex("Status")])
+	priorities := m.selectedPriorities(m.groups[m.groupIndex("Priority")])
+
 	tasks, err := m.store.ListTasks(
-		query,
-		models.Category(m.cfg.ListFlags.Category),
-		models.Status(m.cfg.ListFlags.Status),
-		models.Priority(m.cfg.ListFlags.Priority),
+		categories,
+		statuses,
+		priorities,
 	)
 	if err != nil {
 		m.setContent("Error listing tasks: " + err.Error())
 		return
 	}
-	if len(tasks) == 0 {
-		m.setContent("No tasks found.")
-		return
-	}
 
-	err = fs.UpdateIDMapFile(tasks)
-	if err != nil {
+	if err := fs.UpdateIDMapFile(tasks); err != nil {
 		m.setContent("Error updating ID map file: " + err.Error())
 		return
 	}
@@ -111,4 +180,43 @@ func (m *tasksModel) listTasks(args []string) {
 
 func (m *tasksModel) setContent(content string) {
 	m.content = content
+}
+
+func (m *tasksModel) groupIndex(name string) int {
+	for i, group := range m.groups {
+		if group.name == name {
+			return i
+		}
+	}
+	return -1
+}
+
+func (m *tasksModel) selectedCategories(group filterGroup) []models.Category {
+	values := make([]models.Category, 0, len(group.selected))
+	for value, selected := range group.selected {
+		if selected {
+			values = append(values, models.Category(value))
+		}
+	}
+	return values
+}
+
+func (m *tasksModel) selectedStatuses(group filterGroup) []models.Status {
+	values := make([]models.Status, 0, len(group.selected))
+	for value, selected := range group.selected {
+		if selected {
+			values = append(values, models.Status(value))
+		}
+	}
+	return values
+}
+
+func (m *tasksModel) selectedPriorities(group filterGroup) []models.Priority {
+	values := make([]models.Priority, 0, len(group.selected))
+	for value, selected := range group.selected {
+		if selected {
+			values = append(values, models.Priority(value))
+		}
+	}
+	return values
 }

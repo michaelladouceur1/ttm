@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -87,15 +88,26 @@ func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
 
 }
 
-func (s *Store) ListTasks(titleDescSearch string, category models.Category, status models.Status, priority models.Priority) ([]models.Task, error) {
+func (s *Store) ListTasks(categories []models.Category, statuses []models.Status, priorities []models.Priority) ([]models.Task, error) {
 	queries := New(s.db)
 
+	cats, err := toJSONFilter(categories)
+	if err != nil {
+		return nil, err
+	}
+	prios, err := toJSONFilter(priorities)
+	if err != nil {
+		return nil, err
+	}
+	stats, err := toJSONFilter(statuses)
+	if err != nil {
+		return nil, err
+	}
+
 	dbTasks, err := queries.ListTasks(s.ctx, ListTasksParams{
-		Column1: toNullString(titleDescSearch).String,
-		Column2: toNullString(titleDescSearch).String,
-		Column3: toNullString(string(category)).String,
-		Column4: toNullString(string(priority)).String,
-		Column5: toNullString(string(status)).String,
+		Column1: cats,
+		Column2: prios,
+		Column3: stats,
 	})
 
 	if err != nil {
@@ -424,6 +436,21 @@ func (s *Store) GetNotesByTaskID(taskID int64) ([]models.Note, error) {
 	}
 
 	return notes, nil
+}
+
+func toJSONFilter[T ~string](vals []T) (sql.NullString, error) {
+	if len(vals) == 0 {
+		return sql.NullString{}, nil // no filter
+	}
+	raw := make([]string, len(vals))
+	for i, v := range vals {
+		raw[i] = string(v)
+	}
+	b, err := json.Marshal(raw)
+	if err != nil {
+		return sql.NullString{}, err
+	}
+	return sql.NullString{String: string(b), Valid: true}, nil
 }
 
 func toNullString(v interface{}) sql.NullString {

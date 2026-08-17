@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"strings"
 	"ttm/pkg/config"
 	"ttm/pkg/handlers"
 	"ttm/pkg/store"
@@ -15,13 +16,13 @@ func NewListCmd(cfg *config.Config, store *store.Store) *cobra.Command {
 		Run:   func(cmd *cobra.Command, args []string) { handlers.ListHandler(cmd, args, cfg, store) },
 	}
 
-	listCategoryFlag := &cfg.ListFlags.Category
-	listPriorityFlag := &cfg.ListFlags.Priority
-	listStatusFlag := &cfg.ListFlags.Status
+	listCategoryFlag := strings.Join(cfg.ListFlags.Category, ",")
+	listPriorityFlag := strings.Join(cfg.ListFlags.Priority, ",")
+	listStatusFlag := strings.Join(cfg.ListFlags.Status, ",")
 
-	listCmd.Flags().StringVarP(listCategoryFlag, "category", "c", *listCategoryFlag, "Filter tasks by category")
-	listCmd.Flags().StringVarP(listPriorityFlag, "priority", "p", *listPriorityFlag, "Filter tasks by priority")
-	listCmd.Flags().StringVarP(listStatusFlag, "status", "s", *listStatusFlag, "Filter tasks by status")
+	listCmd.Flags().StringVarP(&listCategoryFlag, "category", "c", listCategoryFlag, "Filter tasks by category")
+	listCmd.Flags().StringVarP(&listPriorityFlag, "priority", "p", listPriorityFlag, "Filter tasks by priority")
+	listCmd.Flags().StringVarP(&listStatusFlag, "status", "s", listStatusFlag, "Filter tasks by status")
 
 	return listCmd
 }

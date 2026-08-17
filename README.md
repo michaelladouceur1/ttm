@@ -114,6 +114,7 @@ logging:
   - [ ] /users - list users and their task/session counts
   - [ ] /adduser - add user to multi-user environment
   - [ ] /assign - assign task to user
+  - [ ] /csv - export tasks and sessions to CSV
 - [ ] Commands legend and help
 - [x] Task notes
 - [ ] User support for multi-user environments

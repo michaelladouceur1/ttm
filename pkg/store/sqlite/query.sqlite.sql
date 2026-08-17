@@ -6,12 +6,22 @@ WHERE id = ?;
 
 -- name: ListTasks :many
 SELECT * FROM tasks
-WHERE 
-    (@title IS NULL OR @title = '' OR title LIKE '%' || @title || '%')
-    AND (@description IS NULL OR @description = '' OR description LIKE '%' || @description || '%')
-    AND (@category IS NULL OR @category = '' OR category = @category)
-    AND (@priority IS NULL OR @priority = '' OR priority = @priority)
-    AND (@status IS NULL OR @status = '' OR status = @status);
+WHERE
+  (
+    @categories_json IS NULL
+    OR @categories_json = ''
+    OR category IN (SELECT value FROM json_each(@categories_json))
+  )
+  AND (
+    @priorities_json IS NULL
+    OR @priorities_json = ''
+    OR priority IN (SELECT value FROM json_each(@priorities_json))
+  )
+  AND (
+    @statuses_json IS NULL
+    OR @statuses_json = ''
+    OR status IN (SELECT value FROM json_each(@statuses_json))
+  );
 
 -- name: CreateTask :one
 INSERT INTO tasks (title, description, category, priority, status, opened_at, closed_at, created_at, updated_at)

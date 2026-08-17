@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strings"
+
 	"ttm/pkg/config"
 	"ttm/pkg/fs"
 	"ttm/pkg/logger"
@@ -11,38 +13,47 @@ import (
 )
 
 func ListHandler(cmd *cobra.Command, args []string, cfg *config.Config, store *store.Store) {
-	listCategoryFlag := &cfg.ListFlags.Category
-	listPriorityFlag := &cfg.ListFlags.Priority
-	listStatusFlag := &cfg.ListFlags.Status
-	var titleDescSearch string
-	if len(args) > 0 {
-		titleDescSearch = args[0]
+	listCategoryFlag := cmd.Flags().Lookup("category").Value.String()
+	listPriorityFlag := cmd.Flags().Lookup("priority").Value.String()
+	listStatusFlag := cmd.Flags().Lookup("status").Value.String()
+
+	categories := []models.Category{}
+	if listCategoryFlag != "" {
+		for cat := range strings.SplitSeq(listCategoryFlag, ",") {
+			category := models.Category(cat)
+			if err := category.Validate(); err != nil {
+				logger.LogError("Error listing tasks: ", err)
+				return
+			}
+			categories = append(categories, category)
+		}
 	}
 
-	category := models.Category(*listCategoryFlag)
-	status := models.Status(*listStatusFlag)
-	priority := models.Priority(*listPriorityFlag)
-
-	var err error
-	err = category.Validate()
-	if err != nil {
-		logger.LogError("Error listing tasks: ", err)
-		return
+	priorities := []models.Priority{}
+	if listPriorityFlag != "" {
+		for prio := range strings.SplitSeq(listPriorityFlag, ",") {
+			priority := models.Priority(prio)
+			if err := priority.Validate(); err != nil {
+				logger.LogError("Error listing tasks: ", err)
+				return
+			}
+			priorities = append(priorities, priority)
+		}
 	}
 
-	err = status.Validate()
-	if err != nil {
-		logger.LogError("Error listing tasks: ", err)
-		return
+	statuses := []models.Status{}
+	if listStatusFlag != "" {
+		for stat := range strings.SplitSeq(listStatusFlag, ",") {
+			status := models.Status(stat)
+			if err := status.Validate(); err != nil {
+				logger.LogError("Error listing tasks: ", err)
+				return
+			}
+			statuses = append(statuses, status)
+		}
 	}
 
-	err = priority.Validate()
-	if err != nil {
-		logger.LogError("Error listing tasks: ", err)
-		return
-	}
-
-	tasks, err := store.ListTasks(titleDescSearch, category, status, priority)
+	tasks, err := store.ListTasks(categories, statuses, priorities)
 	if err != nil {
 		logger.LogError("Error listing tasks: ", err)
 		return
