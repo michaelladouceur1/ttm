@@ -1,14 +1,15 @@
 package ui
 
 import (
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
 	"strings"
 	"ttm/pkg/config"
 	"ttm/pkg/fs"
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
 	"ttm/pkg/store"
+
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type tasksClosedMsg struct {
@@ -76,7 +77,7 @@ func (m tasksModel) View() string {
 
 func (m *tasksModel) listTasks(args []string) {
 	if len(args) > 1 {
-		m.setContent("Error: /list accepts at most one search query.")
+		m.setContent("Error: /tasks accepts at most one search query.")
 		return
 	}
 

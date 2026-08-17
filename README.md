@@ -100,19 +100,22 @@ logging:
   - [x] /add (started; matching ability to CLI)
   - [ ] /tag - add tag to task
   - [x] /note - add note to task
-  - [ ] /start - start session for task
+  - [x] /start - start session for task
   - [ ] /pause - pause session for task
-  - [ ] /end - end session for task
-  - [ ] /cancel - cancel session for task
+  - [x] /end - end session for task
+  - [x] /cancel - cancel session for task
   - [ ] /tasks (started; matches ability to CLI but needs to only list with filter for priority, status, tags, etc.)
   - [x] /tags - list all tags and their counts
   - [ ] /search - search task fields
   - [ ] /update - update task fields
   - [ ] /detail - shows task details with notes and sessions
-  - [ ] /close - close task
+  - [x] /close - close task
   - [ ] /sessions - list sessions for given time period
+  - [ ] /users - list users and their task/session counts
+  - [ ] /adduser - add user to multi-user environment
+  - [ ] /assign - assign task to user
 - [ ] Commands legend and help
-- [ ] Task notes
+- [x] Task notes
 - [ ] User support for multi-user environments
 - [ ] Command history (e.g., up arrow to repeat last command)
 - [ ] Focus (Analogous to sprint) for tasks and sessions
