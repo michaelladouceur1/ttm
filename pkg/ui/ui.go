@@ -24,7 +24,7 @@ var commands = []command{
 	{name: "add", description: "Add a task with a guided form"},
 	{name: "cancel", description: "Discard the active session"},
 	{name: "close", description: "Close one or more tasks"},
-	{name: "tasks", description: "List open tasks, optionally matching a query"},
+	{name: "tasks", description: "List tasks with category, status, and priority filters"},
 	{name: "tags", description: "List all tags and their task counts"},
 	{name: "start", description: "Start a session for a task"},
 	{name: "end", description: "End and save the active session"},
@@ -229,7 +229,11 @@ func (m *model) execute() {
 		}
 		m.active = newAddModel(m.cfg, m.store, m.input.Width)
 	case "tasks":
-		m.active = newTasksModel(m.cfg, m.store, m.width, args[1:])
+		if len(args) != 1 {
+			m.content = "Usage: /tasks"
+			break
+		}
+		m.active = newTasksModel(m.cfg, m.store)
 	case "tags":
 		if len(args) != 1 {
 			m.content = "Usage: /tags"

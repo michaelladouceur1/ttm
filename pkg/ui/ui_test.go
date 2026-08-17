@@ -205,17 +205,71 @@ func TestParseTags(t *testing.T) {
 	}
 }
 
-func TestTasksCommandCreatesChildModel(t *testing.T) {
+func TestTasksCommandRejectsArguments(t *testing.T) {
 	m := newModel(nil, nil)
 	m.input.SetValue("/tasks one two")
+	m.execute()
+
+	if m.active != nil {
+		t.Fatalf("active model = %T, want nil", m.active)
+	}
+	if m.content != "Usage: /tasks" {
+		t.Errorf("content = %q, want usage message", m.content)
+	}
+}
+
+func TestTasksCommandCreatesChildModel(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Write tests", Category: models.CategoryTask, Priority: models.PriorityLow, Status: models.StatusOpen}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+
+	cfg := &config.Config{ListFlags: config.ConfigDefaultFlags{Status: string(models.StatusOpen)}}
+	m := newModel(cfg, st)
+	m.input.SetValue("/tasks")
 	m.execute()
 
 	list, ok := m.active.(tasksModel)
 	if !ok {
 		t.Fatalf("active model = %T, want tasksModel", m.active)
 	}
-	if list.content != "Error: /list accepts at most one search query." {
-		t.Errorf("tasks content = %q", list.content)
+	if !strings.Contains(list.content, "Write tests") {
+		t.Errorf("tasks content = %q, want it to contain the task title", list.content)
+	}
+}
+
+func TestTasksCommandTogglingFilterUpdatesTasks(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Open task", Category: models.CategoryTask, Priority: models.PriorityLow, Status: models.StatusOpen}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Closed task", Category: models.CategoryTask, Priority: models.PriorityLow, Status: models.StatusClosed}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+
+	cfg := &config.Config{ListFlags: config.ConfigDefaultFlags{Status: string(models.StatusOpen)}}
+	m := newTasksModel(cfg, st)
+	if !strings.Contains(m.content, "Open task") || strings.Contains(m.content, "Closed task") {
+		t.Fatalf("default filtered content = %q, want only open task", m.content)
+	}
+
+	// Move the cursor to the "Closed" status option and toggle it on.
+	m.cursor = len(categoryFilterOptions) + 1
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	m = updated.(tasksModel)
+
+	if !strings.Contains(m.content, "Open task") || !strings.Contains(m.content, "Closed task") {
+		t.Fatalf("updated content = %q, want both tasks after toggling status filter", m.content)
 	}
 }
 
@@ -240,7 +294,7 @@ func TestTagsModelClosesToRoot(t *testing.T) {
 }
 
 func TestListModelClosesToRoot(t *testing.T) {
-	m := newTasksModel(nil, nil, 80, []string{"one", "two"})
+	m := tasksModel{content: "No tasks found."}
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	msg := cmd()
 
