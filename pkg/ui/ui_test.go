@@ -538,3 +538,12 @@ func TestRenderSessionsShowsTotalAndBreakdown(t *testing.T) {
 		}
 	}
 }
+
+func TestDetailWidthHasMinimum(t *testing.T) {
+	if got := detailWidth(80); got != detailMinWidth {
+		t.Errorf("detailWidth(80) = %d, want %d", got, detailMinWidth)
+	}
+	if got := detailWidth(160); got != 160 {
+		t.Errorf("detailWidth(160) = %d, want 160", got)
+	}
+}

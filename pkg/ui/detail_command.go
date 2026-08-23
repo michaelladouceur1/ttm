@@ -22,6 +22,8 @@ type detailClosedMsg struct {
 	content string
 }
 
+const detailMinWidth = 150
+
 type detailModel struct {
 	input   textinput.Model
 	cfg     *config.Config
@@ -40,7 +42,7 @@ func newDetailModel(cfg *config.Config, st *store.Store, width int, listID strin
 		cfg:     cfg,
 		store:   st,
 		listID:  listID,
-		width:   width,
+		width:   detailWidth(width),
 		content: "Task details for " + listID,
 	}
 
@@ -51,7 +53,7 @@ func newDetailModel(cfg *config.Config, st *store.Store, width int, listID strin
 func (m detailModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
+		m.width = detailWidth(msg.Width)
 		m.loadTaskDetails()
 		return m, nil
 	case tea.KeyMsg:
@@ -92,8 +94,10 @@ func (m *detailModel) loadTaskDetails() {
 	}
 
 	var content strings.Builder
-	mainTable, _ := m.renderMainTable(task)
+	mainTable, width := m.renderMainTable(task)
 	content.WriteString(mainTable)
+	content.WriteString("\n")
+	content.WriteString(m.renderDescription(task, width))
 	content.WriteString("\n")
 
 	notes, err := m.store.GetNotesByTaskID(taskID)
@@ -102,10 +106,14 @@ func (m *detailModel) loadTaskDetails() {
 		return
 	}
 
-	sessionWidth := max(30, m.width/2)
-	leftWidth := max(20, m.width-sessionWidth-5)
-	leftContent := m.renderDescription(task, leftWidth) + "\n" + m.renderNotes(notes, leftWidth)
-	content.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, leftContent, "     ", m.renderSessions(task, sessionWidth)))
+	const panelGap = "     "
+	panelWidth := (m.width - len(panelGap)) / 2
+	content.WriteString(lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		m.renderNotes(notes, panelWidth),
+		panelGap,
+		m.renderSessions(task, panelWidth),
+	))
 
 	m.content = content.String()
 }
@@ -259,4 +267,8 @@ func formatDuration(duration time.Duration) string {
 	}
 	duration = duration.Round(time.Minute)
 	return fmt.Sprintf("%02d:%02d", int(duration.Hours()), int(duration.Minutes())%60)
+}
+
+func detailWidth(width int) int {
+	return min(detailMinWidth, width)
 }
