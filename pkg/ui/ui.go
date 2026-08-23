@@ -293,7 +293,7 @@ func (m *model) execute() {
 			m.content = "Usage: /detail <task_id>"
 			break
 		}
-		m.active = newDetailModel(m.cfg, m.store, args[1])
+		m.active = newDetailModel(m.cfg, m.store, m.width, args[1])
 	case "note":
 		if len(args) != 2 {
 			m.content = "Usage: /note <task_id>"

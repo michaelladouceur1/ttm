@@ -511,3 +511,30 @@ func TestRenderNotesShowsCreationTimeAndContent(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderSessionsShowsTotalAndBreakdown(t *testing.T) {
+	startedAt := time.Date(2026, time.August, 14, 20, 1, 0, 0, time.UTC)
+	task := models.Task{
+		Duration: time.Time{}.Add(95 * time.Minute),
+		Sessions: []models.Session{
+			{StartTime: startedAt.Add(65 * time.Minute), EndTime: startedAt.Add(95 * time.Minute)},
+			{StartTime: startedAt, EndTime: startedAt.Add(65 * time.Minute)},
+		},
+	}
+
+	rendered := (&detailModel{}).renderSessions(task, 38)
+	for _, want := range []string{
+		"Sessions",
+		"Total time spent: 01:35",
+		"Started At",
+		"Duration",
+		"2026-08-14 20:01",
+		"01:05",
+		"2026-08-14 21:06",
+		"00:30",
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("renderSessions() = %q, want it to contain %q", rendered, want)
+		}
+	}
+}

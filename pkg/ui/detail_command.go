@@ -1,8 +1,11 @@
 package ui
 
 import (
+	"fmt"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"ttm/pkg/config"
 	"ttm/pkg/fs"
 	"ttm/pkg/models"
@@ -24,10 +27,11 @@ type detailModel struct {
 	cfg     *config.Config
 	store   *store.Store
 	listID  string
+	width   int
 	content string
 }
 
-func newDetailModel(cfg *config.Config, st *store.Store, listID string) detailModel {
+func newDetailModel(cfg *config.Config, st *store.Store, width int, listID string) detailModel {
 	input := textinput.New()
 	input.Prompt = "> "
 
@@ -36,6 +40,7 @@ func newDetailModel(cfg *config.Config, st *store.Store, listID string) detailMo
 		cfg:     cfg,
 		store:   st,
 		listID:  listID,
+		width:   width,
 		content: "Task details for " + listID,
 	}
 
@@ -46,6 +51,8 @@ func newDetailModel(cfg *config.Config, st *store.Store, listID string) detailMo
 func (m detailModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.loadTaskDetails()
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -85,10 +92,8 @@ func (m *detailModel) loadTaskDetails() {
 	}
 
 	var content strings.Builder
-	mainTable, width := m.renderMainTable(task)
+	mainTable, _ := m.renderMainTable(task)
 	content.WriteString(mainTable)
-	content.WriteString("\n")
-	content.WriteString(m.renderDescription(task, width))
 	content.WriteString("\n")
 
 	notes, err := m.store.GetNotesByTaskID(taskID)
@@ -97,7 +102,10 @@ func (m *detailModel) loadTaskDetails() {
 		return
 	}
 
-	content.WriteString(m.renderNotes(notes, width))
+	sessionWidth := max(30, m.width/2)
+	leftWidth := max(20, m.width-sessionWidth-5)
+	leftContent := m.renderDescription(task, leftWidth) + "\n" + m.renderNotes(notes, leftWidth)
+	content.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, leftContent, "     ", m.renderSessions(task, sessionWidth)))
 
 	m.content = content.String()
 }
@@ -209,4 +217,46 @@ func (m *detailModel) renderNotes(notes []models.Note, width int) string {
 	}
 
 	return heading + "\n" + table.String()
+}
+
+func (m *detailModel) renderSessions(task models.Task, width int) string {
+	heading := lipgloss.NewStyle().Bold(true).Foreground(styles.Main).Render("Sessions")
+	total := fmt.Sprintf("%s\nTotal time spent: %s", heading, formatDuration(task.Duration.Sub(time.Time{})))
+	if len(task.Sessions) == 0 {
+		return total + "\n\nNo sessions recorded."
+	}
+
+	sessions := append([]models.Session(nil), task.Sessions...)
+	sort.Slice(sessions, func(i, j int) bool {
+		return sessions[i].StartTime.Before(sessions[j].StartTime)
+	})
+
+	cellStyle := lipgloss.NewStyle().Foreground(styles.Highlight1)
+	sessionTable := table.New().
+		Width(width).
+		Border(lipgloss.HiddenBorder()).
+		StyleFunc(func(row, column int) lipgloss.Style {
+			if row == 0 {
+				return lipgloss.NewStyle().Bold(true).Foreground(styles.Main)
+			}
+			return cellStyle
+		}).
+		Row("Started At", "Duration")
+
+	for _, session := range sessions {
+		sessionTable.Row(
+			session.StartTime.Format("2006-01-02 15:04"),
+			formatDuration(session.EndTime.Sub(session.StartTime)),
+		)
+	}
+
+	return total + "\n\n" + sessionTable.String()
+}
+
+func formatDuration(duration time.Duration) string {
+	if duration < 0 {
+		duration = 0
+	}
+	duration = duration.Round(time.Minute)
+	return fmt.Sprintf("%02d:%02d", int(duration.Hours()), int(duration.Minutes())%60)
 }
