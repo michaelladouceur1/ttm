@@ -47,7 +47,7 @@ func init() {
 	case "", "sqlite":
 		strategy = sqlite.NewStore()
 	case "postgres":
-		strategy = postgres.NewStore()
+		strategy = postgres.NewStore(cfg.Config.Storage.Postgres)
 	case "google-docs":
 		strategy = googledocs.NewStore(cfg.Config.Storage.GoogleDocs)
 	default:

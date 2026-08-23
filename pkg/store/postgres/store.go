@@ -6,9 +6,13 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
+	"ttm/pkg/config"
 	"ttm/pkg/models"
 	"ttm/pkg/paths"
 
@@ -16,15 +20,16 @@ import (
 )
 
 type Store struct {
-	ctx context.Context
-	db  *sql.DB
+	ctx    context.Context
+	db     *sql.DB
+	config config.PostgresConfig
 }
 
 //go:embed schema.postgres.sql
 var ddl string
 
-func NewStore() *Store {
-	return &Store{}
+func NewStore(cfg config.PostgresConfig) *Store {
+	return &Store{config: cfg}
 }
 
 func (s *Store) Init() error {
@@ -36,7 +41,12 @@ func (s *Store) Init() error {
 
 	s.ctx = context.Background()
 
-	s.db, err = sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/ttmdb")
+	dsn, err := s.dsn()
+	if err != nil {
+		return err
+	}
+
+	s.db, err = sql.Open("postgres", dsn)
 	if err != nil {
 		return err
 	}
@@ -46,6 +56,39 @@ func (s *Store) Init() error {
 	}
 
 	return nil
+}
+
+func (s *Store) dsn() (string, error) {
+	password := s.config.Password
+	passwordEnv := s.config.PasswordEnv
+	if password == "" && passwordEnv != "" {
+		var ok bool
+		password, ok = os.LookupEnv(passwordEnv)
+		if !ok {
+			return "", fmt.Errorf("postgres password environment variable %q is not set", passwordEnv)
+		}
+	}
+
+	connectionURL := &url.URL{
+		Scheme: "postgres",
+		Host:   net.JoinHostPort(s.config.Host, strconv.Itoa(s.config.Port)),
+		Path:   s.config.DBName,
+	}
+	if s.config.User != "" {
+		if password == "" {
+			connectionURL.User = url.User(s.config.User)
+		} else {
+			connectionURL.User = url.UserPassword(s.config.User, password)
+		}
+	}
+
+	query := url.Values{}
+	if s.config.SSLMode != "" {
+		query.Set("sslmode", s.config.SSLMode)
+	}
+	connectionURL.RawQuery = query.Encode()
+
+	return connectionURL.String(), nil
 }
 
 func (s *Store) InsertTask(task models.Task) (models.Task, error) {

@@ -99,6 +99,26 @@ email address as an editor. The document content is managed as JSON by TTM; do n
 edit that JSON manually. Credentials remain in the credential file rather than
 being stored in the document or committed to source control.
 
+To use PostgreSQL, configure its connection settings:
+
+```yaml
+storage:
+  type: postgres
+  postgres:
+    host: localhost
+    port: 5432
+    user: ttm
+    dbname: ttmdb
+    sslmode: disable
+    passwordEnv: TTM_POSTGRES_PASSWORD
+```
+
+`passwordEnv` names an environment variable containing the password, so the
+password does not need to be stored in `config.yaml`. When `passwordEnv` and
+`password` are omitted, the PostgreSQL driver also supports `PGPASSWORD` and a
+matching `~/.pgpass` (or `PGPASSFILE`) entry. `password` is available only for
+setups where storing it in the plaintext configuration file is acceptable.
+
 ### Logging themes
 
 Set `logging.theme` in `~/.ttm/config.yaml` to choose the output format. The

@@ -32,6 +32,7 @@ type ConfigListFlags struct {
 type StorageConfig struct {
 	Type       string           `yaml:"type"`
 	GoogleDocs GoogleDocsConfig `yaml:"googleDocs"`
+	Postgres   PostgresConfig   `yaml:"postgres"`
 }
 
 type LoggingConfig struct {
@@ -43,12 +44,28 @@ type GoogleDocsConfig struct {
 	CredentialsFile string `yaml:"credentialsFile"`
 }
 
+type PostgresConfig struct {
+	Host        string `yaml:"host"`
+	Port        int    `yaml:"port"`
+	User        string `yaml:"user"`
+	Password    string `yaml:"password"`
+	PasswordEnv string `yaml:"passwordEnv"`
+	DBName      string `yaml:"dbname"`
+	SSLMode     string `yaml:"sslmode"`
+}
+
 func NewConfig() (*gonfig.Gonfig[Config], error) {
 	cfg := &Config{
 		DaysToDisplay:     7,
 		MaxTasksToDisplay: 25,
 		Storage: StorageConfig{
 			Type: "sqlite",
+			Postgres: PostgresConfig{
+				Host:    "localhost",
+				Port:    5432,
+				DBName:  "ttmdb",
+				SSLMode: "disable",
+			},
 		},
 		Logging: LoggingConfig{
 			Theme: "minimal",
