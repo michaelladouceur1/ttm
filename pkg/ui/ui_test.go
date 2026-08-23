@@ -225,6 +225,63 @@ func TestNoteCommandWithTaskIDUsesListedTask(t *testing.T) {
 	}
 }
 
+func TestActiveSessionShowsElapsedTimerAndNarrowsInput(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	if err := fs.CreateSessionFile(1, time.Now().Add(-time.Minute)); err != nil {
+		t.Fatalf("CreateSessionFile() error = %v", err)
+	}
+
+	withTimer := newModel(nil, nil)
+	if withTimer.timer == nil {
+		t.Fatal("timer is nil with an active session")
+	}
+	if !strings.Contains(withTimer.View(), "Elapsed:") {
+		t.Errorf("view = %q, want elapsed timer", withTimer.View())
+	}
+
+	if err := fs.RemoveSessionFile(); err != nil {
+		t.Fatalf("RemoveSessionFile() error = %v", err)
+	}
+	withoutTimer := newModel(nil, nil)
+	if withTimer.input.Width >= withoutTimer.input.Width {
+		t.Errorf("timer input width = %d, want less than %d", withTimer.input.Width, withoutTimer.input.Width)
+	}
+}
+
+func TestStartCommandActivatesSessionTimer(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Timed task"}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if err := fs.UpdateIDMapFile([]models.Task{{ID: 1, ListID: 1}}); err != nil {
+		t.Fatalf("UpdateIDMapFile() error = %v", err)
+	}
+
+	m := newModel(nil, st)
+	initialWidth := m.input.Width
+	m.input.SetValue("/start 1")
+	m.execute()
+
+	if m.timer == nil {
+		t.Fatal("timer is nil after starting a session")
+	}
+	if m.input.Width >= initialWidth {
+		t.Errorf("timer input width = %d, want less than %d", m.input.Width, initialWidth)
+	}
+}
+
+func TestFormatElapsedTime(t *testing.T) {
+	if got := formatElapsedTime(95 * time.Minute); got != "01:35:00" {
+		t.Errorf("formatElapsedTime() = %q, want 01:35:00", got)
+	}
+}
+
 func TestSearchCommandCreatesChildModel(t *testing.T) {
 	m := newModel(nil, nil)
 	m.input.SetValue("/search")

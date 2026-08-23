@@ -11,9 +11,15 @@ import (
 	"ttm/pkg/styles"
 
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/timer"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+)
+
+const (
+	sessionTimerHorizon = 365 * 24 * time.Hour
+	sessionTimerLabel   = "Elapsed: 00:00:00"
 )
 
 type command struct {
@@ -54,6 +60,7 @@ type model struct {
 	content     string
 	active      childModel
 	viewport    viewport.Model
+	timer       *timer.Model
 }
 
 type childModel interface {
@@ -77,12 +84,17 @@ func newModel(cfg *config.Config, st *store.Store) model {
 		content:  "Type / to see available commands.\n\nUse Ctrl+C to exit.",
 		viewport: viewport.New(76, 18),
 	}
+	m.syncSessionTimer()
+	m.setInputWidth()
 	m.setViewportContent()
 	return m
 }
 
 func (m model) Init() tea.Cmd {
-	return textinput.Blink
+	if m.timer == nil {
+		return textinput.Blink
+	}
+	return tea.Batch(textinput.Blink, m.timer.Init())
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -130,9 +142,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.input.Width = max(1, msg.Width-6)
+		m.setInputWidth()
 		m.viewport.Width = max(1, msg.Width-4)
 		m.viewport.Height = max(1, msg.Height-6)
+	case timer.TickMsg:
+		if m.timer == nil {
+			return m, nil
+		}
+		updatedTimer, cmd := m.timer.Update(msg)
+		m.timer = &updatedTimer
+		return m, cmd
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -175,8 +194,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.completeSuggestion()
 				return m, nil
 			}
+			hadTimer := m.timer != nil
 			m.execute()
 			m.setViewportContent()
+			if !hadTimer && m.timer != nil {
+				return m, m.timer.Init()
+			}
 			return m, nil
 		case "esc":
 			m.input.SetValue("")
@@ -284,18 +307,21 @@ func (m *model) execute() {
 			break
 		}
 		m.content = startSession(m.store, args[1], time.Now())
+		m.syncSessionTimer()
 	case "end":
 		if len(args) != 1 {
 			m.content = "Usage: /end"
 			break
 		}
 		m.content = endSession(m.store, time.Now())
+		m.syncSessionTimer()
 	case "cancel":
 		if len(args) != 1 {
 			m.content = "Usage: /cancel"
 			break
 		}
 		m.content = cancelSession()
+		m.syncSessionTimer()
 	case "close":
 		if len(args) < 2 {
 			m.content = "Usage: /close <task_id>..."
@@ -339,6 +365,8 @@ func (m model) View() string {
 	inputView := m.input.View()
 	if m.active != nil {
 		inputView = m.active.InputView()
+	} else if m.timer != nil {
+		inputView = lipgloss.JoinHorizontal(lipgloss.Center, inputView, " ", m.sessionTimerView())
 	}
 
 	input := lipgloss.NewStyle().
@@ -353,6 +381,60 @@ func (m model) View() string {
 		Render(m.viewport.View())
 
 	return input + "\n" + content
+}
+
+func (m *model) syncSessionTimer() {
+	m.timer = nil
+	defer m.setInputWidth()
+	if !fs.SessionFileExists() {
+		return
+	}
+
+	session, err := fs.ReadSessionFile()
+	if err != nil {
+		return
+	}
+
+	elapsed := time.Since(session.StartTime).Round(time.Second)
+	remaining := sessionTimerHorizon - elapsed
+	if remaining <= 0 {
+		return
+	}
+
+	sessionTimer := timer.New(remaining)
+	m.timer = &sessionTimer
+}
+
+func (m *model) setInputWidth() {
+	timerWidth := 0
+	if m.timer != nil {
+		timerWidth = len(sessionTimerLabel) + 1
+	}
+	m.input.Width = max(1, m.width-6-timerWidth)
+}
+
+func (m model) sessionTimerView() string {
+	elapsed := sessionTimerHorizon - m.timer.Timeout
+	if elapsed < 0 {
+		elapsed = 0
+	}
+	elapsed = elapsed.Round(time.Second)
+	return lipgloss.NewStyle().
+		Foreground(styles.Main).
+		Render("Elapsed: " + formatElapsedTime(elapsed))
+}
+
+func formatElapsedTime(duration time.Duration) string {
+	if duration < 0 {
+		duration = 0
+	}
+	duration = duration.Round(time.Second)
+	return fmt.Sprintf(
+		"%02d:%02d:%02d",
+		int(duration.Hours()),
+		int(duration.Minutes())%60,
+		int(duration.Seconds())%60,
+	)
 }
 
 func (m *model) setViewportContent() {
