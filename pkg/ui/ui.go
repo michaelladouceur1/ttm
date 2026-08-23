@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 	"ttm/pkg/config"
+	"ttm/pkg/fs"
 	"ttm/pkg/store"
 	"ttm/pkg/styles"
 
@@ -308,11 +309,24 @@ func (m *model) execute() {
 		}
 		m.active = newDetailModel(m.cfg, m.store, m.width, args[1])
 	case "note":
-		if len(args) != 2 {
-			m.content = "Usage: /note <task_id>"
+		switch len(args) {
+		case 1:
+			session, err := fs.ReadSessionFile()
+			if err != nil {
+				if fs.SessionFileExists() {
+					m.content = "Error reading active session: " + err.Error()
+				} else {
+					m.content = "No active session. Usage: /note <task_id>"
+				}
+				break
+			}
+			m.active = newActiveNoteModel(m.cfg, m.store, m.input.Width, session.TaskID)
+		case 2:
+			m.active = newNoteModel(m.cfg, m.store, m.input.Width, args[1])
+		default:
+			m.content = "Usage: /note [task_id]"
 			break
 		}
-		m.active = newNoteModel(m.cfg, m.store, m.input.Width, args[1])
 	default:
 		m.content = fmt.Sprintf("Unknown command: /%s\n\nType / to see available commands.", args[0])
 	}

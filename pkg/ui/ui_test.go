@@ -148,6 +148,83 @@ func TestSummaryCommandCreatesChildModel(t *testing.T) {
 	}
 }
 
+func TestNoteCommandUsesActiveSessionTask(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Active task"}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if err := fs.CreateSessionFile(1, time.Now()); err != nil {
+		t.Fatalf("CreateSessionFile() error = %v", err)
+	}
+
+	m := newModel(nil, st)
+	m.input.SetValue("/note")
+	m.execute()
+
+	note, ok := m.active.(noteModel)
+	if !ok {
+		t.Fatalf("active model = %T, want noteModel", m.active)
+	}
+	if note.taskID != 1 {
+		t.Fatalf("note task ID = %d, want 1", note.taskID)
+	}
+	note.saveNote("Session note")
+
+	notes, err := st.GetNotesByTaskID(1)
+	if err != nil {
+		t.Fatalf("GetNotesByTaskID() error = %v", err)
+	}
+	if len(notes) != 1 || notes[0].Content != "Session note" {
+		t.Errorf("notes = %#v, want one session note", notes)
+	}
+}
+
+func TestNoteCommandWithoutTaskOrSessionShowsUsage(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	m := newModel(nil, nil)
+	m.input.SetValue("/note")
+	m.execute()
+
+	if m.content != "No active session. Usage: /note <task_id>" {
+		t.Errorf("note content = %q", m.content)
+	}
+}
+
+func TestNoteCommandWithTaskIDUsesListedTask(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Listed task"}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if err := fs.UpdateIDMapFile([]models.Task{{ID: 1, ListID: 1}}); err != nil {
+		t.Fatalf("UpdateIDMapFile() error = %v", err)
+	}
+
+	m := newModel(nil, st)
+	m.input.SetValue("/note 1")
+	m.execute()
+	note := m.active.(noteModel)
+	note.saveNote("Listed task note")
+
+	notes, err := st.GetNotesByTaskID(1)
+	if err != nil {
+		t.Fatalf("GetNotesByTaskID() error = %v", err)
+	}
+	if len(notes) != 1 || notes[0].Content != "Listed task note" {
+		t.Errorf("notes = %#v, want one listed task note", notes)
+	}
+}
+
 func TestSearchCommandCreatesChildModel(t *testing.T) {
 	m := newModel(nil, nil)
 	m.input.SetValue("/search")

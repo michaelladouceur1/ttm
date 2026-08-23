@@ -51,6 +51,7 @@ and press Enter to run it.
 - `/tags`: list all tags and their task counts
 - `/search`: search task text or use `*field:value` filters
 - `/summary [TIME_PERIOD_IN_DAYS]`: show sessions by day and task totals (defaults to 7 days)
+- `/note [task_id]`: add a note to a task, or the active session's task when omitted
 - `/start <task_id>`: start a session for a listed task
 - `/end`: end and save the active session
 - `/cancel`: discard the active session

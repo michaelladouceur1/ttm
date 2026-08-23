@@ -19,6 +19,7 @@ type noteModel struct {
 	cfg     *config.Config
 	store   *store.Store
 	listID  string
+	taskID  int64
 	content string
 }
 
@@ -38,6 +39,12 @@ func newNoteModel(cfg *config.Config, st *store.Store, width int, listID string)
 	}
 
 	// m.loadTaskDetails()
+	return m
+}
+
+func newActiveNoteModel(cfg *config.Config, st *store.Store, width int, taskID int64) noteModel {
+	m := newNoteModel(cfg, st, width, strconv.FormatInt(taskID, 10))
+	m.taskID = taskID
 	return m
 }
 
@@ -70,16 +77,19 @@ func (m noteModel) View() string {
 }
 
 func (m *noteModel) saveNote(content string) {
-	id, err := strconv.Atoi(m.listID)
-	if err != nil {
-		m.content = "Invalid task ID: " + m.listID
-		return
-	}
+	taskID := m.taskID
+	if taskID == 0 {
+		id, err := strconv.Atoi(m.listID)
+		if err != nil {
+			m.content = "Invalid task ID: " + m.listID
+			return
+		}
 
-	taskID, err := fs.GetTaskIDFromTempID(int64(id))
-	if err != nil {
-		m.content = "Task not found: " + m.listID
-		return
+		taskID, err = fs.GetTaskIDFromTempID(int64(id))
+		if err != nil {
+			m.content = "Task not found: " + m.listID
+			return
+		}
 	}
 
 	note, err := m.store.InsertNote(taskID, content)
