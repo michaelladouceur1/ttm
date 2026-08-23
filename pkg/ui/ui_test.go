@@ -69,6 +69,85 @@ func TestStartCommandRequiresTaskID(t *testing.T) {
 	}
 }
 
+func TestSummaryDays(t *testing.T) {
+	tests := []struct {
+		args    []string
+		want    int
+		wantErr string
+	}{
+		{want: 7},
+		{args: []string{"14"}, want: 14},
+		{args: []string{"0"}, wantErr: "positive whole number"},
+		{args: []string{"week"}, wantErr: "positive whole number"},
+		{args: []string{"7", "14"}, wantErr: "usage:"},
+	}
+
+	for _, test := range tests {
+		got, err := summaryDays(test.args)
+		if test.wantErr != "" {
+			if err == nil || !strings.Contains(err.Error(), test.wantErr) {
+				t.Errorf("summaryDays(%v) error = %v, want %q", test.args, err, test.wantErr)
+			}
+			continue
+		}
+		if err != nil || got != test.want {
+			t.Errorf("summaryDays(%v) = %d, %v; want %d, nil", test.args, got, err, test.want)
+		}
+	}
+}
+
+func TestRenderSummaryGroupsSessionsByDayAndTotalsTasks(t *testing.T) {
+	now := time.Date(2026, time.August, 22, 15, 0, 0, 0, time.UTC)
+	plan := models.Task{ID: 1, Title: "Plan release"}
+	tests := models.Task{ID: 2, Title: "Write tests"}
+	rendered := renderSummary([]summarySession{
+		{session: models.Session{TaskId: 1, StartTime: now.Add(-2 * time.Hour), EndTime: now.Add(-75 * time.Minute)}, task: plan},
+		{session: models.Session{TaskId: 2, StartTime: now.AddDate(0, 0, -1), EndTime: now.AddDate(0, 0, -1).Add(45 * time.Minute)}, task: tests},
+		{session: models.Session{TaskId: 1, StartTime: now.AddDate(0, 0, -1).Add(time.Hour), EndTime: now.AddDate(0, 0, -1).Add(95 * time.Minute)}, task: plan},
+	}, []summaryTask{
+		{task: plan, duration: 80 * time.Minute},
+		{task: tests, duration: 45 * time.Minute},
+	}, 120)
+
+	for _, want := range []string{
+		"Sessions",
+		"Tasks",
+		"Saturday, August 22, 2026",
+		"Friday, August 21, 2026",
+		"Plan release",
+		"Write tests",
+		"01:20",
+		"00:45",
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("renderSummary() = %q, want it to contain %q", rendered, want)
+		}
+	}
+	if strings.Index(rendered, "Saturday, August 22, 2026") > strings.Index(rendered, "Friday, August 21, 2026") {
+		t.Errorf("renderSummary() does not order days newest first: %q", rendered)
+	}
+}
+
+func TestSummaryCommandCreatesChildModel(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	m := newModel(nil, st)
+	m.input.SetValue("/summary 14")
+	m.execute()
+
+	summary, ok := m.active.(summaryModel)
+	if !ok {
+		t.Fatalf("active model = %T, want summaryModel", m.active)
+	}
+	if summary.days != 14 {
+		t.Errorf("summary days = %d, want 14", summary.days)
+	}
+}
+
 func TestSearchCommandCreatesChildModel(t *testing.T) {
 	m := newModel(nil, nil)
 	m.input.SetValue("/search")

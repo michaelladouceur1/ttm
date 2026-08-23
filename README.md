@@ -50,6 +50,7 @@ and press Enter to run it.
 - `/tasks ["query"]`: list open tasks, optionally filtered by a query
 - `/tags`: list all tags and their task counts
 - `/search`: search task text or use `*field:value` filters
+- `/summary [TIME_PERIOD_IN_DAYS]`: show sessions by day and task totals (defaults to 7 days)
 - `/start <task_id>`: start a session for a listed task
 - `/end`: end and save the active session
 - `/cancel`: discard the active session
@@ -119,6 +120,7 @@ logging:
   - [x] /end - end session for task
   - [x] /cancel - cancel session for task
   - [x] /tasks (started; matches ability to CLI but needs to only list with filter for priority, status, tags, etc.)
+  - [x] /summary - summary of sessions and tasks worked on in a given time period
   - [x] /tags - list all tags and their counts
   - [x] /search - search task fields
   - [ ] /update - update task fields
