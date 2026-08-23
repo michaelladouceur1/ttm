@@ -113,32 +113,14 @@ func (m *tagModel) loadTags() {
 }
 
 func (m *tagModel) updateSuggestions() {
-	current := currentTag(m.input.Value())
-	if current == "" {
-		m.suggestions = nil
-		m.selected = 0
-		return
-	}
-
-	selectedTags := parseTags(m.input.Value())
-	m.suggestions = m.suggestions[:0]
-	for _, tag := range m.tags {
-		if strings.HasPrefix(strings.ToLower(tag), strings.ToLower(current)) && !containsTag(selectedTags, tag, current) {
-			m.suggestions = append(m.suggestions, tag)
-		}
-	}
-	sort.Slice(m.suggestions, func(i, j int) bool {
-		return strings.ToLower(m.suggestions[i]) < strings.ToLower(m.suggestions[j])
-	})
+	m.suggestions = matchingTags(m.tags, m.input.Value())
 	if m.selected >= len(m.suggestions) {
 		m.selected = 0
 	}
 }
 
 func (m *tagModel) completeSuggestion() {
-	value := m.input.Value()
-	current := currentTag(value)
-	m.input.SetValue(strings.TrimSuffix(value, current) + m.suggestions[m.selected])
+	m.input.SetValue(completedTagValue(m.input.Value(), m.suggestions[m.selected]))
 	m.input.CursorEnd()
 	m.updateSuggestions()
 }
@@ -172,6 +154,29 @@ func (m *tagModel) saveTags() bool {
 func currentTag(value string) string {
 	parts := strings.Split(value, ",")
 	return strings.TrimSpace(parts[len(parts)-1])
+}
+
+func matchingTags(tags []string, value string) []string {
+	current := currentTag(value)
+	if current == "" {
+		return nil
+	}
+
+	selectedTags := parseTags(value)
+	var suggestions []string
+	for _, tag := range tags {
+		if strings.HasPrefix(strings.ToLower(tag), strings.ToLower(current)) && !containsTag(selectedTags, tag, current) {
+			suggestions = append(suggestions, tag)
+		}
+	}
+	sort.Slice(suggestions, func(i, j int) bool {
+		return strings.ToLower(suggestions[i]) < strings.ToLower(suggestions[j])
+	})
+	return suggestions
+}
+
+func completedTagValue(value, suggestion string) string {
+	return strings.TrimSuffix(value, currentTag(value)) + suggestion
 }
 
 func containsTag(tags []string, candidate, current string) bool {

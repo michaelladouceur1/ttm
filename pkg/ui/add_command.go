@@ -34,13 +34,16 @@ type addCompleteMsg struct {
 type addCancelledMsg struct{}
 
 type addModel struct {
-	input    textinput.Model
-	cfg      *config.Config
-	store    *store.Store
-	step     addStep
-	draft    models.Task
-	priority int
-	content  string
+	input       textinput.Model
+	cfg         *config.Config
+	store       *store.Store
+	step        addStep
+	draft       models.Task
+	priority    int
+	content     string
+	tags        []string
+	suggestions []string
+	selected    int
 }
 
 func newAddModel(cfg *config.Config, st *store.Store, inputWidth int) addModel {
@@ -69,10 +72,25 @@ func (m addModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 				m.input.SetValue(string(priorities[m.priority]))
 				return m, nil
 			}
+			if m.step == addStepTags && len(m.suggestions) > 0 {
+				m.selected = (m.selected - 1 + len(m.suggestions)) % len(m.suggestions)
+				return m, nil
+			}
 		case "down":
 			if m.step == addStepPriority {
 				m.priority = (m.priority + 1) % len(priorities)
 				m.input.SetValue(string(priorities[m.priority]))
+				return m, nil
+			}
+			if m.step == addStepTags && len(m.suggestions) > 0 {
+				m.selected = (m.selected + 1) % len(m.suggestions)
+				return m, nil
+			}
+		case "tab":
+			if m.step == addStepTags && len(m.suggestions) > 0 {
+				m.input.SetValue(completedTagValue(m.input.Value(), m.suggestions[m.selected]))
+				m.input.CursorEnd()
+				m.updateTagSuggestions()
 				return m, nil
 			}
 		case "enter":
@@ -84,6 +102,9 @@ func (m addModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 
 	var cmd tea.Cmd
 	m.input, cmd = m.input.Update(msg)
+	if m.step == addStepTags {
+		m.updateTagSuggestions()
+	}
 	return m, cmd
 }
 
@@ -105,6 +126,17 @@ func (m addModel) View() string {
 		body.WriteString("\n")
 	}
 	body.WriteString(m.content)
+	if m.step == addStepTags && len(m.suggestions) > 0 {
+		body.WriteString("\n\nMatching tags\n")
+		for i, tag := range m.suggestions {
+			prefix := "  "
+			if i == m.selected {
+				prefix = "> "
+			}
+			fmt.Fprintf(&body, "%s%s\n", prefix, tag)
+		}
+		body.WriteString("\nTab completes the selected tag.")
+	}
 	return body.String()
 }
 
@@ -133,6 +165,7 @@ func (m addModel) submitAddField() (childModel, tea.Cmd) {
 		}
 		m.draft.Priority = priority
 		m.nextAddStep(addStepTags, "Enter tags (comma-separated)...", "Tags")
+		m.loadTags()
 	case addStepTags:
 		m.draft.Tags = parseTags(value)
 		return m.saveTask()
@@ -145,6 +178,26 @@ func (m *addModel) nextAddStep(step addStep, placeholder, field string) {
 	m.input.SetValue("")
 	m.input.Placeholder = placeholder
 	m.content = "Create task\n\n" + field
+}
+
+func (m *addModel) loadTags() {
+	tagCounts, err := m.store.ListTagCounts()
+	if err != nil {
+		m.content = "Unable to load existing tags: " + err.Error()
+		return
+	}
+
+	m.tags = make([]string, 0, len(tagCounts))
+	for _, tag := range tagCounts {
+		m.tags = append(m.tags, tag.Tag)
+	}
+}
+
+func (m *addModel) updateTagSuggestions() {
+	m.suggestions = matchingTags(m.tags, m.input.Value())
+	if m.selected >= len(m.suggestions) {
+		m.selected = 0
+	}
 }
 
 func (m addModel) saveTask() (childModel, tea.Cmd) {

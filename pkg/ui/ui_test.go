@@ -207,13 +207,20 @@ func TestCancelSessionRemovesActiveSessionWithoutSaving(t *testing.T) {
 }
 
 func TestAddFormWalksThroughFields(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+
 	m := newModel(&config.Config{
 		AddFlags: config.ConfigDefaultFlags{
 			Category: string(models.CategoryTask),
 			Priority: string(models.PriorityHigh),
 			Status:   string(models.StatusOpen),
 		},
-	}, nil)
+	}, st)
 	m.input.SetValue("/add")
 	m.execute()
 
@@ -244,6 +251,33 @@ func TestAddFormWalksThroughFields(t *testing.T) {
 	add = updated.(addModel)
 	if add.step != addStepTags || add.draft.Priority != models.PriorityMedium {
 		t.Fatalf("priority was not saved: step=%d priority=%q", add.step, add.draft.Priority)
+	}
+}
+
+func TestAddModelSuggestsCommaSeparatedTags(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Source task", Tags: []string{"urgent", "work"}}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+
+	m := newAddModel(&config.Config{}, st, 80)
+	m.nextAddStep(addStepTags, "Enter tags (comma-separated)...", "Tags")
+	m.loadTags()
+	m.input.SetValue("work, ur")
+	m.updateTagSuggestions()
+
+	if !reflect.DeepEqual(m.suggestions, []string{"urgent"}) {
+		t.Fatalf("suggestions = %#v, want urgent", m.suggestions)
+	}
+
+	m.input.SetValue(completedTagValue(m.input.Value(), m.suggestions[m.selected]))
+	if m.input.Value() != "work, urgent" {
+		t.Errorf("input = %q, want work, urgent", m.input.Value())
 	}
 }
 
