@@ -54,6 +54,19 @@ and press Enter to run it.
 - `/end`: end and save the active session
 - `/cancel`: discard the active session
 
+### Windows installation
+
+Windows releases include `ttm_setup.exe`. Run the installer to install TTM in
+`Program Files\TTM`, add Start menu shortcuts, and register an uninstaller.
+To create the installer from source on Windows, install [NSIS](https://nsis.sourceforge.io/)
+and run:
+
+```sh
+make package-windows
+```
+
+The installer is written to `dist/ttm_setup.exe`.
+
 ### Shorthand
 
 - `ttm add`: Add a task

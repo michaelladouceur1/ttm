@@ -1,7 +1,7 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Go
+name: Release
 
 on:
   release:
@@ -9,46 +9,47 @@ on:
       - published
 
 jobs:
-
-  build-windows:
+  package-windows:
     runs-on: windows-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.25.3'
 
-    - name: Build
-      run: go build -v -o ttm.exe .
+    - name: Install NSIS
+      run: choco install nsis --no-progress --yes
 
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v3
+    - name: Build installer
+      shell: bash
+      run: make package-windows VERSION="${{ github.event.release.tag_name }}"
+
+    - name: Upload installer artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: ttm
-        path: ttm.exe
+        name: ttm-setup
+        path: dist/ttm_setup.exe
 
   upload-release-asset:
-    needs: build-windows
+    needs: package-windows
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Download build artifact
-      uses: actions/download-artifact@v3
+    - name: Download installer artifact
+      uses: actions/download-artifact@v4
       with:
-        name: ttm
+        name: ttm-setup
+        path: release
 
     - name: Upload Release Asset
-      id: upload-release-asset 
+      id: upload-release-asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./ttm.exe
-        asset_name: ttm.exe
+        asset_path: ./release/ttm_setup.exe
+        asset_name: ttm_setup.exe
         asset_content_type: application/octet-stream
