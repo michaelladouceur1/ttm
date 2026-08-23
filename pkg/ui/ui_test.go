@@ -54,8 +54,8 @@ func TestUpdateSuggestions(t *testing.T) {
 
 	m.input.SetValue("/tag")
 	m.updateSuggestions()
-	if len(m.suggestions) != 1 || m.suggestions[0].name != "tags" {
-		t.Fatalf("suggestions = %#v, want tags", m.suggestions)
+	if len(m.suggestions) != 2 || m.suggestions[0].name != "tag" || m.suggestions[1].name != "tags" {
+		t.Fatalf("suggestions = %#v, want tag and tags", m.suggestions)
 	}
 }
 
@@ -377,6 +377,65 @@ func TestTagsCommandRejectsArguments(t *testing.T) {
 
 	if m.content != "Usage: /tags" {
 		t.Errorf("tags content = %q", m.content)
+	}
+}
+
+func TestTagCommandCreatesChildModel(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+
+	m := newModel(nil, st)
+	m.input.SetValue("/tag 1")
+	m.execute()
+
+	if _, ok := m.active.(tagModel); !ok {
+		t.Errorf("active model = %T, want tagModel", m.active)
+	}
+}
+
+func TestTagModelSuggestsAndSavesTags(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Tagged task"}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Source task", Tags: []string{"urgent", "work"}}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if err := fs.UpdateIDMapFile([]models.Task{{ID: 1, ListID: 1}, {ID: 2, ListID: 2}}); err != nil {
+		t.Fatalf("UpdateIDMapFile() error = %v", err)
+	}
+
+	m := newTagModel(st, 80, "1")
+	m.input.SetValue("ur")
+	m.updateSuggestions()
+	if !reflect.DeepEqual(m.suggestions, []string{"urgent"}) {
+		t.Fatalf("suggestions = %#v, want urgent", m.suggestions)
+	}
+
+	m.completeSuggestion()
+	if m.input.Value() != "urgent" {
+		t.Fatalf("input = %q, want urgent", m.input.Value())
+	}
+	m.input.SetValue("urgent, new-tag")
+	if !m.saveTags() {
+		t.Fatal("saveTags() returned false")
+	}
+
+	task, err := st.GetTaskByID(1)
+	if err != nil {
+		t.Fatalf("GetTaskByID() error = %v", err)
+	}
+	if !reflect.DeepEqual(task.Tags, []string{"urgent", "new-tag"}) {
+		t.Errorf("tags = %#v, want urgent and new-tag", task.Tags)
 	}
 }
 
