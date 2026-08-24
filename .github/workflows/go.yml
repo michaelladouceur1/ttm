@@ -10,7 +10,7 @@ on:
 
 jobs:
   package-windows:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -20,8 +20,8 @@ jobs:
       with:
         go-version: '1.25.3'
 
-    - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y nsis
+    - name: Install NSIS and Make
+      run: choco install nsis make --no-progress --yes
 
     - name: Build installer
       shell: bash
