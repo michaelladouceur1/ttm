@@ -21,7 +21,10 @@ jobs:
         go-version: '1.25.3'
 
     - name: Install NSIS and Make
-      run: choco install nsis make --no-progress --yes
+      shell: pwsh
+      run: |
+        choco install nsis make --no-progress --yes
+        echo "C:\Program Files (x86)\NSIS" >> $env:GITHUB_PATH
 
     - name: Build installer
       shell: bash
