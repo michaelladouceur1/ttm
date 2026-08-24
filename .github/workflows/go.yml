@@ -58,6 +58,8 @@ jobs:
     - package-windows
     - package-linux
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - name: Download installer artifact
       uses: actions/download-artifact@v4
@@ -71,24 +73,11 @@ jobs:
         name: ttm-deb
         path: release
 
-    - name: Upload Windows installer
-      id: upload-windows-installer
-      uses: actions/upload-release-asset@v1
+    - name: Upload release assets
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./release/ttm_setup.exe
-        asset_name: ttm_setup.exe
-        asset_content_type: application/octet-stream
-
-    - name: Upload Debian package
-      id: upload-debian-package
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./release/ttm.deb
-        asset_name: ttm.deb
-        asset_content_type: application/vnd.debian.binary-package
+      run: |
+        gh release upload "${{ github.event.release.tag_name }}" \
+          release/ttm_setup.exe \
+          release/ttm.deb \
+          --repo "${{ github.repository }}"
