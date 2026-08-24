@@ -26,6 +26,7 @@ package-linux: build-linux
 	@echo "Copying package structure..."
 	mkdir -p dist
 	cp -r build/linux/ttm dist/ttm
+	mkdir -p dist/ttm/usr/local/bin
 	cp bin/ttm dist/ttm/usr/local/bin/ttm
 	@echo "Creating DEB package..."
 	dpkg-deb --build dist/ttm dist/ttm.deb
