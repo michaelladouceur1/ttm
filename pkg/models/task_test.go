@@ -14,6 +14,12 @@ func TestTaskValidateRejectsInvalidCategory(t *testing.T) {
 	}
 }
 
+func TestStatusValidateAcceptsStandby(t *testing.T) {
+	if err := StatusStandby.Validate(); err != nil {
+		t.Fatalf("StatusStandby.Validate() error = %v", err)
+	}
+}
+
 func TestSortTasksByIDAndPopulateListIDs(t *testing.T) {
 	tasks := []Task{{ID: 3}, {ID: 1}, {ID: 2}}
 

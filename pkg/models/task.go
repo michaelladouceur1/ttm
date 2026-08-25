@@ -17,8 +17,9 @@ const (
 )
 
 const (
-	StatusOpen   Status = "open"
-	StatusClosed Status = "closed"
+	StatusOpen    Status = "open"
+	StatusStandby Status = "standby"
+	StatusClosed  Status = "closed"
 )
 
 const (
@@ -80,7 +81,7 @@ func (p Priority) Validate() error {
 }
 
 func (s Status) Validate() error {
-	valid := s == StatusOpen || s == StatusClosed || s == ""
+	valid := s == StatusOpen || s == StatusStandby || s == StatusClosed || s == ""
 	if !valid {
 		return &InvalidStatusError{}
 	}
@@ -114,5 +115,5 @@ func (e *InvalidPriorityError) Error() string {
 type InvalidStatusError struct{}
 
 func (e *InvalidStatusError) Error() string {
-	return "Invalid status. Please choose from open, closed"
+	return "Invalid status. Please choose from open, standby, closed"
 }

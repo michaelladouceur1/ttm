@@ -553,6 +553,9 @@ func TestTasksCommandTogglingFilterUpdatesTasks(t *testing.T) {
 	if err := st.InsertTask(models.Task{Title: "Closed task", Category: models.CategoryTask, Priority: models.PriorityLow, Status: models.StatusClosed}); err != nil {
 		t.Fatalf("InsertTask() error = %v", err)
 	}
+	if err := st.InsertTask(models.Task{Title: "Standby task", Category: models.CategoryTask, Priority: models.PriorityLow, Status: models.StatusStandby}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
 
 	cfg := &config.Config{ListFlags: config.ConfigListFlags{Status: []string{string(models.StatusOpen)}}}
 	m := newTasksModel(cfg, st, 80)
@@ -560,13 +563,13 @@ func TestTasksCommandTogglingFilterUpdatesTasks(t *testing.T) {
 		t.Fatalf("default filtered content = %q, want only open task", m.content)
 	}
 
-	// Move the cursor to the "Closed" status option and toggle it on.
+	// Move the cursor to the "Standby" status option and toggle it on.
 	m.cursor = len(categoryFilterOptions) + 1
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeySpace})
 	m = updated.(tasksModel)
 
-	if !strings.Contains(m.content, "Open task") || !strings.Contains(m.content, "Closed task") {
-		t.Fatalf("updated content = %q, want both tasks after toggling status filter", m.content)
+	if !strings.Contains(m.content, "Open task") || !strings.Contains(m.content, "Standby task") || strings.Contains(m.content, "Closed task") {
+		t.Fatalf("updated content = %q, want open and standby tasks after toggling status filter", m.content)
 	}
 }
 
@@ -583,7 +586,7 @@ func TestTaskFiltersRenderOptionsHorizontally(t *testing.T) {
 	rendered := m.renderFilters()
 	for _, want := range []string{
 		"Category: > [ ] Task   [ ] Meeting",
-		"Status:     [x] Open   [ ] Closed",
+		"Status:     [x] Open   [ ] Standby   [ ] Closed",
 		"Priority:   [ ] Low   [ ] Medium   [ ] High",
 	} {
 		if !strings.Contains(rendered, want) {
@@ -604,6 +607,42 @@ func TestTaskFiltersWrapAtTerminalWidth(t *testing.T) {
 		if len(line) > 28 {
 			t.Errorf("filter line %q exceeds available width", line)
 		}
+	}
+}
+
+func TestOpenAndStandbyCommandsUpdateMappedTasks(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Switch status", Status: models.StatusOpen}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if err := fs.UpdateIDMapFile([]models.Task{{ID: 1, ListID: 1}}); err != nil {
+		t.Fatalf("UpdateIDMapFile() error = %v", err)
+	}
+
+	m := newModel(nil, st)
+	m.input.SetValue("/standby 1")
+	m.execute()
+	task, err := st.GetTaskByID(1)
+	if err != nil {
+		t.Fatalf("GetTaskByID() error = %v", err)
+	}
+	if task.Status != models.StatusStandby || !strings.Contains(m.content, "Tasks Put on Standby") {
+		t.Fatalf("standby result = status %q, content %q", task.Status, m.content)
+	}
+
+	m.input.SetValue("/open 1")
+	m.execute()
+	task, err = st.GetTaskByID(1)
+	if err != nil {
+		t.Fatalf("GetTaskByID() error = %v", err)
+	}
+	if task.Status != models.StatusOpen || !strings.Contains(m.content, "Tasks Opened") {
+		t.Fatalf("open result = status %q, content %q", task.Status, m.content)
 	}
 }
 

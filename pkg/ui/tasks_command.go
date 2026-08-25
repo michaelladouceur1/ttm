@@ -33,6 +33,7 @@ var categoryFilterOptions = []filterOption{
 
 var statusFilterOptions = []filterOption{
 	{label: "Open", value: string(models.StatusOpen)},
+	{label: "Standby", value: string(models.StatusStandby)},
 	{label: "Closed", value: string(models.StatusClosed)},
 }
 

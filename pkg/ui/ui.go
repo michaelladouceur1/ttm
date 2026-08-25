@@ -31,7 +31,9 @@ var commands = []command{
 	{name: "add", description: "Add a task with a guided form"},
 	{name: "cancel", description: "Discard the active session"},
 	{name: "close", description: "Close one or more tasks"},
+	{name: "open", description: "Mark one or more tasks as open"},
 	{name: "search", description: "Search tasks by text or field filters"},
+	{name: "standby", description: "Put one or more tasks on standby"},
 	{name: "summary", description: "Show session and task time summaries"},
 	{name: "tag", description: "Add comma-separated tags to a task"},
 	{name: "tasks", description: "List tasks with category, status, and priority filters"},
@@ -328,6 +330,18 @@ func (m *model) execute() {
 			break
 		}
 		m.content = closeTasks(m.store, args[1:])
+	case "open":
+		if len(args) < 2 {
+			m.content = "Usage: /open <task_id>..."
+			break
+		}
+		m.content = openTasks(m.store, args[1:])
+	case "standby":
+		if len(args) < 2 {
+			m.content = "Usage: /standby <task_id>..."
+			break
+		}
+		m.content = standbyTasks(m.store, args[1:])
 	case "detail":
 		if len(args) != 2 {
 			m.content = "Usage: /detail <task_id>"
