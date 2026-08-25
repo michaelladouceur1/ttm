@@ -53,13 +53,12 @@ func (MinimalStyle) RenderSummary(title string, items []SummaryItem) string {
 const (
 	IDWidth           = 5
 	TitleWidth        = 40
-	CategoryWidth     = 12
 	PriorityWidth     = 12
 	StatusWidth       = 12
 	TagsWidth         = 30
 	DurationWidth     = 15
 	CreatedAtWidth    = 21
-	DefaultTableWidth = IDWidth + TitleWidth + CategoryWidth + PriorityWidth + StatusWidth + TagsWidth + DurationWidth + CreatedAtWidth
+	DefaultTableWidth = IDWidth + TitleWidth + PriorityWidth + StatusWidth + TagsWidth + DurationWidth + CreatedAtWidth
 )
 
 func (ms MinimalStyle) RenderTasks(tasks []models.Task) string {
@@ -68,7 +67,6 @@ func (ms MinimalStyle) RenderTasks(tasks []models.Task) string {
 		cellStyle.Width(IDWidth),        // ID
 		cellStyle.Width(TitleWidth),     // Title
 		cellStyle,                       // Description
-		cellStyle.Width(CategoryWidth),  // Category
 		cellStyle.Width(PriorityWidth),  // Priority
 		cellStyle.Width(StatusWidth),    // Status
 		cellStyle.Width(TagsWidth),      // Tags
@@ -84,7 +82,7 @@ func (ms MinimalStyle) RenderTasks(tasks []models.Task) string {
 		Width(max(1, ms.TermWidth-5)).
 		// Border(lipgloss.NormalBorder()).BorderRow(true).BorderColumn(false).BorderLeft(false).BorderRight(false).
 		Border(lipgloss.HiddenBorder()).
-		Headers("ID", "Title", "Description", "Category", "Priority", "Status", "Tags", "Duration", "Created At").
+		Headers("ID", "Title", "Description", "Priority", "Status", "Tags", "Duration", "Created At").
 		StyleFunc(func(row, column int) lipgloss.Style {
 			if row == table.HeaderRow {
 				return headerStyle
@@ -105,7 +103,6 @@ func (ms MinimalStyle) RenderTasks(tasks []models.Task) string {
 			strconv.FormatInt(task.ListID, 10),
 			trimmedTitle,
 			trimmedDescription,
-			string(task.Category),
 			string(task.Priority),
 			string(task.Status),
 			trimmedTags,

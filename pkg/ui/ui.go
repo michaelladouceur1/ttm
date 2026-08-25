@@ -38,7 +38,7 @@ var commands = []command{
 	{name: "standby", description: "Set one or more tasks as standby"},
 	{name: "summary", description: "Show session and task time summaries"},
 	{name: "tag", description: "Add one or more tags to a task (comma-separated)"},
-	{name: "tasks", description: "List tasks with category, status, and priority filters"},
+	{name: "tasks", description: "List tasks with status and priority filters"},
 	{name: "tags", description: "List all tags and their task counts"},
 	{name: "start", description: "Start a session for a task"},
 	{name: "end", description: "End and save the active session"},

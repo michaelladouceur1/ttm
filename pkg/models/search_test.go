@@ -17,7 +17,7 @@ func TestParseTaskSearchPlainText(t *testing.T) {
 }
 
 func TestParseTaskSearchFilters(t *testing.T) {
-	got, err := ParseTaskSearch("$tags:work, urgent $title:Task 1 $status:open")
+	got, err := ParseTaskSearch("*tags:work, urgent *title:Task 1 *status:open")
 	if err != nil {
 		t.Fatalf("ParseTaskSearch() error = %v", err)
 	}
@@ -28,7 +28,7 @@ func TestParseTaskSearchFilters(t *testing.T) {
 }
 
 func TestParseTaskSearchRejectsInvalidFilters(t *testing.T) {
-	for _, input := range []string{"", "$title:", "$unknown:value"} {
+	for _, input := range []string{"", "*title:", "*category:task", "*unknown:value"} {
 		if _, err := ParseTaskSearch(input); err == nil {
 			t.Errorf("ParseTaskSearch(%q) returned nil error", input)
 		}

@@ -118,15 +118,14 @@ func (q *Queries) CreateTags(ctx context.Context, arg CreateTagsParams) ([]Tag, 
 }
 
 const createTask = `-- name: CreateTask :one
-INSERT INTO tasks (title, description, category, priority, status, opened_at, closed_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at
+INSERT INTO tasks (title, description, priority, status, opened_at, closed_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, title, description, priority, status, opened_at, closed_at, created_at, updated_at
 `
 
 type CreateTaskParams struct {
 	Title       sql.NullString
 	Description sql.NullString
-	Category    sql.NullString
 	Priority    sql.NullString
 	Status      sql.NullString
 	OpenedAt    sql.NullTime
@@ -139,7 +138,6 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	row := q.db.QueryRowContext(ctx, createTask,
 		arg.Title,
 		arg.Description,
-		arg.Category,
 		arg.Priority,
 		arg.Status,
 		arg.OpenedAt,
@@ -152,7 +150,6 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.ID,
 		&i.Title,
 		&i.Description,
-		&i.Category,
 		&i.Priority,
 		&i.Status,
 		&i.OpenedAt,
@@ -307,7 +304,7 @@ func (q *Queries) GetTagsByTaskID(ctx context.Context, taskID sql.NullInt64) ([]
 }
 
 const getTaskById = `-- name: GetTaskById :one
-SELECT id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
+SELECT id, title, description, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
 WHERE id = $1
 `
 
@@ -318,7 +315,6 @@ func (q *Queries) GetTaskById(ctx context.Context, id int64) (Task, error) {
 		&i.ID,
 		&i.Title,
 		&i.Description,
-		&i.Category,
 		&i.Priority,
 		&i.Status,
 		&i.OpenedAt,
@@ -366,33 +362,27 @@ func (q *Queries) ListTags(ctx context.Context) ([]ListTagsRow, error) {
 }
 
 const listTasks = `-- name: ListTasks :many
-SELECT id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
+SELECT id, title, description, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
 WHERE
   (
     $1 IS NULL
     OR $1 = ''
-    OR category IN (SELECT value FROM json_each($1))
+    OR priority IN (SELECT value FROM json_each($1))
   )
   AND (
     $2 IS NULL
     OR $2 = ''
-    OR priority IN (SELECT value FROM json_each($2))
-  )
-  AND (
-    $3 IS NULL
-    OR $3 = ''
-    OR status IN (SELECT value FROM json_each($3))
+    OR status IN (SELECT value FROM json_each($2))
   )
 `
 
 type ListTasksParams struct {
-	Column1 interface{}
-	Column2 interface{}
-	Column3 interface{}
+	PrioritiesJSON interface{}
+	StatusesJSON   interface{}
 }
 
 func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, error) {
-	rows, err := q.db.QueryContext(ctx, listTasks, arg.Column1, arg.Column2, arg.Column3)
+	rows, err := q.db.QueryContext(ctx, listTasks, arg.PrioritiesJSON, arg.StatusesJSON)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +394,6 @@ func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, e
 			&i.ID,
 			&i.Title,
 			&i.Description,
-			&i.Category,
 			&i.Priority,
 			&i.Status,
 			&i.OpenedAt,
@@ -430,20 +419,18 @@ UPDATE tasks
 SET 
     title = COALESCE($1, title),
     description = COALESCE($2, description),
-    category = COALESCE($3, category),
-    priority = COALESCE($4, priority),
-    status = COALESCE($5, status),
-    opened_at = COALESCE($6, opened_at),
-    closed_at = COALESCE($7, closed_at),
-    updated_at = $8
-WHERE id = $9
-RETURNING id, title, description, category, priority, status, opened_at, closed_at, created_at, updated_at
+    priority = COALESCE($3, priority),
+    status = COALESCE($4, status),
+    opened_at = COALESCE($5, opened_at),
+    closed_at = COALESCE($6, closed_at),
+    updated_at = $7
+WHERE id = $8
+RETURNING id, title, description, priority, status, opened_at, closed_at, created_at, updated_at
 `
 
 type UpdateTaskFieldParams struct {
 	Title       sql.NullString
 	Description sql.NullString
-	Category    sql.NullString
 	Priority    sql.NullString
 	Status      sql.NullString
 	OpenedAt    sql.NullTime
@@ -456,7 +443,6 @@ func (q *Queries) UpdateTaskField(ctx context.Context, arg UpdateTaskFieldParams
 	row := q.db.QueryRowContext(ctx, updateTaskField,
 		arg.Title,
 		arg.Description,
-		arg.Category,
 		arg.Priority,
 		arg.Status,
 		arg.OpenedAt,
@@ -469,7 +455,6 @@ func (q *Queries) UpdateTaskField(ctx context.Context, arg UpdateTaskFieldParams
 		&i.ID,
 		&i.Title,
 		&i.Description,
-		&i.Category,
 		&i.Priority,
 		&i.Status,
 		&i.OpenedAt,

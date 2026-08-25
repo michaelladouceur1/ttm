@@ -74,8 +74,8 @@ func TestVisibleSuggestionsLimitsCommandsAndKeepsSelectionVisible(t *testing.T) 
 	}
 
 	rendered := m.renderSuggestions()
-	if strings.Count(rendered, "\n") != maxCommandSuggestions {
-		t.Errorf("rendered suggestions = %q, want a heading and %d commands", rendered, maxCommandSuggestions)
+	if len(strings.Split(rendered, "\n")) != maxCommandSuggestions {
+		t.Errorf("rendered suggestions = %q, want %d command lines", rendered, maxCommandSuggestions)
 	}
 }
 
@@ -527,7 +527,6 @@ func TestAddFormWalksThroughFields(t *testing.T) {
 
 	m := newModel(&config.Config{
 		AddFlags: config.ConfigDefaultFlags{
-			Category: string(models.CategoryTask),
 			Priority: string(models.PriorityHigh),
 			Status:   string(models.StatusOpen),
 		},
@@ -620,7 +619,7 @@ func TestTasksCommandCreatesChildModel(t *testing.T) {
 	if err := st.Init(); err != nil {
 		t.Fatalf("Init() error = %v", err)
 	}
-	if err := st.InsertTask(models.Task{Title: "Write tests", Category: models.CategoryTask, Priority: models.PriorityLow, Status: models.StatusOpen}); err != nil {
+	if err := st.InsertTask(models.Task{Title: "Write tests", Priority: models.PriorityLow, Status: models.StatusOpen}); err != nil {
 		t.Fatalf("InsertTask() error = %v", err)
 	}
 
@@ -645,13 +644,13 @@ func TestTasksCommandTogglingFilterUpdatesTasks(t *testing.T) {
 	if err := st.Init(); err != nil {
 		t.Fatalf("Init() error = %v", err)
 	}
-	if err := st.InsertTask(models.Task{Title: "Open task", Category: models.CategoryTask, Priority: models.PriorityLow, Status: models.StatusOpen}); err != nil {
+	if err := st.InsertTask(models.Task{Title: "Open task", Priority: models.PriorityLow, Status: models.StatusOpen}); err != nil {
 		t.Fatalf("InsertTask() error = %v", err)
 	}
-	if err := st.InsertTask(models.Task{Title: "Closed task", Category: models.CategoryTask, Priority: models.PriorityLow, Status: models.StatusClosed}); err != nil {
+	if err := st.InsertTask(models.Task{Title: "Closed task", Priority: models.PriorityLow, Status: models.StatusClosed}); err != nil {
 		t.Fatalf("InsertTask() error = %v", err)
 	}
-	if err := st.InsertTask(models.Task{Title: "Standby task", Category: models.CategoryTask, Priority: models.PriorityLow, Status: models.StatusStandby}); err != nil {
+	if err := st.InsertTask(models.Task{Title: "Standby task", Priority: models.PriorityLow, Status: models.StatusStandby}); err != nil {
 		t.Fatalf("InsertTask() error = %v", err)
 	}
 
@@ -662,7 +661,7 @@ func TestTasksCommandTogglingFilterUpdatesTasks(t *testing.T) {
 	}
 
 	// Move the cursor to the "Standby" status option and toggle it on.
-	m.cursor = len(categoryFilterOptions) + 1
+	m.cursor = 1
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeySpace})
 	m = updated.(tasksModel)
 
@@ -675,7 +674,6 @@ func TestTaskFiltersRenderOptionsHorizontally(t *testing.T) {
 	m := tasksModel{
 		width: 80,
 		groups: []filterGroup{
-			newFilterGroup("Category", categoryFilterOptions),
 			newFilterGroup("Status", statusFilterOptions, string(models.StatusOpen)),
 			newFilterGroup("Priority", priorityFilterOptions),
 		},
@@ -683,8 +681,7 @@ func TestTaskFiltersRenderOptionsHorizontally(t *testing.T) {
 
 	rendered := m.renderFilters()
 	for _, want := range []string{
-		"Category: > [ ] Task   [ ] Meeting",
-		"Status:     [x] Open   [ ] Standby   [ ] Closed",
+		"Status:   > [x] Open   [ ] Standby   [ ] Closed",
 		"Priority:   [ ] Low   [ ] Medium   [ ] High",
 	} {
 		if !strings.Contains(rendered, want) {
@@ -697,7 +694,7 @@ func TestTaskFiltersWrapAtTerminalWidth(t *testing.T) {
 	m := tasksModel{
 		width: 32,
 		groups: []filterGroup{
-			newFilterGroup("Category", categoryFilterOptions),
+			newFilterGroup("Priority", priorityFilterOptions),
 		},
 	}
 

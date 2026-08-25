@@ -21,7 +21,6 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 
 	titleFlag, _ := cmd.Flags().GetString("title")
 	descriptionFlag, _ := cmd.Flags().GetString("description")
-	categoryFlag, _ := cmd.Flags().GetString("category")
 	priorityFlag, _ := cmd.Flags().GetString("priority")
 	statusFlag, _ := cmd.Flags().GetString("status")
 	tagsFlag, _ := cmd.Flags().GetString("tags")
@@ -34,15 +33,8 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		return
 	}
 
-	category := models.Category(categoryFlag)
 	priority := models.Priority(priorityFlag)
 	status := models.Status(statusFlag)
-
-	err = category.Validate()
-	if err != nil {
-		logger.LogError(err)
-		return
-	}
 
 	err = priority.Validate()
 	if err != nil {
@@ -56,7 +48,7 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		return
 	}
 
-	if titleFlag == "" && descriptionFlag == "" && categoryFlag == "" && priorityFlag == "" && statusFlag == "" && tagsFlag == "" && openedAtFlag == "" && closedAtFlag == "" {
+	if titleFlag == "" && descriptionFlag == "" && priorityFlag == "" && statusFlag == "" && tagsFlag == "" && openedAtFlag == "" && closedAtFlag == "" {
 		logger.LogError("Please provide at least one field to update")
 		return
 	}
@@ -73,14 +65,6 @@ func UpdateHandler(cmd *cobra.Command, args []string, store *store.Store) {
 		err = store.UpdateDescription(id, descriptionFlag)
 		if err != nil {
 			logger.LogError("Error updating description: ", err)
-			return
-		}
-	}
-
-	if categoryFlag != "" {
-		err = store.UpdateCategory(id, category)
-		if err != nil {
-			logger.LogError("Error updating category: ", err)
 			return
 		}
 	}

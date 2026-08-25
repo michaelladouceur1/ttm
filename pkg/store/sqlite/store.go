@@ -58,7 +58,6 @@ func (s *Store) InsertTask(task models.Task) (models.Task, error) {
 	newTask, err := queries.CreateTask(s.ctx, CreateTaskParams{
 		Title:       toNullString(task.Title),
 		Description: toNullString(task.Description),
-		Category:    toNullString(string(task.Category)),
 		Priority:    toNullString(string(task.Priority)),
 		Status:      toNullString(string(task.Status)),
 		OpenedAt:    toNullTime(task.OpenedAt),
@@ -89,13 +88,9 @@ func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
 
 }
 
-func (s *Store) ListTasks(categories []models.Category, statuses []models.Status, priorities []models.Priority) ([]models.Task, error) {
+func (s *Store) ListTasks(statuses []models.Status, priorities []models.Priority) ([]models.Task, error) {
 	queries := New(s.db)
 
-	cats, err := toJSONFilter(categories)
-	if err != nil {
-		return nil, err
-	}
 	prios, err := toJSONFilter(priorities)
 	if err != nil {
 		return nil, err
@@ -104,9 +99,7 @@ func (s *Store) ListTasks(categories []models.Category, statuses []models.Status
 	if err != nil {
 		return nil, err
 	}
-
 	dbTasks, err := queries.ListTasks(s.ctx, ListTasksParams{
-		CategoriesJson: cats,
 		PrioritiesJson: prios,
 		StatusesJson:   stats,
 	})
@@ -121,7 +114,7 @@ func (s *Store) ListTasks(categories []models.Category, statuses []models.Status
 }
 
 func (s *Store) SearchTasks(search models.TaskSearch) ([]models.Task, error) {
-	query := `SELECT t.id, t.title, t.description, t.category, t.priority, t.status, t.opened_at, t.closed_at, t.created_at, t.updated_at FROM tasks t`
+	query := `SELECT t.id, t.title, t.description, t.priority, t.status, t.opened_at, t.closed_at, t.created_at, t.updated_at FROM tasks t`
 	clauses := []string{}
 	args := []any{}
 	addMatch := func(column, value string) {
@@ -137,17 +130,15 @@ func (s *Store) SearchTasks(search models.TaskSearch) ([]models.Task, error) {
 	}
 
 	if search.General != "" {
-		args = append(args, search.General, search.General, search.General, search.General, search.General, search.General, search.General)
+		args = append(args, search.General, search.General, search.General, search.General, search.General)
 		clauses = append(clauses, `(LOWER(COALESCE(t.title, '')) LIKE '%' || LOWER(?) || '%' OR
 			LOWER(COALESCE(t.description, '')) LIKE '%' || LOWER(?) || '%' OR
-			LOWER(COALESCE(t.category, '')) LIKE '%' || LOWER(?) || '%' OR
 			LOWER(COALESCE(t.priority, '')) LIKE '%' || LOWER(?) || '%' OR
 			LOWER(COALESCE(t.status, '')) LIKE '%' || LOWER(?) || '%' OR
 			EXISTS (SELECT 1 FROM tags tag WHERE tag.task_id = t.id AND LOWER(COALESCE(tag.tag, '')) LIKE '%' || LOWER(?) || '%'))`)
 	}
 	addMatch("title", search.Title)
 	addMatch("description", search.Description)
-	addMatch("category", search.Category)
 	addMatch("priority", search.Priority)
 	addMatch("status", search.Status)
 	for _, tag := range search.Tags {
@@ -166,7 +157,7 @@ func (s *Store) SearchTasks(search models.TaskSearch) ([]models.Task, error) {
 	var dbTasks []Task
 	for rows.Next() {
 		var task Task
-		if err := rows.Scan(&task.ID, &task.Title, &task.Description, &task.Category, &task.Priority, &task.Status, &task.OpenedAt, &task.ClosedAt, &task.CreatedAt, &task.UpdatedAt); err != nil {
+		if err := rows.Scan(&task.ID, &task.Title, &task.Description, &task.Priority, &task.Status, &task.OpenedAt, &task.ClosedAt, &task.CreatedAt, &task.UpdatedAt); err != nil {
 			return nil, err
 		}
 		dbTasks = append(dbTasks, task)
@@ -188,13 +179,6 @@ func (s *Store) UpdateDescription(taskID int64, description string) error {
 	return s.updateTaskField(UpdateTaskFieldParams{
 		ID:          taskID,
 		Description: toNullString(description),
-	})
-}
-
-func (s *Store) UpdateCategory(taskID int64, category models.Category) error {
-	return s.updateTaskField(UpdateTaskFieldParams{
-		ID:       taskID,
-		Category: toNullString(string(category)),
 	})
 }
 
@@ -477,7 +461,6 @@ func dbTaskToTask(t Task) models.Task {
 		ID:          t.ID,
 		Title:       t.Title.String,
 		Description: t.Description.String,
-		Category:    models.Category(t.Category.String),
 		Priority:    models.Priority(t.Priority.String),
 		Status:      models.Status(t.Status.String),
 		OpenedAt:    t.OpenedAt.Time,

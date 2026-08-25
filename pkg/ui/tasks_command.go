@@ -26,11 +26,6 @@ type filterGroup struct {
 	selected map[string]bool
 }
 
-var categoryFilterOptions = []filterOption{
-	{label: "Task", value: string(models.CategoryTask)},
-	{label: "Meeting", value: string(models.CategoryMeeting)},
-}
-
 var statusFilterOptions = []filterOption{
 	{label: "Open", value: string(models.StatusOpen)},
 	{label: "Standby", value: string(models.StatusStandby)},
@@ -58,7 +53,6 @@ func newTasksModel(cfg *config.Config, st *store.Store, width int) tasksModel {
 		store: st,
 		width: width,
 		groups: []filterGroup{
-			newFilterGroup("Category", categoryFilterOptions, cfg.ListFlags.Category...),
 			newFilterGroup("Status", statusFilterOptions, cfg.ListFlags.Status...),
 			newFilterGroup("Priority", priorityFilterOptions, cfg.ListFlags.Priority...),
 		},
@@ -180,12 +174,10 @@ func (m *tasksModel) toggleCurrent() {
 }
 
 func (m *tasksModel) listTasks() {
-	categories := m.selectedCategories(m.groups[m.groupIndex("Category")])
 	statuses := m.selectedStatuses(m.groups[m.groupIndex("Status")])
 	priorities := m.selectedPriorities(m.groups[m.groupIndex("Priority")])
 
 	tasks, err := m.store.ListTasks(
-		categories,
 		statuses,
 		priorities,
 	)
@@ -213,16 +205,6 @@ func (m *tasksModel) groupIndex(name string) int {
 		}
 	}
 	return -1
-}
-
-func (m *tasksModel) selectedCategories(group filterGroup) []models.Category {
-	values := make([]models.Category, 0, len(group.selected))
-	for value, selected := range group.selected {
-		if selected {
-			values = append(values, models.Category(value))
-		}
-	}
-	return values
 }
 
 func (m *tasksModel) selectedStatuses(group filterGroup) []models.Status {

@@ -33,7 +33,6 @@ type Task struct {
 	ID          int64
 	Title       sql.NullString
 	Description sql.NullString
-	Category    sql.NullString
 	Priority    sql.NullString
 	Status      sql.NullString
 	OpenedAt    sql.NullTime

@@ -1,18 +1,13 @@
--- TASKS 
+-- TASKS
 
 -- name: GetTaskById :one
-SELECT * FROM tasks
+SELECT id, title, description, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
 WHERE id = ?;
 
 -- name: ListTasks :many
-SELECT * FROM tasks
+SELECT id, title, description, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
 WHERE
   (
-    @categories_json IS NULL
-    OR @categories_json = ''
-    OR category IN (SELECT value FROM json_each(@categories_json))
-  )
-  AND (
     @priorities_json IS NULL
     OR @priorities_json = ''
     OR priority IN (SELECT value FROM json_each(@priorities_json))
@@ -24,25 +19,24 @@ WHERE
   );
 
 -- name: CreateTask :one
-INSERT INTO tasks (title, description, category, priority, status, opened_at, closed_at, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING *;
+INSERT INTO tasks (title, description, priority, status, opened_at, closed_at, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, title, description, priority, status, opened_at, closed_at, created_at, updated_at;
 
 -- name: UpdateTaskField :one
 UPDATE tasks
-SET 
+SET
     title = COALESCE(?, title),
     description = COALESCE(?, description),
-    category = COALESCE(?, category),
     priority = COALESCE(?, priority),
     status = COALESCE(?, status),
     opened_at = COALESCE(?, opened_at),
     closed_at = COALESCE(?, closed_at),
     updated_at = ?
 WHERE id = ?
-RETURNING *;
+RETURNING id, title, description, priority, status, opened_at, closed_at, created_at, updated_at;
 
--- SESSIONS 
+-- SESSIONS
 
 -- name: CreateSession :one
 INSERT INTO sessions (task_id, start_time, end_time)
@@ -57,7 +51,7 @@ WHERE task_id = ?;
 SELECT * FROM sessions
 WHERE start_time >= ? AND end_time <= ?;
 
--- TAGS 
+-- TAGS
 
 -- name: ListTags :many
 SELECT tag, COUNT(DISTINCT task_id) AS task_count
@@ -84,7 +78,7 @@ RETURNING *;
 DELETE FROM tags
 WHERE task_id = ?;
 
--- NOTES 
+-- NOTES
 
 -- name: CreateNote :one
 INSERT INTO notes (task_id, content, created_at, updated_at)

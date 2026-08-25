@@ -11,7 +11,6 @@ type TaskSearch struct {
 	Title       string
 	Description string
 	Tags        []string
-	Category    string
 	Priority    string
 	Status      string
 }
@@ -62,8 +61,6 @@ func ParseTaskSearch(input string) (TaskSearch, error) {
 					return TaskSearch{}, fmt.Errorf("tag filters cannot be empty")
 				}
 			}
-		case "category":
-			search.Category = value
 		case "priority":
 			search.Priority = value
 		case "status":

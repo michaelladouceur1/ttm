@@ -2,7 +2,6 @@ CREATE TABLE IF NOT EXISTS tasks (
     id BIGSERIAL PRIMARY KEY,
     title TEXT,
     description TEXT,
-    category TEXT,
     priority TEXT,
     status TEXT,
     opened_at TIMESTAMP,

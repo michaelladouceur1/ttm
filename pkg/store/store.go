@@ -13,11 +13,10 @@ type StoreStrategy interface {
 	// Tasks
 	InsertTask(task models.Task) (models.Task, error)
 	GetTaskByID(taskID int64) (models.Task, error)
-	ListTasks(categories []models.Category, statuses []models.Status, priorities []models.Priority) ([]models.Task, error)
+	ListTasks(statuses []models.Status, priorities []models.Priority) ([]models.Task, error)
 	SearchTasks(search models.TaskSearch) ([]models.Task, error)
 	UpdateTitle(taskID int64, title string) error
 	UpdateDescription(taskID int64, description string) error
-	UpdateCategory(taskID int64, category models.Category) error
 	UpdatePriority(taskID int64, priority models.Priority) error
 	UpdateStatus(taskID int64, status models.Status) error
 	UpdateTags(taskID int64, tags []string) error
@@ -98,8 +97,8 @@ func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
 	return task, nil
 }
 
-func (s *Store) ListTasks(categories []models.Category, statuses []models.Status, priorities []models.Priority) ([]models.Task, error) {
-	tasks, err := s.strategy.ListTasks(categories, statuses, priorities)
+func (s *Store) ListTasks(statuses []models.Status, priorities []models.Priority) ([]models.Task, error) {
+	tasks, err := s.strategy.ListTasks(statuses, priorities)
 	if err != nil {
 		return nil, err
 	}
@@ -147,10 +146,6 @@ func (s *Store) UpdateTitle(taskID int64, title string) error {
 
 func (s *Store) UpdateDescription(taskID int64, description string) error {
 	return s.strategy.UpdateDescription(taskID, description)
-}
-
-func (s *Store) UpdateCategory(taskID int64, category models.Category) error {
-	return s.strategy.UpdateCategory(taskID, category)
 }
 
 func (s *Store) UpdatePriority(taskID int64, priority models.Priority) error {

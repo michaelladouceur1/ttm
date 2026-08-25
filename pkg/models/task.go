@@ -6,15 +6,9 @@ import (
 )
 
 // TODO: These values should be configurable
-type Category string
 type Priority string
 type Status string
 type Tags []string
-
-const (
-	CategoryTask    Category = "task"
-	CategoryMeeting Category = "meeting"
-)
 
 const (
 	StatusOpen    Status = "open"
@@ -33,7 +27,6 @@ type Task struct {
 	ListID      int64     `json:"list_id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
-	Category    Category  `json:"category"`
 	Priority    Priority  `json:"priority"`
 	Status      Status    `json:"status"`
 	Tags        []string  `json:"tags"`
@@ -55,21 +48,10 @@ func (s *Task) CalculateDuration() {
 }
 
 func (t *Task) Validate() error {
-	if err := t.Category.Validate(); err != nil {
-		return err
-	}
 	if err := t.Priority.Validate(); err != nil {
 		return err
 	}
 	return t.Status.Validate()
-}
-
-func (c Category) Validate() error {
-	valid := c == CategoryTask || c == CategoryMeeting || c == ""
-	if !valid {
-		return &InvalidCategoryError{}
-	}
-	return nil
 }
 
 func (p Priority) Validate() error {
@@ -98,12 +80,6 @@ func PopulateListIDs(tasks []Task) {
 	for i := range tasks {
 		tasks[i].ListID = int64(i + 1)
 	}
-}
-
-type InvalidCategoryError struct{}
-
-func (e *InvalidCategoryError) Error() string {
-	return "Invalid category. Please choose from task, meeting"
 }
 
 type InvalidPriorityError struct{}

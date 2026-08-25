@@ -13,21 +13,8 @@ import (
 )
 
 func ListHandler(cmd *cobra.Command, args []string, cfg *config.Config, store *store.Store) {
-	listCategoryFlag := cmd.Flags().Lookup("category").Value.String()
 	listPriorityFlag := cmd.Flags().Lookup("priority").Value.String()
 	listStatusFlag := cmd.Flags().Lookup("status").Value.String()
-
-	categories := []models.Category{}
-	if listCategoryFlag != "" {
-		for cat := range strings.SplitSeq(listCategoryFlag, ",") {
-			category := models.Category(cat)
-			if err := category.Validate(); err != nil {
-				logger.LogError("Error listing tasks: ", err)
-				return
-			}
-			categories = append(categories, category)
-		}
-	}
 
 	priorities := []models.Priority{}
 	if listPriorityFlag != "" {
@@ -53,7 +40,7 @@ func ListHandler(cmd *cobra.Command, args []string, cfg *config.Config, store *s
 		}
 	}
 
-	tasks, err := store.ListTasks(categories, statuses, priorities)
+	tasks, err := store.ListTasks(statuses, priorities)
 	if err != nil {
 		logger.LogError("Error listing tasks: ", err)
 		return

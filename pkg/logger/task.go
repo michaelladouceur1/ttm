@@ -74,7 +74,6 @@ func taskSummaryItems(task models.Task) []SummaryItem {
 	return []SummaryItem{
 		{Key: "Title", Value: task.Title},
 		{Key: "Description", Value: task.Description},
-		{Key: "Category", Value: string(task.Category)},
 		{Key: "Priority", Value: string(task.Priority)},
 		{Key: "Status", Value: string(task.Status)},
 		{Key: "Tags", Value: strings.Join(task.Tags, ",")},

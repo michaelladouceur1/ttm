@@ -18,13 +18,11 @@ type Config struct {
 }
 
 type ConfigDefaultFlags struct {
-	Category string `yaml:"category"`
 	Priority string `yaml:"priority"`
 	Status   string `yaml:"status"`
 }
 
 type ConfigListFlags struct {
-	Category []string `yaml:"category"`
 	Priority []string `yaml:"priority"`
 	Status   []string `yaml:"status"`
 }
@@ -71,12 +69,10 @@ func NewConfig() (*gonfig.Gonfig[Config], error) {
 			Theme: "minimal",
 		},
 		AddFlags: ConfigDefaultFlags{
-			Category: string(models.CategoryTask),
 			Priority: string(models.PriorityHigh),
 			Status:   string(models.StatusOpen),
 		},
 		ListFlags: ConfigListFlags{
-			Category: []string{},
 			Priority: []string{},
 			Status:   []string{string(models.StatusOpen)},
 		},

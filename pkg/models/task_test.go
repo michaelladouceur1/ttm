@@ -2,15 +2,14 @@ package models
 
 import "testing"
 
-func TestTaskValidateRejectsInvalidCategory(t *testing.T) {
+func TestTaskValidateRejectsInvalidPriority(t *testing.T) {
 	task := Task{
-		Category: "invalid",
-		Priority: PriorityHigh,
+		Priority: "invalid",
 		Status:   StatusOpen,
 	}
 
 	if err := task.Validate(); err == nil {
-		t.Fatal("Validate() returned nil for an invalid category")
+		t.Fatal("Validate() returned nil for an invalid priority")
 	}
 }
 

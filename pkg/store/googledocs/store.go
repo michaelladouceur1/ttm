@@ -88,7 +88,7 @@ func (s *Store) GetTaskByID(taskID int64) (models.Task, error) {
 	return models.Task{}, fmt.Errorf("task %d not found", taskID)
 }
 
-func (s *Store) ListTasks(category []models.Category, status []models.Status, priority []models.Priority) ([]models.Task, error) {
+func (s *Store) ListTasks(status []models.Status, priority []models.Priority) ([]models.Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -99,22 +99,12 @@ func (s *Store) ListTasks(category []models.Category, status []models.Status, pr
 
 	tasks := make([]models.Task, 0, len(data.Tasks))
 	for _, task := range data.Tasks {
-		if (len(category) == 0 || containsCategory(category, task.Category)) &&
-			(len(status) == 0 || containsStatus(status, task.Status)) &&
+		if (len(status) == 0 || containsStatus(status, task.Status)) &&
 			(len(priority) == 0 || containsPriority(priority, task.Priority)) {
 			tasks = append(tasks, task)
 		}
 	}
 	return tasks, nil
-}
-
-func containsCategory(categories []models.Category, category models.Category) bool {
-	for _, c := range categories {
-		if c == category {
-			return true
-		}
-	}
-	return false
 }
 
 func containsStatus(statuses []models.Status, status models.Status) bool {
@@ -168,7 +158,6 @@ func taskMatchesSearch(task models.Task, search models.TaskSearch) bool {
 	if search.General != "" &&
 		!contains(task.Title, search.General) &&
 		!contains(task.Description, search.General) &&
-		!contains(string(task.Category), search.General) &&
 		!contains(string(task.Priority), search.General) &&
 		!contains(string(task.Status), search.General) &&
 		!hasTag(search.General) {
@@ -176,7 +165,6 @@ func taskMatchesSearch(task models.Task, search models.TaskSearch) bool {
 	}
 	if !contains(task.Title, search.Title) ||
 		!contains(task.Description, search.Description) ||
-		!contains(string(task.Category), search.Category) ||
 		!contains(string(task.Priority), search.Priority) ||
 		!contains(string(task.Status), search.Status) {
 		return false
@@ -195,10 +183,6 @@ func (s *Store) UpdateTitle(taskID int64, title string) error {
 
 func (s *Store) UpdateDescription(taskID int64, description string) error {
 	return s.updateTask(taskID, func(task *models.Task) { task.Description = description })
-}
-
-func (s *Store) UpdateCategory(taskID int64, category models.Category) error {
-	return s.updateTask(taskID, func(task *models.Task) { task.Category = category })
 }
 
 func (s *Store) UpdatePriority(taskID int64, priority models.Priority) error {

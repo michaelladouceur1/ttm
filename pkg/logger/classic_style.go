@@ -58,7 +58,6 @@ func (cs ClassicStyle) RenderTasks(tasks []models.Task) string {
 		cellStyle.Width(20),
 		cellStyle.Width(30),
 		cellStyle.Width(10),
-		cellStyle.Width(10),
 		cellStyle.Width(8),
 		cellStyle.Width(21),
 		cellStyle,
@@ -69,7 +68,7 @@ func (cs ClassicStyle) RenderTasks(tasks []models.Task) string {
 		Width(max(1, cs.TermWidth-5)).
 		Border(lipgloss.RoundedBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(styles.Main)).
-		Headers("ID", "Title", "Description", "Category", "Priority", "Status", "Tags", "Duration", "Created At").
+		Headers("ID", "Title", "Description", "Priority", "Status", "Tags", "Duration", "Created At").
 		StyleFunc(func(row, column int) lipgloss.Style {
 			if row == table.HeaderRow {
 				return headerStyle
@@ -85,7 +84,6 @@ func (cs ClassicStyle) RenderTasks(tasks []models.Task) string {
 			strconv.FormatInt(task.ListID, 10),
 			task.Title,
 			task.Description,
-			string(task.Category),
 			string(task.Priority),
 			string(task.Status),
 			strings.Join(task.Tags, ","),

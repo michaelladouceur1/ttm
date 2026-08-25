@@ -18,7 +18,6 @@ func NewUpdateCmd(store *store.Store) *cobra.Command {
 	updateCmd.Flags().IntP("id", "i", 0, "Task ID")
 	updateCmd.Flags().StringP("title", "T", "", "Update title")
 	updateCmd.Flags().StringP("description", "d", "", "Update description")
-	updateCmd.Flags().StringP("category", "c", "", "Update category")
 	updateCmd.Flags().StringP("priority", "p", "", "Update priority")
 	updateCmd.Flags().StringP("status", "s", "", "Update status")
 	updateCmd.Flags().StringP("tags", "t", "", "Update tags (comma-separated)")

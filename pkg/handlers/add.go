@@ -11,7 +11,6 @@ import (
 )
 
 func AddHandler(cmd *cobra.Command, args []string, store *store.Store) {
-	addCategoryFlag := cmd.Flags().Lookup("category").Value.String()
 	addPriorityFlag := cmd.Flags().Lookup("priority").Value.String()
 	addStatusFlag := cmd.Flags().Lookup("status").Value.String()
 	addTagsFlag := cmd.Flags().Lookup("tags").Value.String()
@@ -28,7 +27,6 @@ func AddHandler(cmd *cobra.Command, args []string, store *store.Store) {
 	task := models.Task{
 		Title:       title,
 		Description: description,
-		Category:    models.Category(addCategoryFlag),
 		Priority:    models.Priority(addPriorityFlag),
 		Status:      models.Status(addStatusFlag),
 		Tags:        tags,

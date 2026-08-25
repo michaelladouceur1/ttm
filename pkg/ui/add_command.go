@@ -205,7 +205,6 @@ func (m *addModel) updateTagSuggestions() {
 }
 
 func (m addModel) saveTask() (childModel, tea.Cmd) {
-	m.draft.Category = models.Category(m.cfg.AddFlags.Category)
 	m.draft.Status = models.Status(m.cfg.AddFlags.Status)
 	m.draft.OpenedAt = time.Now()
 
