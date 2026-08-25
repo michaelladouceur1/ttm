@@ -136,6 +136,7 @@ logging:
   - [x] /add (started; matching ability to CLI)
   - [x] /tag - add tag to task
   - [x] /note - add note to task
+  - [ ] /notes - list notes for task (or current session's task if no task specified)
   - [x] /start - start session for task
   - [ ] /pause - pause session for task
   - [x] /end - end session for task
@@ -145,7 +146,7 @@ logging:
   - [x] /tags - list all tags and their counts
   - [x] /search - search task fields
   - [ ] /update - update task fields
-  - [ ] /detail - shows task details with notes and sessions
+  - [x] /detail - shows task details with notes and sessions
   - [x] /close - close task
   - [ ] /sessions - list sessions for given time period
   - [ ] /users - list users and their task/session counts

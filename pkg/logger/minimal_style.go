@@ -52,11 +52,11 @@ func (MinimalStyle) RenderSummary(title string, items []SummaryItem) string {
 
 const (
 	IDWidth           = 5
-	TitleWidth        = 20
+	TitleWidth        = 40
 	CategoryWidth     = 12
 	PriorityWidth     = 12
 	StatusWidth       = 12
-	TagsWidth         = 40
+	TagsWidth         = 30
 	DurationWidth     = 15
 	CreatedAtWidth    = 21
 	DefaultTableWidth = IDWidth + TitleWidth + CategoryWidth + PriorityWidth + StatusWidth + TagsWidth + DurationWidth + CreatedAtWidth
