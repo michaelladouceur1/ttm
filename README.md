@@ -52,6 +52,7 @@ and press Enter to run it.
 - `/search`: search task text or use `*field:value` filters
 - `/summary [TIME_PERIOD_IN_DAYS]`: show sessions by day and task totals (defaults to 7 days)
 - `/note [task_id]`: add a note to a task, or the active session's task when omitted
+- `/notes [task_id]`: list a task's note contents, or the active session's task notes when omitted
 - `/start <task_id>`: start a session for a listed task
 - `/open <task_id>...`: mark listed tasks as open
 - `/standby <task_id>...`: put listed tasks on standby
@@ -138,7 +139,7 @@ logging:
   - [x] /add (started; matching ability to CLI)
   - [x] /tag - add tag to task
   - [x] /note - add note to task
-  - [ ] /notes - list notes for task (or current session's task if no task specified)
+  - [x] /notes - list notes for task (or current session's task if no task specified)
   - [x] /start - start session for task
   - [ ] /pause - pause session for task
   - [x] /end - end session for task
@@ -150,6 +151,8 @@ logging:
   - [ ] /update - update task fields
   - [x] /detail - shows task details with notes and sessions
   - [x] /close - close task
+  - [x] /open - open task
+  - [x] /standby - put task on standby
   - [ ] /sessions - list sessions for given time period
   - [ ] /users - list users and their task/session counts
   - [ ] /add-user - add user to multi-user environment

@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 	"ttm/pkg/config"
@@ -42,6 +43,7 @@ var commands = []command{
 	{name: "end", description: "End and save the active session"},
 	{name: "detail", description: "Show details for a task, including notes and sessions"},
 	{name: "note", description: "Add a task note"},
+	{name: "notes", description: "List a task's notes"},
 }
 
 // Run starts the interactive terminal UI.
@@ -366,6 +368,34 @@ func (m *model) execute() {
 		default:
 			m.content = "Usage: /note [task_id]"
 			break
+		}
+	case "notes":
+		switch len(args) {
+		case 1:
+			session, err := fs.ReadSessionFile()
+			if err != nil {
+				if fs.SessionFileExists() {
+					m.content = "Error reading active session: " + err.Error()
+				} else {
+					m.content = "No active session. Usage: /notes <task_id>"
+				}
+				break
+			}
+			m.content = listNotes(m.store, session.TaskID)
+		case 2:
+			listID, err := strconv.ParseInt(args[1], 10, 64)
+			if err != nil {
+				m.content = "Invalid task ID: " + args[1]
+				break
+			}
+			taskID, err := fs.GetTaskIDFromTempID(listID)
+			if err != nil {
+				m.content = "Task not found: " + args[1]
+				break
+			}
+			m.content = listNotes(m.store, taskID)
+		default:
+			m.content = "Usage: /notes [task_id]"
 		}
 	default:
 		m.content = fmt.Sprintf("Unknown command: /%s\n\nType / to see available commands.", args[0])

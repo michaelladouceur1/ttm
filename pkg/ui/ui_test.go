@@ -225,6 +225,73 @@ func TestNoteCommandWithTaskIDUsesListedTask(t *testing.T) {
 	}
 }
 
+func TestNotesCommandListsMappedTaskNotes(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Listed task"}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if _, err := st.InsertNote(1, "First note"); err != nil {
+		t.Fatalf("InsertNote() error = %v", err)
+	}
+	if _, err := st.InsertNote(1, "Second note"); err != nil {
+		t.Fatalf("InsertNote() error = %v", err)
+	}
+	if err := fs.UpdateIDMapFile([]models.Task{{ID: 1, ListID: 1}}); err != nil {
+		t.Fatalf("UpdateIDMapFile() error = %v", err)
+	}
+
+	m := newModel(nil, st)
+	m.input.SetValue("/notes 1")
+	m.execute()
+
+	if m.content != "- First note\n- Second note" {
+		t.Errorf("notes content = %q", m.content)
+	}
+}
+
+func TestNotesCommandUsesActiveSessionTask(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := st.InsertTask(models.Task{Title: "Active task"}); err != nil {
+		t.Fatalf("InsertTask() error = %v", err)
+	}
+	if _, err := st.InsertNote(1, "Session note"); err != nil {
+		t.Fatalf("InsertNote() error = %v", err)
+	}
+	if err := fs.CreateSessionFile(1, time.Now()); err != nil {
+		t.Fatalf("CreateSessionFile() error = %v", err)
+	}
+
+	m := newModel(nil, st)
+	m.input.SetValue("/notes")
+	m.execute()
+
+	if m.content != "- Session note" {
+		t.Errorf("notes content = %q", m.content)
+	}
+}
+
+func TestNotesCommandWithoutTaskOrSessionShowsUsage(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	m := newModel(nil, nil)
+	m.input.SetValue("/notes")
+	m.execute()
+
+	if m.content != "No active session. Usage: /notes <task_id>" {
+		t.Errorf("notes content = %q", m.content)
+	}
+}
+
 func TestActiveSessionShowsElapsedTimerAndNarrowsInput(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 
