@@ -59,7 +59,7 @@ func newAddModel(cfg *config.Config, st *store.Store, inputWidth int) addModel {
 		store:    st,
 		step:     addStepTitle,
 		priority: priorityIndex(models.Priority(cfg.AddFlags.Priority)),
-		content:  "Create task\n\nTitle",
+		content:  "Create Task > Title",
 	}
 }
 
@@ -114,6 +114,11 @@ func (m addModel) InputView() string {
 
 func (m addModel) View() string {
 	var body strings.Builder
+
+	body.WriteString(m.content)
+
+	body.WriteString("\n\n")
+
 	if m.step == addStepPriority {
 		body.WriteString("Priority\n")
 		for i, priority := range priorities {
@@ -125,9 +130,8 @@ func (m addModel) View() string {
 		}
 		body.WriteString("\n")
 	}
-	body.WriteString(m.content)
 	if m.step == addStepTags && len(m.suggestions) > 0 {
-		body.WriteString("\n\nMatching tags\n")
+		body.WriteString("Matching tags\n")
 		for i, tag := range m.suggestions {
 			prefix := "  "
 			if i == m.selected {
@@ -177,7 +181,7 @@ func (m *addModel) nextAddStep(step addStep, placeholder, field string) {
 	m.step = step
 	m.input.SetValue("")
 	m.input.Placeholder = placeholder
-	m.content = "Create task\n\n" + field
+	m.content = "Create Task > " + field
 }
 
 func (m *addModel) loadTags() {
