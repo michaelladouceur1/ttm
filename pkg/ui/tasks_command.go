@@ -7,8 +7,10 @@ import (
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
 	"ttm/pkg/store"
+	"ttm/pkg/styles"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type tasksClosedMsg struct {
@@ -103,24 +105,28 @@ func (m tasksModel) InputView() string {
 }
 
 func (m tasksModel) View() string {
-	return m.renderFilters() + "\n" + m.content
+	var content strings.Builder
+
+	const panelGap = "     "
+	content.WriteString(lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		m.renderFilters(),
+		panelGap,
+		m.content,
+	))
+	return content.String()
 }
 
 func (m tasksModel) renderFilters() string {
 	var body strings.Builder
 	cursor := 0
-	body.WriteString("Filters\n")
-
-	labelWidth := 0
-	for _, group := range m.groups {
-		if width := len(group.name) + 1; width > labelWidth {
-			labelWidth = width
+	width := 0
+	for i, group := range m.groups {
+		label := group.name + "\n"
+		body.WriteString(label)
+		if len(label) > width {
+			width = len(label)
 		}
-	}
-	lineWidth := max(1, m.width-4)
-	for _, group := range m.groups {
-		label := group.name + ":"
-		line := label + strings.Repeat(" ", labelWidth-len(label))
 		for _, option := range group.options {
 			prefix := "  "
 			if cursor == m.cursor {
@@ -131,18 +137,27 @@ func (m tasksModel) renderFilters() string {
 				checkbox = "[x]"
 			}
 			optionText := prefix + checkbox + " " + option.label
-			if len(line)+1+len(optionText) > lineWidth && len(line) > labelWidth {
-				body.WriteString(line)
-				body.WriteByte('\n')
-				line = strings.Repeat(" ", labelWidth)
-			}
-			line += " " + optionText
+			body.WriteString(optionText)
+			body.WriteByte('\n')
 			cursor++
+			if len(optionText) > width {
+				width = len(optionText)
+			}
 		}
-		body.WriteString(line)
-		body.WriteByte('\n')
+		if i < len(m.groups)-1 {
+			body.WriteByte('\n')
+		}
 	}
-	return body.String()
+
+	padding := 1
+	filters := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(styles.Main).
+		Width(max(1, width+(2*padding))).
+		Padding(0, padding).
+		Render(body.String())
+
+	return filters
 }
 
 func (m *tasksModel) totalOptions() int {

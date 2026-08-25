@@ -53,6 +53,7 @@ func (MinimalStyle) RenderSummary(title string, items []SummaryItem) string {
 const (
 	IDWidth           = 5
 	TitleWidth        = 40
+	DescriptionWidth  = 80
 	PriorityWidth     = 12
 	StatusWidth       = 12
 	TagsWidth         = 30
@@ -64,23 +65,19 @@ const (
 func (ms MinimalStyle) RenderTasks(tasks []models.Task) string {
 	cellStyle := lipgloss.NewStyle()
 	columnStyles := []lipgloss.Style{
-		cellStyle.Width(IDWidth),        // ID
-		cellStyle.Width(TitleWidth),     // Title
-		cellStyle,                       // Description
-		cellStyle.Width(PriorityWidth),  // Priority
-		cellStyle.Width(StatusWidth),    // Status
-		cellStyle.Width(TagsWidth),      // Tags
-		cellStyle.Width(DurationWidth),  // Duration
-		cellStyle.Width(CreatedAtWidth), // Created At
+		cellStyle.Width(IDWidth),          // ID
+		cellStyle.Width(TitleWidth),       // Title
+		cellStyle.Width(DescriptionWidth), // Description
+		cellStyle.Width(PriorityWidth),    // Priority
+		cellStyle.Width(StatusWidth),      // Status
+		cellStyle.Width(TagsWidth),        // Tags
+		cellStyle.Width(DurationWidth),    // Duration
+		cellStyle.Width(CreatedAtWidth),   // Created At
 	}
 
 	headerStyle := lipgloss.NewStyle().Foreground(styles.Main).Bold(true)
 
-	descriptionWidth := max(1, ms.TermWidth-DefaultTableWidth) // Total width minus other column widths and padding
-
 	table := table.New().
-		Width(max(1, ms.TermWidth-5)).
-		// Border(lipgloss.NormalBorder()).BorderRow(true).BorderColumn(false).BorderLeft(false).BorderRight(false).
 		Border(lipgloss.HiddenBorder()).
 		Headers("ID", "Title", "Description", "Priority", "Status", "Tags", "Duration", "Created At").
 		StyleFunc(func(row, column int) lipgloss.Style {
@@ -96,7 +93,7 @@ func (ms MinimalStyle) RenderTasks(tasks []models.Task) string {
 
 	for _, task := range tasks {
 		trimmedTitle := trimString(task.Title, TitleWidth-5)
-		trimmedDescription := trimString(task.Description, descriptionWidth-20)
+		trimmedDescription := trimString(task.Description, DescriptionWidth-5)
 		trimmedTags := trimString(strings.Join(task.Tags, ","), TagsWidth-5)
 
 		table.Row(
