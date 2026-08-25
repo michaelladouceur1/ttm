@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	sessionTimerHorizon = 365 * 24 * time.Hour
-	sessionTimerLabel   = "Elapsed: 00:00:00"
+	sessionTimerHorizon   = 365 * 24 * time.Hour
+	sessionTimerLabel     = "Elapsed: 00:00:00"
+	maxCommandSuggestions = 5
 )
 
 type command struct {
@@ -147,8 +148,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		m.setInputWidth()
-		m.viewport.Width = max(1, msg.Width-4)
-		m.viewport.Height = max(1, msg.Height-6)
+		m.setViewportDimensions()
 	case timer.TickMsg:
 		if m.timer == nil {
 			return m, nil
@@ -209,6 +209,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.input.SetValue("")
 			m.suggestions = nil
 			m.selected = 0
+			m.setViewportDimensions()
 			m.setViewportContent()
 			return m, nil
 		}
@@ -225,6 +226,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) updateSuggestions() {
+	defer m.setViewportDimensions()
+
 	value := strings.TrimPrefix(m.input.Value(), "/")
 	if !strings.HasPrefix(m.input.Value(), "/") || strings.ContainsAny(value, " \t") {
 		m.suggestions = nil
@@ -255,6 +258,7 @@ func (m *model) completeSuggestion() {
 	m.input.CursorEnd()
 	m.suggestions = nil
 	m.selected = 0
+	m.setViewportDimensions()
 }
 
 func (m *model) execute() {
@@ -403,6 +407,7 @@ func (m *model) execute() {
 	m.input.SetValue("")
 	m.suggestions = nil
 	m.selected = 0
+	m.setViewportDimensions()
 }
 
 func (m model) View() string {
@@ -419,12 +424,21 @@ func (m model) View() string {
 		Width(max(1, m.width-2)).
 		Render(inputView)
 
+	suggestions := ""
+	if m.active == nil && len(m.suggestions) > 0 {
+		suggestions = "\n" + lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(styles.Main).
+			Width(max(1, m.width-2)).
+			Render(m.renderSuggestions())
+	}
+
 	content := lipgloss.NewStyle().
 		Width(max(1, m.width-2)).
 		Padding(1, 1).
 		Render(m.viewport.View())
 
-	return input + "\n" + content
+	return input + suggestions + "\n" + content
 }
 
 func (m *model) syncSessionTimer() {
@@ -483,29 +497,56 @@ func formatElapsedTime(duration time.Duration) string {
 
 func (m *model) setViewportContent() {
 	var body strings.Builder
-	if m.active == nil && len(m.suggestions) > 0 {
-		longestSuggestion := 0
-		for _, command := range m.suggestions {
-			if len(command.name) > longestSuggestion {
-				longestSuggestion = len(command.name)
-			}
-		}
-		body.WriteString("Commands\n")
-		for i, command := range m.suggestions {
-			prefix := "  "
-			if i == m.selected {
-				prefix = "> "
-			}
-			fmt.Fprintf(&body, "%s/%-*s   %s\n", prefix, longestSuggestion, command.name, command.description)
-		}
-		body.WriteString("\n")
-	}
 	if m.active != nil {
 		body.WriteString(m.active.View())
 	} else {
 		body.WriteString(m.content)
 	}
 	m.viewport.SetContent(body.String())
+}
+
+func (m *model) setViewportDimensions() {
+	m.viewport.Width = max(1, m.width-4)
+	m.viewport.Height = max(1, m.height-6-m.suggestionHeight())
+}
+
+func (m model) suggestionHeight() int {
+	if m.active != nil || len(m.suggestions) == 0 {
+		return 0
+	}
+	return len(m.visibleSuggestions()) + 3
+}
+
+func (m model) visibleSuggestions() []command {
+	end := min(len(m.suggestions), m.selected+maxCommandSuggestions)
+	start := m.visibleSuggestionStart(end)
+	return m.suggestions[start:end]
+}
+
+func (m model) renderSuggestions() string {
+	visible := m.visibleSuggestions()
+	start := m.visibleSuggestionStart(min(len(m.suggestions), m.selected+maxCommandSuggestions))
+
+	longestSuggestion := 0
+	for _, command := range visible {
+		if len(command.name) > longestSuggestion {
+			longestSuggestion = len(command.name)
+		}
+	}
+
+	var body strings.Builder
+	for i, command := range visible {
+		prefix := "  "
+		if start+i == m.selected {
+			prefix = "> "
+		}
+		fmt.Fprintf(&body, "%s/%-*s   %s\n", prefix, longestSuggestion, command.name, command.description)
+	}
+	return strings.TrimRight(body.String(), "\n")
+}
+
+func (m model) visibleSuggestionStart(end int) int {
+	return max(0, end-maxCommandSuggestions)
 }
 
 func isViewportNavigation(msg tea.Msg) bool {

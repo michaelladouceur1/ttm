@@ -59,6 +59,37 @@ func TestUpdateSuggestions(t *testing.T) {
 	}
 }
 
+func TestVisibleSuggestionsLimitsCommandsAndKeepsSelectionVisible(t *testing.T) {
+	m := newModel(nil, nil)
+	m.input.SetValue("/")
+	m.updateSuggestions()
+	m.selected = len(m.suggestions) - 1
+
+	visible := m.visibleSuggestions()
+	if len(visible) != maxCommandSuggestions {
+		t.Fatalf("visible suggestions = %d, want %d", len(visible), maxCommandSuggestions)
+	}
+	if visible[len(visible)-1].name != m.suggestions[m.selected].name {
+		t.Errorf("last visible suggestion = %q, want selected %q", visible[len(visible)-1].name, m.suggestions[m.selected].name)
+	}
+
+	rendered := m.renderSuggestions()
+	if strings.Count(rendered, "\n") != maxCommandSuggestions {
+		t.Errorf("rendered suggestions = %q, want a heading and %d commands", rendered, maxCommandSuggestions)
+	}
+}
+
+func TestViewRendersSuggestionsInMatchingBorder(t *testing.T) {
+	m := newModel(nil, nil)
+	m.input.SetValue("/")
+	m.updateSuggestions()
+
+	rendered := m.View()
+	if strings.Count(rendered, "╭") < 2 || strings.Count(rendered, "╰") < 2 {
+		t.Errorf("view = %q, want matching borders around input and suggestions", rendered)
+	}
+}
+
 func TestStartCommandRequiresTaskID(t *testing.T) {
 	m := newModel(nil, nil)
 	m.input.SetValue("/start")
