@@ -3,17 +3,24 @@ SELECT id, title, description, priority, status, opened_at, closed_at, created_a
 WHERE id = $1;
 
 -- name: ListTasks :many
-SELECT id, title, description, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
+SELECT id, title, description, priority, status, opened_at, closed_at, created_at, updated_at
+FROM tasks
 WHERE
   (
-    $1 IS NULL
-    OR $1 = ''
-    OR priority IN (SELECT value FROM json_each($1))
+    COALESCE($1::text, '') = ''
+    OR priority IN (
+      SELECT jsonb_array_elements_text(
+        COALESCE(NULLIF($1::text, ''), '[]')::jsonb
+      )
+    )
   )
   AND (
-    $2 IS NULL
-    OR $2 = ''
-    OR status IN (SELECT value FROM json_each($2))
+    COALESCE($2::text, '') = ''
+    OR status IN (
+      SELECT jsonb_array_elements_text(
+        COALESCE(NULLIF($2::text, ''), '[]')::jsonb
+      )
+    )
   );
 
 -- name: CreateTask :one

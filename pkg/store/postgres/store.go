@@ -141,9 +141,10 @@ func (s *Store) ListTasks(statuses []models.Status, priorities []models.Priority
 	if err != nil {
 		return nil, err
 	}
+
 	dbTasks, err := queries.ListTasks(s.ctx, ListTasksParams{
-		PrioritiesJSON: prios,
-		StatusesJSON:   stats,
+		Column1: prios.String,
+		Column2: stats.String,
 	})
 
 	if err != nil {

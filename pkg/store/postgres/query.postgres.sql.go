@@ -362,27 +362,34 @@ func (q *Queries) ListTags(ctx context.Context) ([]ListTagsRow, error) {
 }
 
 const listTasks = `-- name: ListTasks :many
-SELECT id, title, description, priority, status, opened_at, closed_at, created_at, updated_at FROM tasks
+SELECT id, title, description, priority, status, opened_at, closed_at, created_at, updated_at
+FROM tasks
 WHERE
   (
-    $1 IS NULL
-    OR $1 = ''
-    OR priority IN (SELECT value FROM json_each($1))
+    COALESCE($1::text, '') = ''
+    OR priority IN (
+      SELECT jsonb_array_elements_text(
+        COALESCE(NULLIF($1::text, ''), '[]')::jsonb
+      )
+    )
   )
   AND (
-    $2 IS NULL
-    OR $2 = ''
-    OR status IN (SELECT value FROM json_each($2))
+    COALESCE($2::text, '') = ''
+    OR status IN (
+      SELECT jsonb_array_elements_text(
+        COALESCE(NULLIF($2::text, ''), '[]')::jsonb
+      )
+    )
   )
 `
 
 type ListTasksParams struct {
-	PrioritiesJSON interface{}
-	StatusesJSON   interface{}
+	Column1 string
+	Column2 string
 }
 
 func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, error) {
-	rows, err := q.db.QueryContext(ctx, listTasks, arg.PrioritiesJSON, arg.StatusesJSON)
+	rows, err := q.db.QueryContext(ctx, listTasks, arg.Column1, arg.Column2)
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +423,7 @@ func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, e
 
 const updateTaskField = `-- name: UpdateTaskField :one
 UPDATE tasks
-SET 
+SET
     title = COALESCE($1, title),
     description = COALESCE($2, description),
     priority = COALESCE($3, priority),
