@@ -35,7 +35,7 @@ type detailModel struct {
 
 func newDetailModel(cfg *config.Config, st *store.Store, width int, listID string) detailModel {
 	input := textinput.New()
-	input.Prompt = "> "
+	input.Prompt = styles.InputPrefix
 
 	m := detailModel{
 		input:   input,

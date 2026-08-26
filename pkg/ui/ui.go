@@ -76,7 +76,7 @@ type childModel interface {
 
 func newModel(cfg *config.Config, st *store.Store) model {
 	input := textinput.New()
-	input.Prompt = "> "
+	input.Prompt = styles.InputPrefix
 	input.Placeholder = "Type / for commands"
 	input.Focus()
 
@@ -538,7 +538,7 @@ func (m model) renderSuggestions() string {
 	for i, command := range visible {
 		prefix := "  "
 		if start+i == m.selected {
-			prefix = "> "
+			prefix = styles.SelectorPrefix
 		}
 		fmt.Fprintf(&body, "%s/%-*s   %s\n", prefix, longestSuggestion, command.name, command.description)
 	}

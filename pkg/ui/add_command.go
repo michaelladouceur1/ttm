@@ -7,6 +7,7 @@ import (
 	"ttm/pkg/config"
 	"ttm/pkg/models"
 	"ttm/pkg/store"
+	"ttm/pkg/styles"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -56,7 +57,7 @@ type addModel struct {
 
 func newAddModel(cfg *config.Config, st *store.Store, inputWidth int) addModel {
 	input := textinput.New()
-	input.Prompt = "> "
+	input.Prompt = styles.InputPrefix
 	input.Placeholder = "Enter title..."
 	input.Width = inputWidth
 	input.Focus()
@@ -68,7 +69,7 @@ func newAddModel(cfg *config.Config, st *store.Store, inputWidth int) addModel {
 		step:     addStepTitle,
 		priority: priorityIndex(models.Priority(cfg.AddFlags.Priority)),
 		status:   statusIndex(models.Status(cfg.AddFlags.Status)),
-		content:  "Create Task > Title",
+		content:  "Create Task " + styles.RightArrow + " Title",
 	}
 }
 
@@ -143,7 +144,7 @@ func (m addModel) View() string {
 		for i, priority := range priorities {
 			prefix := "  "
 			if i == m.priority {
-				prefix = "> "
+				prefix = styles.SelectorPrefix
 			}
 			fmt.Fprintf(&body, "%s%s\n", prefix, priority)
 		}
@@ -154,7 +155,7 @@ func (m addModel) View() string {
 		for i, status := range statuses {
 			prefix := "  "
 			if i == m.status {
-				prefix = "> "
+				prefix = styles.SelectorPrefix
 			}
 			fmt.Fprintf(&body, "%s%s\n", prefix, status)
 		}
@@ -165,7 +166,7 @@ func (m addModel) View() string {
 		for i, tag := range m.suggestions {
 			prefix := "  "
 			if i == m.selected {
-				prefix = "> "
+				prefix = styles.SelectorPrefix
 			}
 			fmt.Fprintf(&body, "%s%s\n", prefix, tag)
 		}
@@ -222,7 +223,7 @@ func (m *addModel) nextAddStep(step addStep, placeholder, field string) {
 	m.step = step
 	m.input.SetValue("")
 	m.input.Placeholder = placeholder
-	m.content = "Create Task > " + field
+	m.content = "Create Task " + styles.RightArrow + " " + field
 }
 
 func (m *addModel) loadTags() {

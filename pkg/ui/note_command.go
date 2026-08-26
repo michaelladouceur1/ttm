@@ -5,6 +5,7 @@ import (
 	"ttm/pkg/config"
 	"ttm/pkg/fs"
 	"ttm/pkg/store"
+	"ttm/pkg/styles"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -25,7 +26,7 @@ type noteModel struct {
 
 func newNoteModel(cfg *config.Config, st *store.Store, width int, listID string) noteModel {
 	input := textinput.New()
-	input.Prompt = "> "
+	input.Prompt = styles.InputPrefix
 	input.Placeholder = "Enter note content..."
 	input.Width = max(1, width-6)
 	input.Focus()

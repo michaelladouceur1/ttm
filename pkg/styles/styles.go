@@ -8,4 +8,15 @@ var (
 	Highlight1 = lipgloss.Color("#e0e0e0ff")
 	Highlight2 = lipgloss.Color("#6b6b6bff")
 	Highlight3 = lipgloss.Color("#e4e4e4ff")
+
+	// Icons
+	Bullet     = "•"
+	LeftArrow  = "←"
+	UpArrow    = "↑"
+	RightArrow = "→"
+	DownArrow  = "↓"
+
+	// UI
+	InputPrefix    = "> "
+	SelectorPrefix = "> "
 )

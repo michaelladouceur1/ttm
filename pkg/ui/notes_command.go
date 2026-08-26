@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 	"ttm/pkg/store"
+	"ttm/pkg/styles"
 )
 
 func listNotes(st *store.Store, taskID int64) string {
@@ -16,7 +17,8 @@ func listNotes(st *store.Store, taskID int64) string {
 
 	var body strings.Builder
 	for _, note := range notes {
-		body.WriteString("- ")
+		body.WriteString(styles.Bullet)
+		body.WriteString(" ")
 		body.WriteString(note.Content)
 		body.WriteByte('\n')
 	}

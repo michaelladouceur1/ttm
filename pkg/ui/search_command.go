@@ -6,6 +6,7 @@ import (
 	"ttm/pkg/logger"
 	"ttm/pkg/models"
 	"ttm/pkg/store"
+	"ttm/pkg/styles"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -23,7 +24,7 @@ type searchModel struct {
 
 func newSearchModel(st *store.Store, width int) searchModel {
 	input := textinput.New()
-	input.Prompt = "> "
+	input.Prompt = styles.InputPrefix
 	input.Placeholder = "Search tasks..."
 	input.Width = max(1, width-6)
 	input.Focus()

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"ttm/pkg/fs"
 	"ttm/pkg/store"
+	"ttm/pkg/styles"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -27,7 +28,7 @@ type tagModel struct {
 
 func newTagModel(st *store.Store, width int, listID string) tagModel {
 	input := textinput.New()
-	input.Prompt = "> "
+	input.Prompt = styles.InputPrefix
 	input.Placeholder = "Enter tags (comma-separated)..."
 	input.Width = max(1, width-6)
 	input.Focus()
@@ -91,7 +92,7 @@ func (m tagModel) View() string {
 	for i, tag := range m.suggestions {
 		prefix := "  "
 		if i == m.selected {
-			prefix = "> "
+			prefix = styles.SelectorPrefix
 		}
 		body.WriteString(prefix + tag + "\n")
 	}

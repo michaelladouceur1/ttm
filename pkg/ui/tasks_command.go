@@ -130,7 +130,7 @@ func (m tasksModel) renderFilters() string {
 		for _, option := range group.options {
 			prefix := "  "
 			if cursor == m.cursor {
-				prefix = "> "
+				prefix = styles.SelectorPrefix
 			}
 			checkbox := "[ ]"
 			if group.selected[option.value] {
