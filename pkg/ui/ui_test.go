@@ -559,8 +559,41 @@ func TestAddFormWalksThroughFields(t *testing.T) {
 	add.input.SetValue("medium")
 	updated, _ = add.submitAddField()
 	add = updated.(addModel)
-	if add.step != addStepTags || add.draft.Priority != models.PriorityMedium {
+	if add.step != addStepStatus || add.draft.Priority != models.PriorityMedium {
 		t.Fatalf("priority was not saved: step=%d priority=%q", add.step, add.draft.Priority)
+	}
+
+	add.input.SetValue("standby")
+	updated, _ = add.submitAddField()
+	add = updated.(addModel)
+	if add.step != addStepTags || add.draft.Status != models.StatusStandby {
+		t.Fatalf("status was not saved: step=%d status=%q", add.step, add.draft.Status)
+	}
+}
+
+func TestAddStatusDefaultsToConfiguredValue(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	st := store.NewStore(sqlite.NewStore())
+	if err := st.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	m := newAddModel(&config.Config{
+		AddFlags: config.ConfigDefaultFlags{
+			Priority: string(models.PriorityHigh),
+			Status:   string(models.StatusStandby),
+		},
+	}, st, 80)
+	m.step = addStepStatus
+	m.input.SetValue("")
+
+	updated, _ := m.submitAddField()
+	m = updated.(addModel)
+	if m.draft.Status != models.StatusStandby {
+		t.Errorf("status = %q, want standby", m.draft.Status)
+	}
+	if m.step != addStepTags {
+		t.Errorf("step = %d, want tags step", m.step)
 	}
 }
 

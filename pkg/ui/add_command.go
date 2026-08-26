@@ -18,6 +18,7 @@ const (
 	addStepTitle addStep = iota
 	addStepDescription
 	addStepPriority
+	addStepStatus
 	addStepTags
 )
 
@@ -25,6 +26,12 @@ var priorities = []models.Priority{
 	models.PriorityLow,
 	models.PriorityMedium,
 	models.PriorityHigh,
+}
+
+var statuses = []models.Status{
+	models.StatusOpen,
+	models.StatusStandby,
+	models.StatusClosed,
 }
 
 type addCompleteMsg struct {
@@ -40,6 +47,7 @@ type addModel struct {
 	step        addStep
 	draft       models.Task
 	priority    int
+	status      int
 	content     string
 	tags        []string
 	suggestions []string
@@ -59,6 +67,7 @@ func newAddModel(cfg *config.Config, st *store.Store, inputWidth int) addModel {
 		store:    st,
 		step:     addStepTitle,
 		priority: priorityIndex(models.Priority(cfg.AddFlags.Priority)),
+		status:   statusIndex(models.Status(cfg.AddFlags.Status)),
 		content:  "Create Task > Title",
 	}
 }
@@ -72,6 +81,11 @@ func (m addModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 				m.input.SetValue(string(priorities[m.priority]))
 				return m, nil
 			}
+			if m.step == addStepStatus {
+				m.status = (m.status - 1 + len(statuses)) % len(statuses)
+				m.input.SetValue(string(statuses[m.status]))
+				return m, nil
+			}
 			if m.step == addStepTags && len(m.suggestions) > 0 {
 				m.selected = (m.selected - 1 + len(m.suggestions)) % len(m.suggestions)
 				return m, nil
@@ -80,6 +94,11 @@ func (m addModel) Update(msg tea.Msg) (childModel, tea.Cmd) {
 			if m.step == addStepPriority {
 				m.priority = (m.priority + 1) % len(priorities)
 				m.input.SetValue(string(priorities[m.priority]))
+				return m, nil
+			}
+			if m.step == addStepStatus {
+				m.status = (m.status + 1) % len(statuses)
+				m.input.SetValue(string(statuses[m.status]))
 				return m, nil
 			}
 			if m.step == addStepTags && len(m.suggestions) > 0 {
@@ -130,6 +149,17 @@ func (m addModel) View() string {
 		}
 		body.WriteString("\n")
 	}
+	if m.step == addStepStatus {
+		body.WriteString("Status\n")
+		for i, status := range statuses {
+			prefix := "  "
+			if i == m.status {
+				prefix = "> "
+			}
+			fmt.Fprintf(&body, "%s%s\n", prefix, status)
+		}
+		body.WriteString("\n")
+	}
 	if m.step == addStepTags && len(m.suggestions) > 0 {
 		body.WriteString("Matching tags\n")
 		for i, tag := range m.suggestions {
@@ -168,6 +198,17 @@ func (m addModel) submitAddField() (childModel, tea.Cmd) {
 			return m, nil
 		}
 		m.draft.Priority = priority
+		m.nextAddStep(addStepStatus, "Choose status: open, standby, closed", "Status")
+	case addStepStatus:
+		status := models.Status(strings.ToLower(value))
+		if value == "" {
+			status = statuses[m.status]
+		}
+		if status != models.StatusOpen && status != models.StatusStandby && status != models.StatusClosed {
+			m.content = "Choose a status: open, standby, or closed."
+			return m, nil
+		}
+		m.draft.Status = status
 		m.nextAddStep(addStepTags, "Enter tags (comma-separated)...", "Tags")
 		m.loadTags()
 	case addStepTags:
@@ -205,7 +246,6 @@ func (m *addModel) updateTagSuggestions() {
 }
 
 func (m addModel) saveTask() (childModel, tea.Cmd) {
-	m.draft.Status = models.Status(m.cfg.AddFlags.Status)
 	m.draft.OpenedAt = time.Now()
 
 	if err := m.draft.Validate(); err != nil {
@@ -236,4 +276,13 @@ func priorityIndex(priority models.Priority) int {
 		}
 	}
 	return 2
+}
+
+func statusIndex(status models.Status) int {
+	for i, option := range statuses {
+		if status == option {
+			return i
+		}
+	}
+	return 0
 }
