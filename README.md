@@ -2,15 +2,15 @@
 
 `ttm [command] [subcommands]`
 
-### Task
+## Task
 
 `ttm task [subcommands]`
 
-#### Main
+### Main
 
 - `ttm view`: Serve webpage displaying tasks and sessions in user-friendly UI
 
-#### Subcommands
+### Subcommands
 
 - `add` : Add a task
   - `ttm task add [title] [description?]`
@@ -23,11 +23,11 @@
 - `close` : Close a task
   - `ttm task close [taskId]`
 
-### Session
+## Session
 
 `ttm session [subcommands]`
 
-#### Subcommands
+### Subcommands
 
 - `start` : Start a session
   - `ttm session start [taskId]`
@@ -40,7 +40,7 @@
 - `summary` : Summarize sessions for given time period
   - `ttm session summary`
 
-### Terminal UI
+## Terminal UI
 
 Run `ttm` without arguments to open the full-screen terminal UI. Type `/` in
 the command input to browse commands, use the arrow keys or Tab to select one,
@@ -59,7 +59,7 @@ and press Enter to run it.
 - `/end`: end and save the active session
 - `/cancel`: discard the active session
 
-### Windows installation
+## Windows installation
 
 Windows releases include `ttm_setup.exe`. Run the installer to install TTM in
 `Program Files\TTM`, add Start menu shortcuts, and register an uninstaller.
@@ -72,7 +72,7 @@ make package-windows
 
 The installer is written to `dist/ttm_setup.exe`.
 
-### Shorthand
+## Shorthand
 
 - `ttm add`: Add a task
 - `ttm list`: List tasks
@@ -83,7 +83,7 @@ The installer is written to `dist/ttm_setup.exe`.
 - `ttm end`: End session
 - `ttm cancel`: Cancel session
 
-### Storage configuration
+## Storage configuration
 
 TTM uses SQLite by default. To store task and session data in a Google Doc instead,
 set the following values in `~/.ttm/config.yaml`:
@@ -122,7 +122,7 @@ password does not need to be stored in `config.yaml`. When `passwordEnv` and
 matching `~/.pgpass` (or `PGPASSFILE`) entry. `password` is available only for
 setups where storing it in the plaintext configuration file is acceptable.
 
-### Logging themes
+## Logging themes
 
 Set `logging.theme` in `~/.ttm/config.yaml` to choose the output format. The
 default `classic` theme uses colored tables and summary trees. `compact` is a
@@ -133,7 +133,112 @@ logging:
   theme: compact
 ```
 
-#### TODO
+## PostgreSQL over Tailscale setup
+
+Use this when you want TTM on one machine to use PostgreSQL on another machine over a private Tailscale network.
+
+### 1. Install and connect both machines to Tailscale
+- Install Tailscale on:
+  - your TTM client machine
+  - your PostgreSQL server machine
+- Ensure both are in the same tailnet and can ping each other over Tailscale.
+- Note the PostgreSQL server Tailscale address (example: 100.88.77.66).
+
+### 2. Configure PostgreSQL to listen for remote connections
+On the PostgreSQL server, edit postgresql.conf:
+
+    listen_addresses = '127.0.0.1,100.88.77.66'
+    port = 5432
+
+You can use * for listen_addresses, but binding only loopback + Tailscale IP is tighter.
+
+Restart PostgreSQL and confirm it is listening:
+
+    sudo systemctl restart postgresql
+    ss -lntp | rg 5432
+
+You should see 5432 bound to the Tailscale address (or 0.0.0.0 if using *), not only 127.0.0.1.
+
+### 3. Create app user and database
+TTM initializes tables, but the database itself must already exist.
+
+    sudo -u postgres psql
+
+    CREATE ROLE ttm_app LOGIN PASSWORD 'replace-with-strong-password';
+    CREATE DATABASE ttmdb OWNER ttm_app;
+    GRANT ALL PRIVILEGES ON DATABASE ttmdb TO ttm_app;
+
+    \q
+
+### 4. Allow Tailscale clients in pg_hba.conf
+Add one of these rules on the PostgreSQL server.
+
+Tighter (single client):
+
+    hostssl  ttmdb  ttm_app  100.77.66.55/32  scram-sha-256
+
+Broader (all Tailscale IPv4 nodes):
+
+    hostssl  ttmdb  ttm_app  100.64.0.0/10    scram-sha-256
+
+If you enable PostgreSQL TLS, use hostssl instead of hostnossl (or always use hostssl as shown above).
+
+Reload PostgreSQL:
+
+    sudo systemctl reload postgresql
+
+### 5. Allow firewall access on the DB server
+Allow inbound TCP 5432 from:
+- the client Tailscale IP (/32), or
+- the Tailscale CGNAT range 100.64.0.0/10
+
+Do not expose 5432 to the public internet.
+
+### 6. Configure TTM
+In ~/.ttm/config.yaml:
+
+    storage:
+      type: postgres
+      postgres:
+        host: "100.88.77.66"
+        port: 5432
+        user: "ttm_app"
+        dbname: "ttmdb"
+        sslmode: require
+        passwordEnv: "TTM_POSTGRES_PASSWORD"
+
+Set password in environment (recommended over plaintext config):
+
+    export TTM_POSTGRES_PASSWORD='replace-with-strong-password'
+
+### 7. Validate connectivity before running TTM
+From the client machine:
+
+    pg_isready -h 100.88.77.66 -p 5432 -U ttm_app -d ttmdb
+    psql -h 100.88.77.66 -U ttm_app -d ttmdb -c "select 1;"
+
+If these work, TTM should connect and initialize schema objects automatically.
+
+### Common errors and fixes
+
+- Connection refused
+  - PostgreSQL not listening on Tailscale interface, or firewall is blocking 5432.
+
+- No pg_hba.conf entry for host ... no encryption
+  - Add matching hostnossl rule for client IP/range, or switch to hostssl + sslmode require.
+
+- Database does not exist
+  - Create the database first (TTM does not create the DB itself).
+
+### Security recommendations
+
+1. Use a dedicated least-privilege DB user (not postgres superuser).
+2. Prefer passwordEnv instead of storing password in config file.
+3. Rotate credentials if they were ever exposed.
+4. Restrict pg_hba and firewall rules to least privilege.
+5. Consider TLS (sslmode require) in addition to Tailscale encryption.
+
+## TODO
 
 - [ ] TUI commands
   - [x] /add (started; matching ability to CLI)
