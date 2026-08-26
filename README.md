@@ -204,7 +204,7 @@ In ~/.ttm/config.yaml:
         port: 5432
         user: "ttm_app"
         dbname: "ttmdb"
-        sslmode: disable
+        sslmode: require
         passwordEnv: "TTM_POSTGRES_PASSWORD"
 
 Set password in environment (recommended over plaintext config):
